@@ -10,6 +10,7 @@ import '../../../../core/utils/double_utils.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../providers/analytics_provider.dart';
+import '../providers/admin_provider.dart';
 
 class AdminAnalyticsScreen extends ConsumerWidget {
   const AdminAnalyticsScreen({super.key});
@@ -210,7 +211,7 @@ class AdminAnalyticsScreen extends ConsumerWidget {
           // 3. Financial Health Section
           _buildSectionHeader(l10n.financialOverview, Icons.account_balance_rounded),
           const SizedBox(height: 12),
-          _buildFinancialDashboard(context, financialSummary, revenue, expenses, salaryAdvances, currencyFormat, l10n),
+          _buildFinancialDashboard(context, ref, financialSummary, revenue, expenses, salaryAdvances, currencyFormat, l10n),
           const SizedBox(height: 28),
 
           // 4. Operational Efficiency Section
@@ -447,6 +448,7 @@ class AdminAnalyticsScreen extends ConsumerWidget {
 
   Widget _buildFinancialDashboard(
     BuildContext context,
+    WidgetRef ref,
     Map<String, dynamic> summary,
     Map<String, dynamic> revenue,
     Map<String, dynamic> expenses,
