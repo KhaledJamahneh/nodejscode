@@ -232,6 +232,12 @@ router.get(
   adminController.getAnalyticsOverview
 );
 
+/**
+ * POST /api/v1/admin/analytics/pay-debt
+ * Pay all company debt to workers (unpaid + worker_pocket expenses)
+ */
+router.post('/analytics/pay-debt', adminController.payCompanyDebt);
+
 // ============================================================================
 // REQUEST MANAGEMENT
 // ============================================================================

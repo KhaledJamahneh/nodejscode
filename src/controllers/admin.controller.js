@@ -1623,8 +1623,8 @@ const getAnalyticsOverview = async (req, res) => {
           SUM(CASE WHEN payment_method = 'company_pocket' THEN amount ELSE 0 END) as company_expenses,
           SUM(CASE WHEN payment_method = 'cash' THEN amount ELSE 0 END) as cash_expenses,
           SUM(CASE WHEN payment_method = 'card' THEN amount ELSE 0 END) as card_expenses,
-          SUM(CASE WHEN payment_status = 'paid' THEN amount ELSE 0 END) as paid_expenses,
-          SUM(CASE WHEN payment_status IN ('unpaid', 'pending') THEN amount ELSE 0 END) as unpaid_expenses
+          SUM(CASE WHEN payment_method IN ('cash', 'card', 'company_pocket') THEN amount ELSE 0 END) as paid_expenses,
+          SUM(CASE WHEN payment_method IN ('unpaid', 'worker_pocket') THEN amount ELSE 0 END) as unpaid_expenses
         FROM worker_expenses
         WHERE 1=1 ${expenseDateFilter}
       `),
@@ -1753,6 +1753,9 @@ const getAnalyticsOverview = async (req, res) => {
     const totalAdvances = salaryAdvances.rows.reduce((sum, row) => sum + parseFloat(row.advance_amount || 0), 0);
     const totalOutcome = (parseFloat(expenses.total_expenses_amount) || 0) + totalAdvances;
     const netIncome = (parseFloat(revenue.total_revenue) || 0) - totalOutcome;
+    
+    // Calculate company debt to workers (unpaid expenses + worker_pocket expenses)
+    const companyDebtToWorkers = parseFloat(expenses.unpaid_expenses || 0);
 
     res.json({
       success: true,
@@ -1773,6 +1776,7 @@ const getAnalyticsOverview = async (req, res) => {
           net_income: netIncome,
           paid_expenses: expenses.paid_expenses,
           unpaid_expenses: expenses.unpaid_expenses,
+          company_debt_to_workers: companyDebtToWorkers,
           payment_logs: paymentLogs.rows,
           expense_list: expenseList.rows
         },
@@ -1793,6 +1797,42 @@ const getAnalyticsOverview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get analytics'
+    });
+  }
+};
+
+/**
+ * POST /api/v1/admin/analytics/pay-debt
+ * Pay all company debt to workers (unpaid + worker_pocket expenses)
+ */
+const payCompanyDebt = async (req, res) => {
+  try {
+    const result = await query(
+      `UPDATE worker_expenses 
+       SET payment_method = 'cash', 
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE payment_method IN ('unpaid', 'worker_pocket')
+       RETURNING id, payment_method`,
+      []
+    );
+
+    logger.info('Company debt paid by admin:', { 
+      admin: req.user.id, 
+      expensesUpdated: result.rows.length 
+    });
+
+    res.json({
+      success: true,
+      message: 'Company debt paid successfully',
+      data: {
+        expenses_paid: result.rows.length
+      }
+    });
+  } catch (error) {
+    logger.error('Pay company debt error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to pay company debt'
     });
   }
 };
@@ -2858,6 +2898,7 @@ module.exports = {
   deleteUser,
   updateWorkerAdvance,
   getAnalyticsOverview,
+  payCompanyDebt,
   createStation,
   updateStation,
   deleteStation,
