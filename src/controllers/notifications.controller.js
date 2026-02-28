@@ -42,9 +42,12 @@ const getNotifications = async (req, res) => {
     const params = [userId];
 
     // Filter notifications by type based on role
-    if (isClient && !isAdmin) {
+    if (isAdmin) {
+      // Admins should only see admin-relevant notifications
+      queryText += " AND type IN ('worker_assignment', 'low_inventory', 'new_request', 'system', 'urgent', 'important', 'announcement')";
+    } else if (isClient) {
       queryText += " AND type IN ('delivery_status', 'coupon_status', 'announcement', 'system')";
-    } else if (isWorker && !isAdmin) {
+    } else if (isWorker) {
       queryText += " AND type IN ('worker_assignment', 'low_inventory', 'new_request', 'system', 'delivery_status')";
     }
 
