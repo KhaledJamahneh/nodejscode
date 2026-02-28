@@ -9,6 +9,7 @@ router.use(authenticateToken);
 router.get('/', notificationsController.getNotifications);
 router.get('/unread-count', notificationsController.getUnreadCount);
 router.put('/:id/read', notificationsController.markAsRead);
+router.patch('/mark-all-read', notificationsController.markAllAsRead);
 router.put('/mark-all-read', notificationsController.markAllAsRead);
 
 module.exports = router;
