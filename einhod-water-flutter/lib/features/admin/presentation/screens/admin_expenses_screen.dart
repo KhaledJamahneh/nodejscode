@@ -54,7 +54,7 @@ class AdminExpensesScreen extends ConsumerWidget {
           final companyPaid = (summary['company_paid'] ?? 0.0).toDouble();
           final debtToWorkers = (summary['debt_to_workers'] ?? 0.0).toDouble();
           final reimbursed = (summary['reimbursed'] ?? 0.0).toDouble();
-          final totalExpenses = companyPaid + reimbursed;
+          final totalExpenses = (summary['total'] ?? 0.0).toDouble();
 
           return Column(
             children: [
@@ -119,7 +119,7 @@ class AdminExpensesScreen extends ConsumerWidget {
                         Expanded(
                           child: _MiniStatCard(
                             label: l10n.paid,
-                            amount: companyPaid + reimbursed,
+                            amount: companyPaid,
                             icon: Icons.check_circle,
                           ),
                         ),
