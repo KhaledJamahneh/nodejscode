@@ -2532,22 +2532,56 @@ const updateExpense = async (req, res) => {
     const expenseId = req.params.id;
     const { amount, payment_method, payment_status, destination, notes } = req.body;
 
-    if (amount === null || amount === undefined) {
+    logger.debug('Updating expense:', { expenseId, amount, payment_method, payment_status, destination, notes });
+
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (amount !== undefined) {
+      if (amount === null) {
+        return res.status(400).json({
+          success: false,
+          message: 'Amount cannot be null'
+        });
+      }
+      updates.push(`amount = $${paramCount++}`);
+      values.push(amount);
+    }
+    if (payment_method !== undefined) {
+      updates.push(`payment_method = $${paramCount++}`);
+      values.push(payment_method);
+    }
+    if (payment_status !== undefined) {
+      updates.push(`payment_status = $${paramCount++}`);
+      values.push(payment_status);
+    }
+    if (destination !== undefined) {
+      updates.push(`destination = $${paramCount++}`);
+      values.push(destination);
+    }
+    if (notes !== undefined) {
+      updates.push(`notes = $${paramCount++}`);
+      values.push(notes);
+    }
+
+    if (updates.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Amount is required'
+        message: 'No fields to update'
       });
     }
 
-    logger.debug('Updating expense:', { expenseId, amount, payment_method, payment_status, destination, notes });
+    updates.push('updated_at = NOW()');
+    values.push(expenseId);
 
     const result = await query(
       `UPDATE worker_expenses
-       SET amount = $1, payment_method = $2, payment_status = $3, 
-           destination = $4, notes = $5, updated_at = NOW()
-       WHERE id = $6
+       SET ${updates.join(', ')}
+       WHERE id = $${paramCount}
        RETURNING *`,
-      [amount, payment_method, payment_status, destination, notes, expenseId]
+      values
     );
 
     if (result.rows.length === 0) {
