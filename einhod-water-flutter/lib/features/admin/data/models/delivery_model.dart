@@ -35,7 +35,7 @@ class Delivery {
       scheduledTime: json['scheduled_time'],
       actualDeliveryTime: json['actual_delivery_time'],
       gallonsDelivered: json['gallons_delivered'],
-      gallonsReturned: json['gallons_returned'],
+      gallonsReturned: json['empty_gallons_returned'] ?? json['gallons_returned'],
       status: json['status'],
       notes: json['notes'],
       clientName: json['client_name'],
