@@ -144,8 +144,20 @@ class AdminService {
     return List<Map<String, dynamic>>.from(response.data['data']);
   }
 
-  Future<void> createCouponSize(int size) async {
-    await _dio.post(ApiEndpoints.adminCouponSizes, data: {'size': size});
+  Future<void> createCouponSize({
+    required int size,
+    required int totalGallons,
+    required double price,
+    int bonusGallons = 0,
+    int expiryDays = 365,
+  }) async {
+    await _dio.post(ApiEndpoints.adminCouponSizes, data: {
+      'size': size,
+      'total_gallons': totalGallons,
+      'price': price,
+      'bonus_gallons': bonusGallons,
+      'expiry_days': expiryDays,
+    });
   }
 
   Future<void> updateCouponSize(int id, Map<String, dynamic> data) async {

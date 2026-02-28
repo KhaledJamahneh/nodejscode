@@ -1622,7 +1622,11 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
   Future<void> _addCouponSize(int size) async {
     try {
       final service = ref.read(adminServiceProvider);
-      await service.createCouponSize(size);
+      await service.createCouponSize(
+        size: size,
+        totalGallons: size * 10,
+        price: size * 10,
+      );
       ref.invalidate(couponSizesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
