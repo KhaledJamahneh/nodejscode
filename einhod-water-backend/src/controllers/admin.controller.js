@@ -1779,11 +1779,11 @@ const getAnalyticsOverview = async (req, res) => {
         SELECT 
           COUNT(*) as total_workers,
           COUNT(CASE WHEN u.is_active = true THEN 1 END) as active_workers,
-          COUNT(CASE WHEN s.id IS NOT NULL THEN 1 END) as workers_on_shift,
+          COUNT(CASE WHEN ws.id IS NOT NULL THEN 1 END) as workers_on_shift,
           COUNT(CASE WHEN d.id IS NOT NULL THEN 1 END) as workers_with_deliveries_today
         FROM worker_profiles wp
         JOIN users u ON wp.user_id = u.id
-        LEFT JOIN shifts s ON wp.shift_id = s.id
+        LEFT JOIN work_shifts ws ON wp.shift_id = ws.id
         LEFT JOIN deliveries d ON wp.id = d.worker_id 
           AND DATE(d.delivery_date) = CURRENT_DATE
           AND d.status IN ('pending', 'in_progress')
