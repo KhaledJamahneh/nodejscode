@@ -1110,9 +1110,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
   Widget _buildEmptyState(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return EmptyStateWidget(
-      icon: Icons.people_outline_rounded,
+      icon: '👥',
       title: l10n.noActivity,
-      message: '',
+      description: '',
     );
   }
 

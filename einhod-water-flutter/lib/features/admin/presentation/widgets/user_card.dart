@@ -202,7 +202,7 @@ class UserCard extends StatelessWidget {
                           const SizedBox(width: AppSpacing.sm),
                           Flexible(
                             child: Text(
-                              l10n.viewShifts,
+                              l10n.workShifts,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
