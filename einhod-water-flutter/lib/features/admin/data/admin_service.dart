@@ -196,6 +196,10 @@ class AdminService {
     return response.data['data'];
   }
 
+  Future<void> payCompanyDebt() async {
+    await _dio.post('${ApiEndpoints.adminAnalytics}/pay-debt');
+  }
+
   // Station Management
   Future<void> createStation({
     required String name,

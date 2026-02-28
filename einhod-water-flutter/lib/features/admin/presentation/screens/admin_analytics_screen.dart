@@ -454,6 +454,8 @@ class AdminAnalyticsScreen extends ConsumerWidget {
     NumberFormat currencyFormat,
     AppLocalizations l10n,
   ) {
+    final companyDebt = DoubleUtils.toDouble(summary['company_debt_to_workers']);
+    
     return ModernCard(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(24),
@@ -492,9 +494,103 @@ class AdminAnalyticsScreen extends ConsumerWidget {
             currencyFormat,
             onTap: () => _showExpenseDetails(context, l10n.salaryAdvance, summary, expenses, advances, currencyFormat, l10n, 'advances'),
           ),
+          if (companyDebt > 0) ...[
+            const SizedBox(height: 16),
+            _buildDebtRow(context, ref, companyDebt, currencyFormat, l10n),
+          ],
         ],
       ),
     );
+  }
+
+  Widget _buildDebtRow(BuildContext context, WidgetRef ref, double debt, NumberFormat currencyFormat, AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.iosRed.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.iosRed.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.iosRed.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.account_balance_rounded, color: AppTheme.iosRed, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Company Debt to Workers', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                Text('Unpaid + Worker Pocket', style: TextStyle(fontSize: 12, color: AppTheme.iosGray)),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(currencyFormat.format(debt), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.iosRed)),
+              const SizedBox(height: 4),
+              ElevatedButton(
+                onPressed: () => _payDebt(context, ref),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.iosRed,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  minimumSize: Size.zero,
+                ),
+                child: const Text('Pay', style: TextStyle(fontSize: 13)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _payDebt(BuildContext context, WidgetRef ref) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pay Company Debt'),
+        content: const Text('This will mark all unpaid and worker pocket expenses as paid. Continue?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.iosRed),
+            child: const Text('Pay Now'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && context.mounted) {
+      try {
+        final service = ref.read(adminServiceProvider);
+        await service.payCompanyDebt();
+        ref.invalidate(analyticsProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Debt paid successfully'), backgroundColor: AppTheme.successGreen),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.iosRed),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildFinancialRow(

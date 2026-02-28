@@ -1400,6 +1400,7 @@ const createUser = async (req, res) => {
     } = req.body;
 
     const roles = Array.isArray(role) ? role : [role];
+    const primaryRole = roles[0];
 
     await transaction(async (client) => {
       // Hash password
@@ -1752,9 +1753,6 @@ const getAnalyticsOverview = async (req, res) => {
     const totalAdvances = salaryAdvances.rows.reduce((sum, row) => sum + parseFloat(row.advance_amount || 0), 0);
     const totalOutcome = (parseFloat(expenses.total_expenses_amount) || 0) + totalAdvances;
     const netIncome = (parseFloat(revenue.total_revenue) || 0) - totalOutcome;
-    
-    // Calculate company debt to workers (worker_pocket + unpaid expenses)
-    const companyDebtToWorkers = (parseFloat(expenses.my_pocket_expenses) || 0) + (parseFloat(expenses.unpaid_expenses) || 0);
 
     res.json({
       success: true,
@@ -1775,7 +1773,6 @@ const getAnalyticsOverview = async (req, res) => {
           net_income: netIncome,
           paid_expenses: expenses.paid_expenses,
           unpaid_expenses: expenses.unpaid_expenses,
-          company_debt_to_workers: companyDebtToWorkers,
           payment_logs: paymentLogs.rows,
           expense_list: expenseList.rows
         },
