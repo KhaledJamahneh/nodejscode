@@ -564,7 +564,7 @@ router.put(
   [
     param('id').isInt().withMessage('Expense ID must be a number'),
     body('amount').optional().isFloat().withMessage('Amount must be a number'),
-    body('payment_method').isIn(['cash', 'card', 'worker_pocket', 'company_pocket', 'unpaid']).withMessage('Invalid payment method'),
+    body('payment_method').optional().isIn(['cash', 'card', 'worker_pocket', 'company_pocket', 'unpaid']).withMessage('Invalid payment method'),
     body('payment_status').optional().isIn(['paid', 'unpaid', 'pending']).withMessage('Invalid payment status')
   ],
   validate,
