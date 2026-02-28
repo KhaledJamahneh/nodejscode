@@ -16,11 +16,16 @@ const verificationCodes = new Map();
  * Generate JWT access token
  */
 const generateAccessToken = (user) => {
+  // Ensure roles is always an array for the JWT payload
+  const roles = Array.isArray(user.roles) 
+    ? user.roles 
+    : (user.role ? [user.role] : []);
+
   return jwt.sign(
     {
       id: user.id,
       username: user.username,
-      roles: user.roles
+      roles: roles
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
@@ -77,6 +82,9 @@ const login = async (req, res) => {
       'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1',
       [user.id]
     );
+
+    // Map singular role to roles array for frontend and middleware compatibility
+    user.roles = Array.isArray(user.role) ? user.role : [user.role];
 
     // Generate tokens
     const accessToken = generateAccessToken(user);
@@ -434,7 +442,8 @@ const getCurrentUser = async (req, res) => {
     }
 
     const userData = result.rows[0];
-    userData.role = Array.isArray(userData.role) ? userData.role : [userData.role];
+    userData.roles = Array.isArray(userData.role) ? userData.role : [userData.role];
+    delete userData.role; // Remove singular role to avoid confusion
 
     res.json({
       success: true,

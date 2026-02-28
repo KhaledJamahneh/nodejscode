@@ -27,6 +27,9 @@ const notificationRoutes = require('./routes/notification.routes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for Render/Cloud environments (needed for express-rate-limit)
+app.set('trust proxy', 1);
+
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
