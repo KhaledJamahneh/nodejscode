@@ -460,9 +460,7 @@ class _ExpenseCard extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(paymentMethod == 'worker_pocket' 
-                                ? 'Worker reimbursed' 
-                                : l10n.statusUpdated),
+                              content: Text(l10n.statusUpdated),
                               backgroundColor: AppTheme.successGreen,
                             ),
                           );
@@ -471,7 +469,7 @@ class _ExpenseCard extends ConsumerWidget {
                       icon: const Icon(Icons.check_circle, size: 16),
                       label: Text(
                         expense['payment_method'] == 'worker_pocket' 
-                          ? 'Reimburse' 
+                          ? l10n.reimburse 
                           : l10n.markAsPaid, 
                         style: const TextStyle(fontSize: 13)
                       ),
