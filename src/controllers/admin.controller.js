@@ -2571,7 +2571,7 @@ const getAllExpenses = async (req, res) => {
       }
       // Worker paid from pocket
       else if (expense.payment_method === 'worker_pocket') {
-        if (expense.payment_status === 'paid') {
+        if (expense.payment_status === 'completed') {
           acc.reimbursed += amount; // Already reimbursed to worker
         } else {
           acc.debt_to_workers += amount; // Still owe worker
