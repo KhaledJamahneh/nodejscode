@@ -452,24 +452,37 @@ class _ExpenseCard extends ConsumerWidget {
                         final expenseId = expense['id'];
                         final paymentMethod = expense['payment_method'];
                         
-                        // If worker_pocket, change to company_pocket (company reimburses/pays)
-                        if (paymentMethod == 'worker_pocket') {
-                          await ref.read(adminServiceProvider).updateExpense(
-                            expenseId,
-                            {'payment_method': 'company_pocket'},
-                          );
-                        } else {
-                          await ref.read(adminServiceProvider).updateExpenseStatus(expenseId, 'paid');
-                        }
-                        
-                        ref.refresh(adminExpensesProvider);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.statusUpdated),
-                              backgroundColor: AppTheme.successGreen,
-                            ),
-                          );
+                        try {
+                          // If worker_pocket, change to company_pocket (company reimburses/pays)
+                          if (paymentMethod == 'worker_pocket') {
+                            await ref.read(adminServiceProvider).updateExpense(
+                              expenseId,
+                              {'payment_method': 'company_pocket'},
+                            );
+                          } else {
+                            await ref.read(adminServiceProvider).updateExpenseStatus(expenseId, 'paid');
+                          }
+                          
+                          // Force refresh the expenses data
+                          ref.invalidate(adminExpensesProvider);
+                          
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.statusUpdated),
+                                backgroundColor: AppTheme.successGreen,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         }
                       },
                       icon: const Icon(Icons.check_circle, size: 16),
