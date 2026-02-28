@@ -312,6 +312,12 @@ class _ExpenseCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final date = DateTime.parse(expense['created_at']);
     final status = expense['payment_status'] as String;
+    final paymentMethod = expense['payment_method'] as String?;
+    
+    // Show pay button if: unpaid status OR worker_pocket/unpaid payment method
+    final needsPayment = status != 'paid' || 
+                        paymentMethod == 'worker_pocket' || 
+                        paymentMethod == 'unpaid';
 
     Color statusColor;
     switch (status) {
@@ -432,31 +438,43 @@ class _ExpenseCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-                if (status != 'paid') ...[
+                if (needsPayment) ...[
                   const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         final expenseId = expense['id'];
-                        await ref.read(adminServiceProvider).updateExpenseStatus(expenseId, 'paid');
+                        final paymentMethod = expense['payment_method'];
+                        
+                        // If worker_pocket or unpaid, change payment method to cash (company pays)
+                        if (paymentMethod == 'worker_pocket' || paymentMethod == 'unpaid') {
+                          await ref.read(adminServiceProvider).updateExpense(
+                            expenseId,
+                            {'payment_method': 'cash'},
+                          );
+                        } else {
+                          await ref.read(adminServiceProvider).updateExpenseStatus(expenseId, 'paid');
+                        }
+                        
                         ref.refresh(adminExpensesProvider);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(l10n.statusUpdated),
-                              action: SnackBarAction(
-                                label: l10n.undo,
-                                onPressed: () async {
-                                  await ref.read(adminServiceProvider).updateExpenseStatus(expenseId, 'unpaid');
-                                  ref.refresh(adminExpensesProvider);
-                                },
-                              ),
+                              content: Text(paymentMethod == 'worker_pocket' 
+                                ? 'Worker reimbursed' 
+                                : l10n.statusUpdated),
+                              backgroundColor: AppTheme.successGreen,
                             ),
                           );
                         }
                       },
                       icon: const Icon(Icons.check_circle, size: 16),
-                      label: Text(l10n.markAsPaid, style: const TextStyle(fontSize: 13)),
+                      label: Text(
+                        expense['payment_method'] == 'worker_pocket' 
+                          ? 'Reimburse' 
+                          : l10n.markAsPaid, 
+                        style: const TextStyle(fontSize: 13)
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.successGreen,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
