@@ -452,11 +452,11 @@ class _ExpenseCard extends ConsumerWidget {
                         final expenseId = expense['id'];
                         final paymentMethod = expense['payment_method'];
                         
-                        // If worker_pocket or unpaid, change payment method to cash (company pays)
-                        if (paymentMethod == 'worker_pocket' || paymentMethod == 'unpaid') {
+                        // If worker_pocket, change to company_pocket (company reimburses/pays)
+                        if (paymentMethod == 'worker_pocket') {
                           await ref.read(adminServiceProvider).updateExpense(
                             expenseId,
-                            {'payment_method': 'cash'},
+                            {'payment_method': 'company_pocket'},
                           );
                         } else {
                           await ref.read(adminServiceProvider).updateExpenseStatus(expenseId, 'paid');
