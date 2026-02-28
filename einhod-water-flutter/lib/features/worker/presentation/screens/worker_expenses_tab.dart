@@ -18,7 +18,7 @@ class _WorkerExpensesTabState extends ConsumerState<WorkerExpensesTab> {
   final _amountController = TextEditingController();
   final _destinationController = TextEditingController();
   final _notesController = TextEditingController();
-  String _selectedMainMethod = 'my_pocket';
+  String _selectedMainMethod = 'worker_pocket';
   String _selectedSubMethod = 'cash';
   String _selectedStatus = 'unpaid';
 
@@ -93,8 +93,8 @@ class _WorkerExpensesTabState extends ConsumerState<WorkerExpensesTab> {
                       prefixIcon: const Icon(Icons.payment_rounded),
                     ),
                     items: [
-                      DropdownMenuItem(value: 'my_pocket', child: Text(l10n.myPocket)),
-                      DropdownMenuItem(value: 'company', child: Text(l10n.company)),
+                      DropdownMenuItem(value: 'worker_pocket', child: Text(l10n.myPocket)),
+                      DropdownMenuItem(value: 'company_pocket', child: Text(l10n.company)),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -102,7 +102,7 @@ class _WorkerExpensesTabState extends ConsumerState<WorkerExpensesTab> {
                       }
                     },
                   ),
-                  if (_selectedMainMethod == 'company') ...[
+                  if (_selectedMainMethod == 'company_pocket') ...[
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       value: _selectedSubMethod,
@@ -232,7 +232,7 @@ class _WorkerExpensesTabState extends ConsumerState<WorkerExpensesTab> {
     if (amount == null || amount <= 0) return;
 
     final paymentMethod = _selectedStatus == 'paid'
-        ? (_selectedMainMethod == 'my_pocket' ? 'my_pocket' : _selectedSubMethod)
+        ? (_selectedMainMethod == 'worker_pocket' ? 'worker_pocket' : _selectedSubMethod)
         : 'unpaid';
 
     ref.read(workerOpsProvider.notifier).submitExpense({
@@ -247,7 +247,7 @@ class _WorkerExpensesTabState extends ConsumerState<WorkerExpensesTab> {
     _destinationController.clear();
     _notesController.clear();
     setState(() {
-      _selectedMainMethod = 'my_pocket';
+      _selectedMainMethod = 'worker_pocket';
       _selectedStatus = 'unpaid';
     });
     
@@ -261,7 +261,7 @@ class _WorkerExpensesTabState extends ConsumerState<WorkerExpensesTab> {
     final notesController = TextEditingController(text: expense.notes ?? '');
     
     String selectedMethod = expense.paymentMethod;
-    if (!['cash', 'card', 'my_pocket', 'company', 'unpaid'].contains(selectedMethod)) {
+    if (!['cash', 'card', 'worker_pocket', 'company_pocket', 'unpaid'].contains(selectedMethod)) {
       selectedMethod = 'unpaid';
     }
     
@@ -295,8 +295,8 @@ class _WorkerExpensesTabState extends ConsumerState<WorkerExpensesTab> {
                     prefixIcon: const Icon(Icons.payment_rounded),
                   ),
                   items: [
-                    DropdownMenuItem(value: 'my_pocket', child: Text(l10n.myPocket)),
-                    DropdownMenuItem(value: 'company', child: Text(l10n.company)),
+                    DropdownMenuItem(value: 'worker_pocket', child: Text(l10n.myPocket)),
+                    DropdownMenuItem(value: 'company_pocket', child: Text(l10n.company)),
                     DropdownMenuItem(value: 'cash', child: Text(l10n.cashRevenue)),
                     DropdownMenuItem(value: 'card', child: Text(l10n.cardRevenue)),
                     DropdownMenuItem(value: 'unpaid', child: Text(l10n.unpaid)),
