@@ -43,7 +43,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
     _tabController.addListener(() {
       _selectedUserIds.clear();
       // Clear filters when switching tabs
-      ref.read(usersFilterProvider.notifier).state = const UsersFilter();
+      ref.read(usersFilterProvider.notifier).state = UsersFilter();
       _searchController.clear();
       setState(() {});
     });
