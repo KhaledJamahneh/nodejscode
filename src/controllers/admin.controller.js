@@ -2456,7 +2456,7 @@ const updateWorkerAdvance = async (req, res) => {
 
 /**
  * GET /api/v1/admin/expenses
- * Get all worker expenses
+ * Get all worker expenses with summary
  */
 const getAllExpenses = async (req, res) => {
   try {
@@ -2472,9 +2472,37 @@ const getAllExpenses = async (req, res) => {
        ORDER BY we.created_at DESC`
     );
 
+    // Calculate summary
+    const summary = result.rows.reduce((acc, expense) => {
+      const amount = parseFloat(expense.amount) || 0;
+      
+      // Company paid directly (already spent)
+      if (expense.payment_method === 'company_pocket') {
+        acc.company_paid += amount;
+      }
+      // Worker paid from pocket
+      else if (expense.payment_method === 'worker_pocket') {
+        if (expense.payment_status === 'paid') {
+          acc.reimbursed += amount; // Already reimbursed to worker
+        } else {
+          acc.debt_to_workers += amount; // Still owe worker
+        }
+      }
+      
+      return acc;
+    }, {
+      company_paid: 0,      // Paid directly by company
+      debt_to_workers: 0,   // Owed to workers (unpaid worker_pocket)
+      reimbursed: 0,        // Already reimbursed to workers
+      total: 0
+    });
+
+    summary.total = summary.company_paid + summary.reimbursed;
+
     res.json({
       success: true,
-      data: result.rows
+      data: result.rows,
+      summary
     });
   } catch (error) {
     logger.error('Get all expenses error:', error);
