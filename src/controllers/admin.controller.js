@@ -2569,24 +2569,19 @@ const getAllExpenses = async (req, res) => {
       if (expense.payment_method === 'company_pocket') {
         acc.company_paid += amount;
       }
-      // Worker paid from pocket - company owes worker until reimbursed
+      // Worker paid from pocket - company owes worker (all worker_pocket expenses are debt)
       else if (expense.payment_method === 'worker_pocket') {
-        if (expense.payment_status === 'unpaid' || expense.payment_status === 'pending') {
-          acc.debt_to_workers += amount; // Worker paid, company still owes them
-        } else if (expense.payment_status === 'paid') {
-          acc.reimbursed += amount; // Company reimbursed the worker
-        }
+        acc.debt_to_workers += amount;
       }
       
       return acc;
     }, {
       company_paid: 0,      // Paid directly by company
-      debt_to_workers: 0,   // Owed to workers (unpaid/pending worker_pocket)
-      reimbursed: 0,        // Already reimbursed to workers
+      debt_to_workers: 0,   // Owed to workers (all worker_pocket expenses)
       total: 0
     });
 
-    summary.total = summary.company_paid + summary.reimbursed;
+    summary.total = summary.company_paid;
 
     res.json({
       success: true,
