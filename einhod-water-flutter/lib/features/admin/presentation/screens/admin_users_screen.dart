@@ -2325,7 +2325,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
   final _addressController = TextEditingController();
 
   List<String> _selectedRoles = ['client'];
-  int _initialCoupons = 100;
+  int? _initialCoupons;
   String _subscriptionType = 'coupon_book';
   String _selectedWorkerType = 'delivery';
   bool _obscurePassword = true;
@@ -2517,28 +2517,36 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                   builder: (context, ref, child) {
                     final couponSizesAsync = ref.watch(couponSizesProvider);
                     return couponSizesAsync.when(
-                      data: (sizes) => DropdownButtonFormField<int>(
-                        value: sizes.contains(_initialCoupons) ? _initialCoupons : (sizes.isNotEmpty ? sizes.first : 100),
-                        decoration: InputDecoration(
-                            labelText: l10n.coupons,
-                            prefixIcon: const Icon(Icons.confirmation_number_rounded)),
-                        items: sizes.map((size) {
-                          return DropdownMenuItem(
-                              value: size, child: Text('$size ${l10n.coupons}'));
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) setState(() => _initialCoupons = value);
-                        },
-                      ),
+                      data: (sizes) {
+                        // Set initial value to first size if not set
+                        if (_initialCoupons == null && sizes.isNotEmpty) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            setState(() => _initialCoupons = sizes.first);
+                          });
+                        }
+                        return DropdownButtonFormField<int>(
+                          value: _initialCoupons ?? (sizes.isNotEmpty ? sizes.first : null),
+                          decoration: InputDecoration(
+                              labelText: l10n.coupons,
+                              prefixIcon: const Icon(Icons.confirmation_number_rounded)),
+                          items: sizes.map((size) {
+                            return DropdownMenuItem(
+                                value: size, child: Text('$size ${l10n.coupons}'));
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) setState(() => _initialCoupons = value);
+                          },
+                        );
+                      },
                       loading: () => DropdownButtonFormField<int>(
                         value: _initialCoupons,
                         decoration: InputDecoration(
                             labelText: l10n.coupons,
                             prefixIcon: const Icon(Icons.confirmation_number_rounded)),
-                        items: [_initialCoupons].map((size) {
+                        items: _initialCoupons != null ? [_initialCoupons!].map((size) {
                           return DropdownMenuItem(
                               value: size, child: Text('$size ${l10n.coupons}'));
-                        }).toList(),
+                        }).toList() : [],
                         onChanged: null,
                       ),
                       error: (_, __) => DropdownButtonFormField<int>(
