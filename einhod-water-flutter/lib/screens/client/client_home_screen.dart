@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:confetti/confetti.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/shared_widgets.dart';
 import '../../models/models.dart';
-import '../../core/widgets/liquid_loading.dart';
-import '../../core/widgets/glass_card.dart';
-import '../../core/widgets/smart_suggestion_widget.dart';
-import '../../core/widgets/shimmer_loading.dart';
-import '../../core/widgets/skeletons.dart';
-import '../../core/services/haptic_service.dart';
-import '../../core/services/ai_prediction_service.dart';
 import 'notifications_screen.dart';
 
 class ClientHomeScreen extends StatefulWidget {
@@ -25,34 +15,16 @@ class ClientHomeScreen extends StatefulWidget {
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   int _selectedTab = 0;
-  bool _isLoading = true;
-  bool _showSuggestion = true;
   late final _client = widget.client;
   final _deliveries = MockData.recentDeliveries;
   final _notifications = MockData.notifications;
-  late final DeliveryPrediction _prediction;
-
-  @override
-  void initState() {
-    super.initState();
-    _prediction = AIPredictionService.predictNextDelivery(_deliveries);
-    // Simulate initial loading to show off LiquidLoadingIndicator
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
     final tabs = [
       _HomeTab(
           client: _client,
           deliveries: _deliveries,
-          prediction: _showSuggestion ? _prediction : null,
-          isLoading: _isLoading,
-          onDismissSuggestion: () => setState(() => _showSuggestion = false),
           onRequestDelivery: _showDeliveryRequestSheet),
       const ClientRequestsTab(),
       NotificationsScreen(notifications: _notifications),
@@ -74,27 +46,24 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedTab,
-          onTap: (i) {
-            HapticService.selection();
-            setState(() => _selectedTab = i);
-          },
-          items: [
+          onTap: (i) => setState(() => _selectedTab = i),
+          items: const [
             BottomNavigationBarItem(
-                icon: const Icon(Icons.home_outlined),
-                activeIcon: const Icon(Icons.home),
-                label: l10n.dashboard),
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
+                label: 'Home'),
             BottomNavigationBarItem(
-                icon: const Icon(Icons.local_shipping_outlined),
-                activeIcon: const Icon(Icons.local_shipping),
-                label: l10n.requests),
+                icon: Icon(Icons.local_shipping_outlined),
+                activeIcon: Icon(Icons.local_shipping),
+                label: 'Requests'),
             BottomNavigationBarItem(
-                icon: const Icon(Icons.notifications_outlined),
-                activeIcon: const Icon(Icons.notifications),
-                label: l10n.notifications),
+                icon: Icon(Icons.notifications_outlined),
+                activeIcon: Icon(Icons.notifications),
+                label: 'Notifications'),
             BottomNavigationBarItem(
-                icon: const Icon(Icons.person_outline),
-                activeIcon: const Icon(Icons.person),
-                label: l10n.profile),
+                icon: Icon(Icons.person_outline),
+                activeIcon: Icon(Icons.person),
+                label: 'Profile'),
           ],
         ),
       ),
@@ -102,7 +71,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   void _showDeliveryRequestSheet() {
-    HapticService.medium();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -116,23 +84,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 class _HomeTab extends StatelessWidget {
   final ClientModel client;
   final List<DeliveryModel> deliveries;
-  final DeliveryPrediction? prediction;
-  final bool isLoading;
-  final VoidCallback onDismissSuggestion;
   final VoidCallback onRequestDelivery;
 
-  const _HomeTab({
-    required this.client,
-    required this.deliveries,
-    required this.prediction,
-    required this.isLoading,
-    required this.onDismissSuggestion,
-    required this.onRequestDelivery,
-  });
+  const _HomeTab(
+      {required this.client,
+      required this.deliveries,
+      required this.onRequestDelivery});
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.base, vertical: AppSpacing.base),
@@ -140,82 +100,58 @@ class _HomeTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Greeting
-          Text('${l10n.goodMorning}, ${client.name.split(' ').first} 👋',
+          Text('Good morning, ${client.name.split(' ').first} 👋',
               style: AppTypography.headlineLarge),
           const SizedBox(height: AppSpacing.base),
 
-          // Smart Suggestion (Goal 1: AIPrediction)
-          if (prediction != null && !isLoading) ...[
-            SmartDeliverySuggestion(
-              prediction: prediction!,
-              onAccept: onRequestDelivery,
-              onDismiss: onDismissSuggestion,
-            ).animate().fadeIn().slideY(begin: -0.1, end: 0),
-            const SizedBox(height: AppSpacing.base),
-          ],
-
           // Hero Subscription Card
-          ShimmerLoading(
-            isLoading: isLoading,
-            child: isLoading ? const HeroCardSkeleton() : _HeroSubscriptionCard(client: client),
-          ),
+          _HeroSubscriptionCard(client: client),
           const SizedBox(height: AppSpacing.base),
 
           // Debt Alert Banner
-          if (client.hasDebt && !isLoading) ...[
+          if (client.hasDebt) ...[
             _DebtAlertBanner(amount: client.outstandingDebt),
             const SizedBox(height: AppSpacing.base),
           ],
 
           // Quick Action Button
-          if (!isLoading)
-            GestureDetector(
-              onTap: onRequestDelivery,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                decoration: BoxDecoration(
-                  gradient: AppColors.heroGradient,
-                  borderRadius: BorderRadius.circular(AppRadius.base),
-                  boxShadow: AppShadows.button,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('🚰', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      l10n.requestWaterDelivery,
-                      style: AppTypography.headlineMedium
-                          .copyWith(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.elasticOut),
+          GestureDetector(
+            onTap: onRequestDelivery,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                borderRadius: BorderRadius.circular(AppRadius.base),
+                boxShadow: AppShadows.button,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('🚰', style: TextStyle(fontSize: 24)),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Request Water Delivery',
+                    style: AppTypography.headlineMedium
+                        .copyWith(color: Colors.white),
+                  ),
+                ],
+              ),
             ),
+          ),
           const SizedBox(height: AppSpacing.xl),
 
           // Recent Deliveries
           SectionHeader(
-            title: l10n.recentDeliveries,
-            actionLabel: l10n.seeAll,
+            title: 'Recent Deliveries',
+            actionLabel: 'View All',
             onAction: () {},
           ),
           const SizedBox(height: AppSpacing.md),
-          if (isLoading)
-            ...List.generate(3, (i) => const ShimmerLoading(child: DeliveryCardSkeleton()))
-          else
-            ...deliveries.asMap().entries.map((entry) {
-              final index = entry.key;
-              final d = entry.value;
-              return Padding(
+          ...deliveries.map((d) => Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: _DeliveryHistoryCard(delivery: d),
-              )
-                  .animate()
-                  .fadeIn(delay: (100 * index).ms, duration: 400.ms)
-                  .slideX(begin: 0.2, end: 0, curve: Curves.easeOutQuad);
-            }),
+              )),
 
           const SizedBox(height: AppSpacing.xl),
 
@@ -248,7 +184,7 @@ class _HeroSubscriptionCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: AppColors.premiumGradient, // Updated to premium gradient
+        gradient: AppColors.cardGradient,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: AppShadows.elevated,
       ),
@@ -872,21 +808,6 @@ class _DeliveryRequestSheetState extends State<DeliveryRequestSheet> {
   String? _selectedPriority;
   int _gallons = 2;
   final _notesController = TextEditingController();
-  late ConfettiController _confettiController;
-
-  @override
-  void initState() {
-    super.initState();
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 3));
-  }
-
-  @override
-  void dispose() {
-    _confettiController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -938,6 +859,7 @@ class _DeliveryRequestSheetState extends State<DeliveryRequestSheet> {
               address: widget.client.address ?? '',
               gallons: _gallons,
               onSubmit: () {
+                Navigator.pop(context);
                 _showSuccess(context);
               },
               onBack: () => setState(() => _step = 1),
@@ -948,54 +870,30 @@ class _DeliveryRequestSheetState extends State<DeliveryRequestSheet> {
   }
 
   void _showSuccess(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    HapticService.success();
-    _confettiController.play();
     showDialog(
       context: context,
-      builder: (_) => Stack(
-        alignment: Alignment.center,
-        children: [
-          Dialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.xl)),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xxl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('💧', style: TextStyle(fontSize: 64)),
-                  const SizedBox(height: AppSpacing.base),
-                  Text(l10n.requestReceived,
-                      style: AppTypography.headlineLarge,
-                      textAlign: TextAlign.center),
-                  const SizedBox(height: AppSpacing.xl),
-                  PrimaryButton(
-                      label: l10n.done,
-                      onTap: () async {
-                        HapticService.selection();
-                        await Future.delayed(300.ms);
-                        if (context.mounted) {
-                          Navigator.pop(context); // Pop dialog
-                          Navigator.pop(context); // Pop sheet
-                        }
-                      }),
-                ],
-              ),
-            ),
-          ),
-          ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            shouldLoop: false,
-            colors: const [
-              AppColors.oceanBlue,
-              AppColors.skyBlue,
-              AppColors.accentGold,
-              Colors.white
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl)),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('💧', style: TextStyle(fontSize: 64)),
+              const SizedBox(height: AppSpacing.base),
+              Text('Request Received!',
+                  style: AppTypography.headlineLarge,
+                  textAlign: TextAlign.center),
+              const SizedBox(height: AppSpacing.xs),
+              Text('تم استلام الطلب',
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: AppColors.skyBlue)),
+              const SizedBox(height: AppSpacing.xl),
+              PrimaryButton(label: 'Done', onTap: () => Navigator.pop(context)),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1041,10 +939,7 @@ class _PriorityStep extends StatelessWidget {
           ...options.map((opt) {
             final isSelected = selected == opt.$1;
             return GestureDetector(
-              onTap: () {
-                HapticService.selection();
-                onSelect(opt.$1);
-              },
+              onTap: () => onSelect(opt.$1),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -1133,12 +1028,7 @@ class _DetailsStep extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               GestureDetector(
-                onTap: () {
-                  if (gallons > 1) {
-                    HapticService.light();
-                    onGallonsChanged(gallons - 1);
-                  }
-                },
+                onTap: () => gallons > 1 ? onGallonsChanged(gallons - 1) : null,
                 child: Container(
                   width: 48,
                   height: 48,
@@ -1157,10 +1047,7 @@ class _DetailsStep extends StatelessWidget {
                         .copyWith(color: AppColors.oceanBlue)),
               ),
               GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  onGallonsChanged(gallons + 1);
-                },
+                onTap: () => onGallonsChanged(gallons + 1),
                 child: Container(
                   width: 48,
                   height: 48,

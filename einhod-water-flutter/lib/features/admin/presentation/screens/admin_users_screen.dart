@@ -18,9 +18,7 @@ import '../../data/models/shift_model.dart';
 import 'admin_shifts_screen.dart' show shiftsProvider;
 
 class AdminUsersScreen extends ConsumerStatefulWidget {
-  final String? initialSearch;
-  final String? initialRole;
-  const AdminUsersScreen({super.key, this.initialSearch, this.initialRole});
+  const AdminUsersScreen({super.key});
 
   @override
   ConsumerState<AdminUsersScreen> createState() => _AdminUsersScreenState();
@@ -28,24 +26,13 @@ class AdminUsersScreen extends ConsumerStatefulWidget {
 
 class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
     with SingleTickerProviderStateMixin {
-  late final TextEditingController _searchController;
+  final _searchController = TextEditingController();
   late TabController _tabController;
   final Set<int> _selectedUserIds = {};
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController(text: widget.initialSearch);
-    
-    // Apply initial filters if provided
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.initialSearch != null || widget.initialRole != null) {
-        ref.read(usersFilterProvider.notifier).update((state) => state.copyWith(
-          search: widget.initialSearch,
-          role: widget.initialRole,
-        ));
-      }
-    });
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       _selectedUserIds.clear();

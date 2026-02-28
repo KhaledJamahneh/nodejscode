@@ -30,14 +30,6 @@ class AppColors {
   static const Color closedOrange = Color(0xFFFFF3E0);
   static const Color closedRed = Color(0xFFFFEBEE);
 
-  // Premium Colors
-  static const Color glassWhite = Color(0xFFFAFAFA);
-  static const Color glassBlue = Color(0xFFE3F2FD);
-  static const Color accentGold = Color(0xFFFFD700);
-  static const Color successGreen = Color(0xFF00C853);
-  static const Color warningAmber = Color(0xFFFFAB00);
-  static const Color errorRed = Color(0xFFD50000);
-
   // Gradients
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -50,11 +42,6 @@ class AppColors {
     end: Alignment.bottomRight,
     colors: [Color(0xFF1A7FCC), Color(0xFF5BC8F5)],
   );
-
-  static const LinearGradient premiumGradient = LinearGradient(
-    colors: [Color(0xFF0A6EBD), Color(0xFF5BC8F5), Color(0xFFFFD700)],
-    stops: [0.0, 0.7, 1.0],
-  );
 }
 
 class AppTypography {
@@ -63,21 +50,6 @@ class AppTypography {
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
         height: 1.2,
-      );
-
-  static TextStyle get hero => GoogleFonts.inter(
-        fontSize: 48,
-        fontWeight: FontWeight.w800,
-        height: 1.1,
-        letterSpacing: -1.5,
-        color: AppColors.textPrimary,
-      );
-
-  static TextStyle get microCopy => GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
-        color: AppColors.textPrimary,
       );
 
   static TextStyle get displayMedium => GoogleFonts.inter(

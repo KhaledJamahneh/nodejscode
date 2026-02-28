@@ -52,8 +52,6 @@ dependencies:
   
   # Icons
   font_awesome_flutter: ^10.6.0
-  flutter_animate: ^4.5.2
-  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_test:

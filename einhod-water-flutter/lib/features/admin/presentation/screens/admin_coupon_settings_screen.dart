@@ -119,11 +119,6 @@ class _CouponSizeCard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           _InfoRow(
-            label: l10n.expiryDays,
-            value: '${size['expiry_days'] ?? 365} Days',
-          ),
-          const SizedBox(height: 8),
-          _InfoRow(
             label: l10n.totalPrice,
             value: '₪${size['total_price']}',
             highlight: true,
@@ -137,7 +132,6 @@ class _CouponSizeCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final priceCtrl = TextEditingController(text: '${size['price_per_page']}');
     final bonusCtrl = TextEditingController(text: '${size['bonus_gallons'] ?? 0}');
-    final expiryCtrl = TextEditingController(text: '${size['expiry_days'] ?? 365}');
 
     showDialog(
       context: context,
@@ -163,15 +157,6 @@ class _CouponSizeCard extends ConsumerWidget {
                 prefixIcon: const Icon(Icons.card_giftcard_rounded),
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: expiryCtrl,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: l10n.expiryDays,
-                prefixIcon: const Icon(Icons.timer_rounded),
-              ),
-            ),
           ],
         ),
         actions: [
@@ -183,16 +168,11 @@ class _CouponSizeCard extends ConsumerWidget {
             onPressed: () async {
               final price = double.tryParse(priceCtrl.text);
               final bonus = int.tryParse(bonusCtrl.text);
-              final expiry = int.tryParse(expiryCtrl.text);
 
-              if (price != null && bonus != null && expiry != null) {
+              if (price != null && bonus != null) {
                 await ref.read(adminServiceProvider).updateCouponSize(
                   size['id'],
-                  {
-                    'price_per_page': price, 
-                    'bonus_gallons': bonus,
-                    'expiry_days': expiry,
-                  },
+                  {'price_per_page': price, 'bonus_gallons': bonus},
                 );
                 Navigator.pop(context);
                 ref.invalidate(adminCouponSizesProvider);

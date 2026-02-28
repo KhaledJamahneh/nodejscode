@@ -19,7 +19,7 @@ const getProfile = async (req, res) => {
         u.email,
         u.phone_number,
         u.last_login,
-        u.roles,
+        u.role,
         cp.id as profile_id,
         cp.full_name,
         cp.address,
@@ -38,7 +38,7 @@ const getProfile = async (req, res) => {
         cp.updated_at
       FROM users u
       LEFT JOIN client_profiles cp ON u.id = cp.user_id
-      WHERE u.id = $1 AND 'client' = ANY(u.roles)`,
+      WHERE u.id = $1 AND 'client' = ANY(u.role)`,
       [userId]
     );
 

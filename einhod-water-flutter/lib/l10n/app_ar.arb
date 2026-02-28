@@ -233,7 +233,6 @@
   "language": "اللغة",
   "optional": "اختياري",
   "allDates": "كافة التواريخ",
-  "daysLabel": "أيام",
   "history": "السجل",
   "seeAll": "عرض الكل",
   "yourRequestsAppearHere": "ستظهر طلباتك هنا",
@@ -606,33 +605,5 @@
   "serialNumber": "الرقم التسلسلي",
   "assignedTo": "مخصص لـ",
   "viewDetails": "عرض التفاصيل",
-  "location": "الموقع",
-  "fetchingDeliveries": "جاري جلب عمليات التوصيل الخاصة بك...",
-  "smartSuggestion": "اقتراح ذكي",
-  "predictionNeedHistory": "نحتاج إلى مزيد من سجل التوصيل لتقديم توقعات دقيقة. عادة ما يطلب العملاء كل {days} أيام.",
-  "@predictionNeedHistory": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "predictionReasoning": "بناءً على نمطك المتمثل في {gallons} جالوناً كل {days} أيام، فمن المحتمل أن تحتاج إلى مزيد من الماء في {date} تقريباً.",
-  "@predictionReasoning": {
-    "placeholders": {
-      "gallons": {
-        "type": "int"
-      },
-      "days": {
-        "type": "int"
-      },
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "scheduleDelivery": "جدولة التوصيل",
-  "remindMe": "ذكرني لاحقاً",
-  "dismiss": "تجاهل",
-  "done": "تم"
+  "location": "الموقع"
 }

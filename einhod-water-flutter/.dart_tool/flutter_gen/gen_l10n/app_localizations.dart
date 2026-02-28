@@ -1385,12 +1385,6 @@ abstract class AppLocalizations {
   /// **'All Dates'**
   String get allDates;
 
-  /// No description provided for @daysLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Days'**
-  String get daysLabel;
-
   /// No description provided for @history.
   ///
   /// In en, this message translates to:
@@ -3292,54 +3286,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Location'**
   String get location;
-
-  /// No description provided for @fetchingDeliveries.
-  ///
-  /// In en, this message translates to:
-  /// **'Fetching your deliveries...'**
-  String get fetchingDeliveries;
-
-  /// No description provided for @smartSuggestion.
-  ///
-  /// In en, this message translates to:
-  /// **'Smart Suggestion'**
-  String get smartSuggestion;
-
-  /// No description provided for @predictionNeedHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'We need more delivery history to provide accurate predictions. Usually, clients order every {days} days.'**
-  String predictionNeedHistory(int days);
-
-  /// No description provided for @predictionReasoning.
-  ///
-  /// In en, this message translates to:
-  /// **'Based on your pattern of {gallons} gallons every {days} days, you\'ll likely need more water around {date}.'**
-  String predictionReasoning(int gallons, int days, String date);
-
-  /// No description provided for @scheduleDelivery.
-  ///
-  /// In en, this message translates to:
-  /// **'Schedule Delivery'**
-  String get scheduleDelivery;
-
-  /// No description provided for @remindMe.
-  ///
-  /// In en, this message translates to:
-  /// **'Remind Me'**
-  String get remindMe;
-
-  /// No description provided for @dismiss.
-  ///
-  /// In en, this message translates to:
-  /// **'Dismiss'**
-  String get dismiss;
-
-  /// No description provided for @done.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get done;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

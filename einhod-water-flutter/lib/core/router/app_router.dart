@@ -77,13 +77,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/users',
         name: 'admin-users',
-        pageBuilder: (context, state) {
-          final search = state.uri.queryParameters['search'];
-          final role = state.uri.queryParameters['role'];
-          return CupertinoPage(
-            child: AdminUsersScreen(initialSearch: search, initialRole: role),
-          );
-        },
+        pageBuilder: (context, state) => const CupertinoPage(
+          child: AdminUsersScreen(),
+        ),
       ),
       GoRoute(
         path: '/admin/requests',

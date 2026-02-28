@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/shared_widgets.dart';
 import '../../models/models.dart';
-import '../../core/widgets/glass_card.dart';
-import '../../core/services/haptic_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
   final List<NotificationModel> notifications;
@@ -49,7 +45,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     // Group by date
     final today = _notifications
         .where((n) => DateTime.now().difference(n.timestamp).inDays == 0)
@@ -62,12 +57,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return diff > 1 && diff <= 7;
     }).toList();
 
-    int animationIndex = 0;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(l10n.notifications),
+        title: const Text('Notifications'),
         actions: [
           TextButton(
             onPressed: () => setState(() => _notifications = _notifications
@@ -81,8 +74,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       actionLabel: n.actionLabel,
                     ))
                 .toList()),
-            child: Text(l10n.markAllRead,
-                style: const TextStyle(color: AppColors.oceanBlue, fontSize: 13)),
+            child: Text('Mark all read',
+                style: TextStyle(color: AppColors.oceanBlue, fontSize: 13)),
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -95,40 +88,31 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         padding: const EdgeInsets.all(AppSpacing.base),
         children: [
           if (today.isNotEmpty) ...[
-            _GroupLabel(l10n.today),
+            _GroupLabel('Today'),
             ...today.map((n) => _NotificationCard(
                 notification: n,
                 borderColor: _borderColor(n.level),
-                icon: _icon(n.level))
-                .animate()
-                .fadeIn(delay: (50 * animationIndex++).ms)
-                .slideX(begin: 0.1, end: 0)),
+                icon: _icon(n.level))),
           ],
           if (yesterday.isNotEmpty) ...[
-            _GroupLabel('Yesterday'), // This one isn't in arb yet, let's just use it for now if needed or check if arb has it
+            _GroupLabel('Yesterday'),
             ...yesterday.map((n) => _NotificationCard(
                 notification: n,
                 borderColor: _borderColor(n.level),
-                icon: _icon(n.level))
-                .animate()
-                .fadeIn(delay: (50 * animationIndex++).ms)
-                .slideX(begin: 0.1, end: 0)),
+                icon: _icon(n.level))),
           ],
           if (thisWeek.isNotEmpty) ...[
             _GroupLabel('This Week'),
             ...thisWeek.map((n) => _NotificationCard(
                 notification: n,
                 borderColor: _borderColor(n.level),
-                icon: _icon(n.level))
-                .animate()
-                .fadeIn(delay: (50 * animationIndex++).ms)
-                .slideX(begin: 0.1, end: 0)),
+                icon: _icon(n.level))),
           ],
           if (_notifications.isEmpty)
-            EmptyState(
+            const EmptyState(
               emoji: '🔔',
-              title: l10n.noActivity,
-              subtitle: l10n.yourRequestsAppearHere,
+              title: 'No notifications yet',
+              subtitle: 'We\'ll notify you about deliveries and updates here',
             ),
         ],
       ),
@@ -174,92 +158,55 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Dismissible(
       key: Key(notification.id),
       background: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: AppColors.success.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: AppSpacing.xl),
-        child: const Icon(Icons.check_circle_outline, color: AppColors.success),
-      ),
-      secondaryBackground: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: AppColors.danger.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
+        color: AppColors.danger.withOpacity(0.1),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.xl),
         child: const Icon(Icons.delete_outline, color: AppColors.danger),
       ),
-      onUpdate: (details) {
-        if (details.reached && !details.previousReached) {
-          HapticService.light();
-        }
-      },
-      onDismissed: (direction) {
-        HapticService.medium();
-        // Logical implementation would be here to update parent state
-      },
-      child: GlassCard(
+      direction: DismissDirection.endToStart,
+      child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        color: notification.isRead
-            ? AppColors.white
-            : AppColors.glassBlue,
+        decoration: BoxDecoration(
+          color: notification.isRead
+              ? AppColors.white
+              : AppColors.oceanBlue.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border(left: BorderSide(color: borderColor, width: 4)),
+          boxShadow: AppShadows.card,
+        ),
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: borderColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 16, color: borderColor),
-                ),
+                Icon(icon, size: 16, color: borderColor),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                     child: Text(notification.title,
-                        style: AppTypography.titleMedium.copyWith(
-                          fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.w700,
-                        ))),
-                Text(notification.timestamp.difference(DateTime.now()).inDays == 0 ? l10n.today : notification.timeAgo, style: AppTypography.microCopy.copyWith(color: AppColors.textSecondary)),
+                        style: AppTypography.titleMedium)),
+                Text(notification.timeAgo, style: AppTypography.bodySmall),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.xs),
             Text(notification.body,
                 style: AppTypography.bodySmall,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis),
             if (notification.actionLabel != null) ...[
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.oceanBlue,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(120, 36),
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
-                    ),
-                    child: Text(notification.actionLabel!, style: const TextStyle(fontSize: 12)),
+              const SizedBox(height: AppSpacing.sm),
+              GestureDetector(
+                onTap: () {},
+                child: Text(
+                  notification.actionLabel!,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.oceanBlue,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  TextButton(
-                    onPressed: () {},
-                    child: Text(l10n.dismiss, style: const TextStyle(fontSize: 12)),
-                  ),
-                ],
+                ),
               ),
             ],
           ],

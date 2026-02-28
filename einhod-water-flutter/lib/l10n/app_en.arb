@@ -239,7 +239,6 @@
   "language": "Language",
   "optional": "Optional",
   "allDates": "All Dates",
-  "daysLabel": "Days",
   "history": "History",
   "seeAll": "See All",
   "yourRequestsAppearHere": "Your requests will appear here",
@@ -668,33 +667,5 @@
   "serialNumber": "Serial Number",
   "assignedTo": "Assigned To",
   "viewDetails": "View Details",
-  "location": "Location",
-  "fetchingDeliveries": "Fetching your deliveries...",
-  "smartSuggestion": "Smart Suggestion",
-  "predictionNeedHistory": "We need more delivery history to provide accurate predictions. Usually, clients order every {days} days.",
-  "@predictionNeedHistory": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "predictionReasoning": "Based on your pattern of {gallons} gallons every {days} days, you'll likely need more water around {date}.",
-  "@predictionReasoning": {
-    "placeholders": {
-      "gallons": {
-        "type": "int"
-      },
-      "days": {
-        "type": "int"
-      },
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "scheduleDelivery": "Schedule Delivery",
-  "remindMe": "Remind Me",
-  "dismiss": "Dismiss",
-  "done": "Done"
+  "location": "Location"
 }

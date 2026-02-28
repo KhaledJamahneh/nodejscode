@@ -658,9 +658,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get allDates => 'كافة التواريخ';
 
   @override
-  String get daysLabel => 'أيام';
-
-  @override
   String get history => 'السجل';
 
   @override
@@ -1632,32 +1629,4 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get location => 'الموقع';
-
-  @override
-  String get fetchingDeliveries => 'جاري جلب عمليات التوصيل الخاصة بك...';
-
-  @override
-  String get smartSuggestion => 'اقتراح ذكي';
-
-  @override
-  String predictionNeedHistory(int days) {
-    return 'نحتاج إلى مزيد من سجل التوصيل لتقديم توقعات دقيقة. عادة ما يطلب العملاء كل $days أيام.';
-  }
-
-  @override
-  String predictionReasoning(int gallons, int days, String date) {
-    return 'بناءً على نمطك المتمثل في $gallons جالوناً كل $days أيام، فمن المحتمل أن تحتاج إلى مزيد من الماء في $date تقريباً.';
-  }
-
-  @override
-  String get scheduleDelivery => 'جدولة التوصيل';
-
-  @override
-  String get remindMe => 'ذكرني لاحقاً';
-
-  @override
-  String get dismiss => 'تجاهل';
-
-  @override
-  String get done => 'تم';
 }

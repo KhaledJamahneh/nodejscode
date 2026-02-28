@@ -1387,7 +1387,7 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
                     'client_id': selectedClientId,
                     'worker_id': selectedWorkerId,
                     'gallons_delivered': int.parse(gallonsController.text),
-                    'gallons_returned': int.parse(emptyGallonsController.text),
+                    'empty_gallons_returned': int.parse(emptyGallonsController.text),
                     'notes': notesController.text.isEmpty ? null : notesController.text,
                   };
                   if (selectedClientSubscription == 'pay_as_you_go' || selectedClientSubscription == 'cash') {
@@ -1464,7 +1464,7 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
               try {
                 await ref.read(adminServiceProvider).updateDelivery(delivery.id, {
                   'gallons_delivered': int.parse(gallonsController.text),
-                  'gallons_returned': int.parse(emptyGallonsController.text),
+                  'empty_gallons_returned': int.parse(emptyGallonsController.text),
                   'notes': notesController.text.isEmpty ? null : notesController.text,
                 });
                 ref.invalidate(deliveriesListProvider);

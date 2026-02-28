@@ -28,7 +28,7 @@ class AuthService {
         await StorageService.saveUserData(
           userId: data['user']['id'],
           username: data['user']['username'],
-          role: data['user']['roles'],
+          role: data['user']['roles'] ?? data['user']['role'],
           fullName: data['user']['full_name'],
         );
 

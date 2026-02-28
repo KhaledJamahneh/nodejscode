@@ -2,7 +2,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
@@ -200,43 +199,19 @@ class AdminAnalyticsScreen extends ConsumerWidget {
           // 2. Performance Section (Charts)
           _buildSectionHeader(l10n.deliveryPerformance, Icons.analytics_rounded),
           const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => context.push('/admin/deliveries'),
-            child: _buildChartCard(
-              context,
-              l10n.deliveryPerformance,
-              Icons.show_chart,
-              _buildDeliveryChart(deliveries),
-            ),
+          _buildChartCard(
+            context,
+            l10n.deliveryPerformance,
+            Icons.show_chart,
+            _buildDeliveryChart(deliveries),
           ),
           const SizedBox(height: 28),
-
-          // 2.1 Trend Section
-          if (data['daily_trend'] != null && (data['daily_trend'] as List).isNotEmpty) ...[
-            _buildSectionHeader('Delivery & Revenue Trends', Icons.trending_up_rounded),
-            const SizedBox(height: 12),
-            _buildChartCard(
-              context,
-              'Last 7 Days',
-              Icons.timeline_rounded,
-              _buildTrendChart(data['daily_trend'] as List, currencyFormat),
-            ),
-            const SizedBox(height: 28),
-          ],
 
           // 3. Financial Health Section
           _buildSectionHeader(l10n.financialOverview, Icons.account_balance_rounded),
           const SizedBox(height: 12),
           _buildFinancialDashboard(context, financialSummary, revenue, expenses, salaryAdvances, currencyFormat, l10n),
           const SizedBox(height: 28),
-
-          // 3.1 Subscription Breakdown
-          if (data['subscription_breakdown'] != null) ...[
-            _buildSectionHeader('Clients by Subscription', Icons.pie_chart_rounded),
-            const SizedBox(height: 12),
-            _buildSubscriptionBreakdown(context, data['subscription_breakdown'] as List, currencyFormat),
-            const SizedBox(height: 28),
-          ],
 
           // 4. Operational Efficiency Section
           _buildSectionHeader('Operational Efficiency', Icons.speed_rounded),
@@ -248,23 +223,20 @@ class AdminAnalyticsScreen extends ConsumerWidget {
               '${deliveries['total_gallons'] ?? 0}${l10n.gallons}',
               Icons.water_drop_rounded,
               AppTheme.iosTeal,
-              onTap: () => context.push('/admin/deliveries'),
             ),
             _buildStatItem(
               context,
-              'Pending Requests',
-              '${deliveries['pending_deliveries'] ?? 0}',
-              Icons.pending_actions_rounded,
-              AppTheme.midUrgentOrange,
-              onTap: () => context.push('/admin/requests'),
-            ),
-            _buildStatItem(
-              context,
-              'Active Workers',
-              '${deliveries['active_workers'] ?? 0}',
-              Icons.engineering_rounded,
+              l10n.avgPerDelivery,
+              '${DoubleUtils.toDouble(deliveries['avg_gallons']).toStringAsFixed(1)}${l10n.gallons}',
+              Icons.auto_graph_rounded,
               AppTheme.iosIndigo,
-              onTap: () => context.push('/admin/users?role=delivery_worker'),
+            ),
+            _buildStatItem(
+              context,
+              l10n.uniqueClients,
+              '${deliveries['unique_clients'] ?? 0}',
+              Icons.people_alt_rounded,
+              AppTheme.iosPurple,
             ),
             _buildStatItem(
               context,
@@ -272,7 +244,6 @@ class AdminAnalyticsScreen extends ConsumerWidget {
               currencyFormat.format(DoubleUtils.toDouble(clients['total_debt'])),
               Icons.money_off_rounded,
               AppTheme.iosRed,
-              onTap: () => context.push('/admin/revenues'),
             ),
           ]),
           const SizedBox(height: 28),
@@ -859,137 +830,6 @@ class AdminAnalyticsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTrendChart(List<dynamic> trend, NumberFormat currencyFormat) {
-    if (trend.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      children: [
-        SizedBox(
-          height: 200,
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: 1,
-                getDrawingHorizontalLine: (value) => const FlLine(
-                  color: AppTheme.iosGray6,
-                  strokeWidth: 1,
-                ),
-              ),
-              titlesData: FlTitlesData(
-                show: true,
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 30,
-                    interval: 1,
-                    getTitlesWidget: (value, meta) {
-                      if (value < 0 || value >= trend.length) return const SizedBox.shrink();
-                      final date = DateTime.parse(trend[value.toInt()]['day']);
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          DateFormat('E').format(date),
-                          style: const TextStyle(color: AppTheme.iosGray, fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    interval: 10,
-                    getTitlesWidget: (value, meta) => Text(
-                      value.toInt().toString(),
-                      style: const TextStyle(color: AppTheme.iosGray, fontSize: 10),
-                    ),
-                    reservedSize: 28,
-                  ),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: trend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), DoubleUtils.toDouble(e.value['delivery_count']))).toList(),
-                  isCurved: true,
-                  color: AppTheme.primary,
-                  barWidth: 4,
-                  isStrokeCapRound: true,
-                  dotData: const FlDotData(show: false),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: AppTheme.primary.withOpacity(0.1),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildChartLegendItem('Daily Deliveries', AppTheme.primary),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSubscriptionBreakdown(BuildContext context, List<dynamic> breakdown, NumberFormat currencyFormat) {
-    return ModernCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: breakdown.map((item) {
-          final type = item['subscription_type']?.toString().replaceAll('_', ' ').toUpperCase() ?? 'N/A';
-          final count = item['count'] ?? 0;
-          final debt = DoubleUtils.toDouble(item['total_debt']);
-          
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: (item['subscription_type'] == 'coupon_book' ? AppTheme.iosBlue : AppTheme.iosGreen).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    item['subscription_type'] == 'coupon_book' ? Icons.book_rounded : Icons.money_rounded,
-                    size: 16,
-                    color: item['subscription_type'] == 'coupon_book' ? AppTheme.iosBlue : AppTheme.iosGreen,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(type, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      Text('$count Clients', style: const TextStyle(color: AppTheme.iosGray, fontSize: 12)),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('₪${debt.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.iosRed)),
-                    const Text('Total Debt', style: TextStyle(color: AppTheme.iosGray, fontSize: 10)),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   BarChartGroupData _buildBarGroup(int x, double y, Color color) {
     return BarChartGroupData(
       x: x,
@@ -1060,7 +900,6 @@ class AdminAnalyticsScreen extends ConsumerWidget {
         itemBuilder: (context, index) {
           final worker = workers[index];
           return ListTile(
-            onTap: () => context.push('/admin/users?search=${worker['full_name']}&role=delivery_worker'),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             leading: Container(
@@ -1127,7 +966,6 @@ class AdminAnalyticsScreen extends ConsumerWidget {
               .toStringAsFixed(1);
 
           return ListTile(
-            onTap: () => context.push('/admin/users?search=${worker['full_name']}&role=onsite_worker'),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             leading: Container(
