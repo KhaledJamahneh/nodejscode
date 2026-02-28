@@ -2571,9 +2571,9 @@ const getAllExpenses = async (req, res) => {
       }
       // Worker paid from pocket - company owes worker until reimbursed
       else if (expense.payment_method === 'worker_pocket') {
-        if (expense.payment_status === 'completed') {
-          acc.debt_to_workers += amount; // Worker paid, company owes them
-        } else {
+        if (expense.payment_status === 'unpaid' || expense.payment_status === 'pending') {
+          acc.debt_to_workers += amount; // Worker paid, company still owes them
+        } else if (expense.payment_status === 'paid') {
           acc.reimbursed += amount; // Company reimbursed the worker
         }
       }
@@ -2581,7 +2581,7 @@ const getAllExpenses = async (req, res) => {
       return acc;
     }, {
       company_paid: 0,      // Paid directly by company
-      debt_to_workers: 0,   // Owed to workers (completed worker_pocket)
+      debt_to_workers: 0,   // Owed to workers (unpaid/pending worker_pocket)
       reimbursed: 0,        // Already reimbursed to workers
       total: 0
     });
