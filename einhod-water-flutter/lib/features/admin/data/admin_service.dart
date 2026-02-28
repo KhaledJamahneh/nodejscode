@@ -146,15 +146,13 @@ class AdminService {
 
   Future<void> createCouponSize({
     required int size,
-    required int totalGallons,
-    required double price,
+    required double pricePerPage,
     int bonusGallons = 0,
     int expiryDays = 365,
   }) async {
     await _dio.post(ApiEndpoints.adminCouponSizes, data: {
       'size': size,
-      'total_gallons': totalGallons,
-      'price': price,
+      'price_per_page': pricePerPage,
       'bonus_gallons': bonusGallons,
       'expiry_days': expiryDays,
     });

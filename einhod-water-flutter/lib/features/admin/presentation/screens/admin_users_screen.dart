@@ -1624,8 +1624,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
       final service = ref.read(adminServiceProvider);
       await service.createCouponSize(
         size: size,
-        totalGallons: size * 10,
-        price: size * 10,
+        pricePerPage: 10.0,
       );
       ref.invalidate(couponSizesProvider);
       if (mounted) {

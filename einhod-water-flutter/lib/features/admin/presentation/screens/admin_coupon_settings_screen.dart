@@ -65,7 +65,6 @@ class AdminCouponSettingsScreen extends ConsumerWidget {
   void _showCreateCouponSizeDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final sizeController = TextEditingController();
-    final totalGallonsController = TextEditingController();
     final priceController = TextEditingController();
     final bonusController = TextEditingController(text: '0');
     final expiryDaysController = TextEditingController(text: '365');
@@ -81,18 +80,9 @@ class AdminCouponSettingsScreen extends ConsumerWidget {
               TextField(
                 controller: sizeController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: '${l10n.size} (${l10n.gallons})',
-                  hintText: '50',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: totalGallonsController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: '${l10n.total} ${l10n.gallons}',
-                  hintText: '500',
+                decoration: const InputDecoration(
+                  labelText: 'Number of Coupons',
+                  hintText: '10',
                 ),
               ),
               const SizedBox(height: 12),
@@ -100,8 +90,8 @@ class AdminCouponSettingsScreen extends ConsumerWidget {
                 controller: priceController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
-                  labelText: 'Price (₪)',
-                  hintText: '500',
+                  labelText: 'Price per Coupon (₪)',
+                  hintText: '10',
                 ),
               ),
               const SizedBox(height: 12),
@@ -133,20 +123,18 @@ class AdminCouponSettingsScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               final size = int.tryParse(sizeController.text);
-              final totalGallons = int.tryParse(totalGallonsController.text);
-              final price = double.tryParse(priceController.text);
+              final pricePerPage = double.tryParse(priceController.text);
               final bonus = int.tryParse(bonusController.text) ?? 0;
               final expiryDays = int.tryParse(expiryDaysController.text) ?? 365;
 
-              if (size == null || totalGallons == null || price == null) {
+              if (size == null || pricePerPage == null) {
                 return;
               }
 
               try {
                 await ref.read(adminServiceProvider).createCouponSize(
                   size: size,
-                  totalGallons: totalGallons,
-                  price: price,
+                  pricePerPage: pricePerPage,
                   bonusGallons: bonus,
                   expiryDays: expiryDays,
                 );
