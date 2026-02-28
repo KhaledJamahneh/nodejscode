@@ -275,7 +275,14 @@ router.post(
  * POST /api/v1/workers/deliveries/quick
  * Create a quick delivery without a request
  */
-router.post('/deliveries/quick', workerAuth, workerController.createQuickDelivery);
+const quickDeliveryValidation = [
+  body('client_id').isInt().withMessage('Client ID is required'),
+  body('worker_id').isInt().withMessage('Worker ID is required'),
+  body('gallons_delivered').isInt({ min: 1, max: 500 }).withMessage('Gallons delivered must be between 1 and 500'),
+  body('empty_gallons_returned').optional().isInt({ min: 0, max: 500 }).withMessage('Empty gallons must be between 0 and 500'),
+];
+
+router.post('/deliveries/quick', workerAuth, quickDeliveryValidation, validate, workerController.createQuickDelivery);
 
 router.put(
   '/expenses/:id',
