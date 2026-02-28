@@ -31,7 +31,10 @@ class AdminExpensesScreen extends ConsumerWidget {
         ],
       ),
       body: expensesAsync.when(
-        data: (allExpenses) {
+        data: (expensesData) {
+          final allExpenses = List<Map<String, dynamic>>.from(expensesData['data'] ?? []);
+          final summary = expensesData['summary'] ?? {};
+          
           if (allExpenses.isEmpty) {
             return Center(child: Text(l10n.noExpenses));
           }
@@ -47,9 +50,11 @@ class AdminExpensesScreen extends ConsumerWidget {
                      date.isBefore(dateFilter.end.add(const Duration(days: 1)));
             }).toList();
           }
-          final totalExpenses = allExpenses.fold<double>(0.0, (sum, e) => sum + _getAmount(e));
-          final paidExpenses = allExpenses.where((e) => e['payment_status'] == 'paid').fold<double>(0.0, (sum, e) => sum + _getAmount(e));
-          final unpaidExpenses = allExpenses.where((e) => e['payment_status'] == 'unpaid').fold<double>(0.0, (sum, e) => sum + _getAmount(e));
+          
+          final companyPaid = (summary['company_paid'] ?? 0.0).toDouble();
+          final debtToWorkers = (summary['debt_to_workers'] ?? 0.0).toDouble();
+          final reimbursed = (summary['reimbursed'] ?? 0.0).toDouble();
+          final totalExpenses = companyPaid + reimbursed;
 
           return Column(
             children: [
@@ -114,16 +119,17 @@ class AdminExpensesScreen extends ConsumerWidget {
                         Expanded(
                           child: _MiniStatCard(
                             label: l10n.paid,
-                            amount: paidExpenses,
+                            amount: companyPaid + reimbursed,
                             icon: Icons.check_circle,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _MiniStatCard(
-                            label: l10n.unpaid,
-                            amount: unpaidExpenses,
-                            icon: Icons.pending,
+                            label: 'Debt to Workers',
+                            amount: debtToWorkers,
+                            icon: Icons.account_balance_wallet_outlined,
+                            color: AppTheme.iosOrange,
                           ),
                         ),
                       ],
@@ -633,24 +639,27 @@ class _MiniStatCard extends StatelessWidget {
   final String label;
   final double amount;
   final IconData icon;
+  final Color? color;
 
   const _MiniStatCard({
     required this.label,
     required this.amount,
     required this.icon,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? Colors.white;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: effectiveColor.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Icon(icon, color: effectiveColor, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -659,14 +668,14 @@ class _MiniStatCard extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: effectiveColor.withOpacity(0.9),
                     fontSize: 11,
                   ),
                 ),
                 Text(
                   '₪${amount.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: effectiveColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),

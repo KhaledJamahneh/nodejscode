@@ -32,7 +32,7 @@ final deliveriesProvider =
 
 // Expenses Provider
 final adminExpensesProvider =
-    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider<Map<String, dynamic>>((ref) async {
   final service = ref.read(adminServiceProvider);
   return await service.getAllExpenses();
 });

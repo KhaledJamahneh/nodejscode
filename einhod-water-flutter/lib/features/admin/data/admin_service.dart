@@ -258,9 +258,12 @@ class AdminService {
   }
 
   // Worker Expenses
-  Future<List<Map<String, dynamic>>> getAllExpenses() async {
+  Future<Map<String, dynamic>> getAllExpenses() async {
     final response = await _dio.get('/admin/expenses');
-    return List<Map<String, dynamic>>.from(response.data['data']);
+    return {
+      'data': List<Map<String, dynamic>>.from(response.data['data']),
+      'summary': response.data['summary'] ?? {},
+    };
   }
 
   Future<void> updateExpenseStatus(int expenseId, String status) async {
