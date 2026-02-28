@@ -88,6 +88,7 @@ class _NotificationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final isRead = notification['is_read'] ?? false;
     final type = notification['type'] ?? '';
     final createdAt = DateTime.parse(notification['created_at']);

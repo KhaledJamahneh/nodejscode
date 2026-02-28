@@ -148,7 +148,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationRequestAccepted => 'تم قبول الطلب';
 
   @override
-  String notificationRequestAcceptedMsg(Object workerName) {
+  String notificationRequestAcceptedMsg(String workerName) {
     return 'تم تعيين $workerName لطلب التوصيل الخاص بك';
   }
 
@@ -162,7 +162,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationPaymentReceived => 'تم استلام الدفع';
 
   @override
-  String notificationPaymentReceivedMsg(Object amount) {
+  String notificationPaymentReceivedMsg(String amount) {
     return 'تم استلام دفعة بقيمة ₪$amount';
   }
 
@@ -170,7 +170,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationWorkerNearby => 'الموظف قريب';
 
   @override
-  String notificationWorkerNearbyMsg(Object workerName) {
+  String notificationWorkerNearbyMsg(String workerName) {
     return '$workerName قريب من موقعك';
   }
 

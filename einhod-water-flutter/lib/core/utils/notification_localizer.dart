@@ -25,36 +25,24 @@ class NotificationLocalizer {
   static String getMessage(String? notificationKey, String fallbackMessage, Map<String, dynamic>? params, AppLocalizations l10n) {
     if (notificationKey == null) return fallbackMessage;
     
-    String message;
     switch (notificationKey) {
       case 'notification.delivery.assigned':
-        message = l10n.notificationDeliveryAssignedMsg;
-        break;
+        return l10n.notificationDeliveryAssignedMsg;
       case 'notification.request.accepted':
-        message = l10n.notificationRequestAcceptedMsg;
-        break;
+        final workerName = params?['workerName']?.toString() ?? 'Worker';
+        return l10n.notificationRequestAcceptedMsg(workerName);
       case 'notification.delivery.completed':
-        message = l10n.notificationDeliveryCompletedMsg;
-        break;
+        return l10n.notificationDeliveryCompletedMsg;
       case 'notification.payment.received':
-        message = l10n.notificationPaymentReceivedMsg;
-        break;
+        final amount = params?['amount']?.toString() ?? '0';
+        return l10n.notificationPaymentReceivedMsg(amount);
       case 'notification.worker.nearby':
-        message = l10n.notificationWorkerNearbyMsg;
-        break;
+        final workerName = params?['workerName']?.toString() ?? 'Worker';
+        return l10n.notificationWorkerNearbyMsg(workerName);
       case 'notification.generic':
       default:
         return fallbackMessage;
     }
-
-    // Replace parameters
-    if (params != null) {
-      params.forEach((key, value) {
-        message = message.replaceAll('{$key}', value.toString());
-      });
-    }
-
-    return message;
   }
 
   static Map<String, dynamic>? parseParams(dynamic paramsData) {

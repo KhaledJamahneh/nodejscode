@@ -381,7 +381,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{workerName} has been assigned to your delivery request'**
-  String notificationRequestAcceptedMsg(Object workerName);
+  String notificationRequestAcceptedMsg(String workerName);
 
   /// No description provided for @notificationDeliveryCompleted.
   ///
@@ -405,7 +405,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Payment of ₪{amount} received'**
-  String notificationPaymentReceivedMsg(Object amount);
+  String notificationPaymentReceivedMsg(String amount);
 
   /// No description provided for @notificationWorkerNearby.
   ///
@@ -417,7 +417,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{workerName} is nearby your location'**
-  String notificationWorkerNearbyMsg(Object workerName);
+  String notificationWorkerNearbyMsg(String workerName);
 
   /// No description provided for @notificationGeneric.
   ///

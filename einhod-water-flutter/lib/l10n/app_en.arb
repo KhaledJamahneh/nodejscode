@@ -47,12 +47,33 @@
   "notificationDeliveryAssignedMsg": "Admin assigned you a new delivery request",
   "notificationRequestAccepted": "Request Accepted",
   "notificationRequestAcceptedMsg": "{workerName} has been assigned to your delivery request",
+  "@notificationRequestAcceptedMsg": {
+    "placeholders": {
+      "workerName": {
+        "type": "String"
+      }
+    }
+  },
   "notificationDeliveryCompleted": "Delivery Completed",
   "notificationDeliveryCompletedMsg": "Your delivery has been completed",
   "notificationPaymentReceived": "Payment Received",
   "notificationPaymentReceivedMsg": "Payment of ₪{amount} received",
+  "@notificationPaymentReceivedMsg": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "notificationWorkerNearby": "Worker Nearby",
   "notificationWorkerNearbyMsg": "{workerName} is nearby your location",
+  "@notificationWorkerNearbyMsg": {
+    "placeholders": {
+      "workerName": {
+        "type": "String"
+      }
+    }
+  },
   "notificationGeneric": "Notification",
   "notificationGenericMsg": "You have a new notification",
   "revenue": "Revenue",
