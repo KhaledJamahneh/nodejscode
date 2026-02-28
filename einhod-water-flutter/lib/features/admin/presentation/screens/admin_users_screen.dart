@@ -97,7 +97,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () => ref.invalidate(usersProvider),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -138,7 +138,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                   children: [
                     const Icon(Icons.error_outline_rounded,
                         size: 48, color: AppTheme.iosRed),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     Text('${l10n.error}: ${error.toString()}',
                         style: const TextStyle(color: AppTheme.iosGray)),
                     const SizedBox(height: 24),
@@ -215,7 +215,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
               filled: true,
               fillColor: Theme.of(context).cardColor,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -225,7 +225,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                   clearSearch: value.isEmpty);
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
 
           // Filter Chips
           SingleChildScrollView(
@@ -239,7 +239,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                           ? AppTheme.textPrimaryDark
                           : AppTheme.textPrimaryLight,
                     )),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
 
                 // Role Filter
                 _buildFilterChip(
@@ -249,7 +249,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                   selected: filter.role != null,
                   onTap: () => _showRoleFilter(context, filter),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
 
                 // Status Filter
                 _buildFilterChip(
@@ -259,7 +259,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                   selected: filter.isActive != null,
                   onTap: () => _showStatusFilter(context, filter),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
 
                 // On-Shift Filter (only show for workers tab)
                 if (_tabController.index == 0)
@@ -270,7 +270,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                     selected: filter.onShift != null,
                     onTap: () => _showOnShiftFilter(context, filter),
                   ),
-                if (_tabController.index == 0) const SizedBox(width: 8),
+                if (_tabController.index == 0) const SizedBox(width: AppSpacing.sm),
 
                 // Payment Method Filter (only show for clients tab)
                 if (_tabController.index == 1)
@@ -281,7 +281,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                     selected: filter.paymentMethod != null,
                     onTap: () => _showPaymentMethodFilter(context, filter),
                   ),
-                if (_tabController.index == 1) const SizedBox(width: 8),
+                if (_tabController.index == 1) const SizedBox(width: AppSpacing.sm),
 
                 // Coupon Size Filter (only show for clients tab with coupons)
                 if (_tabController.index == 1 && filter.paymentMethod == 'coupons')
@@ -292,7 +292,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                     selected: filter.couponSize != null,
                     onTap: () => _showCouponSizeFilter(context, filter),
                   ),
-                if (_tabController.index == 1 && filter.paymentMethod == 'coupons') const SizedBox(width: 8),
+                if (_tabController.index == 1 && filter.paymentMethod == 'coupons') const SizedBox(width: AppSpacing.sm),
 
                 // Clear All
                 if (filter.role != null ||
@@ -323,41 +323,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return UserFilterChip(
+      label: label,
+      isSelected: selected,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppTheme.primary.withOpacity(0.1)
-              : Colors.black.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? AppTheme.primary : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? AppTheme.primary : (Theme.of(context).brightness == Brightness.dark
-                    ? AppTheme.textPrimaryDark
-                    : AppTheme.textPrimaryLight),
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 13,
-              ),
-            ),
-            if (selected) ...[
-              const SizedBox(width: 4),
-              const Icon(Icons.arrow_drop_down_rounded,
-                  size: 16, color: AppTheme.primary),
-            ],
-          ],
-        ),
-      ),
     );
   }
 
@@ -367,7 +336,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
         itemCount: users.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
           final user = users[index];
           return _buildUserCard(user);
@@ -385,7 +354,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
 
     return ModernCard(
       margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       borderColor: isSelected ? AppTheme.primary : null,
       borderWidth: isSelected ? 2.5 : null,
       onTap: _selectedUserIds.isEmpty ? () => _showUserDetails(context, user.id) : () {
@@ -423,7 +392,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 flex: 2,
                 child: Column(
@@ -444,7 +413,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Flexible(
                 child: Container(
                   padding:
@@ -487,7 +456,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                               ? AppTheme.iosOrange
                               : AppTheme.iosGreen,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Flexible(
                           child: Text(
                             user.isActive ? l10n.deactivate : l10n.activate,
@@ -508,7 +477,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                         children: [
                           const Icon(Icons.schedule_rounded,
                               color: AppTheme.primary, size: 18),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           Flexible(
                             child: Text(
                               'Manage Shift',
@@ -529,7 +498,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                         children: [
                           const Icon(Icons.event_busy_rounded,
                               color: AppTheme.iosOrange, size: 18),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           Flexible(
                             child: Text(
                               'Add Leave',
@@ -550,7 +519,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                         children: [
                           const Icon(Icons.account_balance_wallet_outlined,
                               color: AppTheme.primary, size: 18),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           Flexible(
                             child: Text(
                               l10n.salaryAdvance,
@@ -570,7 +539,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                       children: [
                         const Icon(Icons.delete_outline_rounded,
                             color: AppTheme.iosRed, size: 18),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Flexible(
                           child: Text(
                             l10n.delete,
@@ -590,7 +559,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.edit_outlined, size: 18),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Flexible(
                           child: Text(
                             l10n.editInfo,
@@ -653,7 +622,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                             fontWeight: FontWeight.w600,
                             color: AppTheme.iosBlue),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       const Icon(Icons.inventory_2_outlined,
                           size: 14, color: AppTheme.iosGreen),
                       const SizedBox(width: 4),
@@ -671,19 +640,19 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
           ),
           // Worker shift and leave info
           if (user.isWorker) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             if (user.currentLeave != null)
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppTheme.iosOrange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   border: Border.all(color: AppTheme.iosOrange.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.event_busy_rounded, size: 16, color: AppTheme.iosOrange),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         '${user.currentLeave!.typeDisplay}: ${DateFormat('MMM d').format(DateTime.parse(user.currentLeave!.startDate))} - ${DateFormat('MMM d').format(DateTime.parse(user.currentLeave!.endDate))}',
@@ -722,7 +691,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       user.shift!.timeDisplay(Localizations.localeOf(context).languageCode),
@@ -737,12 +706,12 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppTheme.iosRed.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: const Row(
                   children: [
                     Icon(Icons.warning_rounded, size: 16, color: AppTheme.iosRed),
-                    SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     Text(
                       'No shift assigned',
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.iosRed),
@@ -784,7 +753,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
             maxChildSize: 0.95,
             builder: (context, scrollController) => GlassCard(
               margin: EdgeInsets.zero,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppSpacing.xxl),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(32)),
               child: userAsync.when(
@@ -867,7 +836,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,
                                 color: AppTheme.primary)),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         _buildDetailRow(
                             context,
                             l10n.fullName,
@@ -900,14 +869,14 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                             l10n.gallonsOnHand,
                             '${user.profile!['gallons_on_hand'] ?? 0} ${l10n.gallons}',
                             Icons.inventory_2_outlined),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.sm),
                         if (user.profile!['dispensers_count'] != null && user.profile!['dispensers_count'] > 0) ...[
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             child: Row(
                               children: [
                                 const Icon(Icons.water_drop_outlined, size: 20, color: AppTheme.iosGray),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: AppSpacing.md),
                                 Text(
                                   '${l10n.dispensers} (${user.profile!['dispensers_count']})',
                                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -927,12 +896,12 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: AppTheme.iosGray.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(AppRadius.sm),
                                   ),
                                   child: Row(
                                     children: [
                                       const Icon(Icons.qr_code, size: 18, color: AppTheme.primary),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: AppSpacing.md),
                                       Expanded(
                                         child: Text(
                                           (serialNumber == null || serialNumber.isEmpty) ? 'No Serial Number' : serialNumber,
@@ -946,14 +915,14 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                               );
                             },
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                         ],
                         _buildDetailRow(
                             context,
                             l10n.balance,
                             '₪${user.profile!['current_debt'] ?? 0.00}',
                             Icons.money_off_outlined),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.lg),
                       ],
                       if (user.roles.contains('delivery_worker') ||
                           user.roles.contains('onsite_worker')) ...[
@@ -962,7 +931,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,
                                 color: AppTheme.primary)),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         _buildDetailRow(
                             context,
                             l10n.fullName,
@@ -999,7 +968,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                             '₪${user.profile!['debt_advances'] ?? '0.00'}',
                             Icons.account_balance_wallet_outlined),
                         if (user.roles.contains('onsite_worker')) ...[
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           Consumer(
                             builder: (context, ref, _) {
                               final stationsAsync =
@@ -1044,14 +1013,14 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                                             color: AppTheme.primary
                                                 .withOpacity(0.1),
                                             borderRadius:
-                                                BorderRadius.circular(12),
+                                                BorderRadius.circular(AppRadius.md),
                                           ),
                                           child: const Icon(
                                               Icons.factory_rounded,
                                               size: 20,
                                               color: AppTheme.primary),
                                         ),
-                                        const SizedBox(width: 16),
+                                        const SizedBox(width: AppSpacing.lg),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
@@ -1083,7 +1052,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                                                   color: statusColor
                                                       .withOpacity(0.1),
                                                   borderRadius:
-                                                      BorderRadius.circular(12),
+                                                      BorderRadius.circular(AppRadius.md),
                                                 ),
                                                 child: Text(
                                                   statusText,
@@ -1140,22 +1109,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
 
   Widget _buildEmptyState(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.people_outline_rounded,
-              size: 80, color: AppTheme.iosGray.withOpacity(0.2)),
-          const SizedBox(height: 24),
-          Text(
-            l10n.noActivity,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(color: AppTheme.iosGray),
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: Icons.people_outline_rounded,
+      title: l10n.noActivity,
+      message: '',
     );
   }
 
@@ -1535,11 +1492,11 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                         )).toList(),
                       ),
                       loading: () => const Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: EdgeInsets.all(AppSpacing.xxl),
                         child: Center(child: CircularProgressIndicator.adaptive()),
                       ),
                       error: (_, __) => Padding(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(AppSpacing.xxl),
                         child: Text(l10n.error),
                       ),
                     ),
@@ -1767,7 +1724,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('${user.profile?['full_name']} - ${l10n.salaryAdvance}'),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
@@ -1895,13 +1852,13 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
     showModalBottomSheet(
       context: context,
       builder: (context) => Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Assign Shift', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             ...shifts.map((s) {
               final shift = WorkShift.fromJson(s);
               final isAssigned = user.profile?['shift_id'] == shift.id;
@@ -1956,17 +1913,17 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                 ],
                 onChanged: (v) => setState(() => leaveType = v!),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: startController,
                 decoration: const InputDecoration(labelText: 'Start Date (YYYY-MM-DD)'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: endController,
                 decoration: const InputDecoration(labelText: 'End Date (YYYY-MM-DD)'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: reasonController,
                 decoration: const InputDecoration(labelText: 'Reason (optional)'),
@@ -2080,7 +2037,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
           title: Row(
             children: [
               const Icon(Icons.water_drop, color: AppTheme.primary),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(child: Text(l10n.dispensers)),
             ],
           ),
@@ -2124,27 +2081,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
   }
 
   Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.iosGray),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
-    );
+    return DetailRow(label: label, value: value);
   }
 }
 
@@ -2265,11 +2202,11 @@ Widget _buildDetailRow(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: AppTheme.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Icon(icon, size: 20, color: AppTheme.primary),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.lg),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2362,7 +2299,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           children: [
             // Role Selection (Multiple)
             _buildSectionTitle(context, l10n.assignRoles),
@@ -2381,7 +2318,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                     value: _selectedRoles.contains(role),
                     activeColor: AppTheme.primary,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(AppRadius.md)),
                     onChanged: (bool? value) {
                       setState(() {
                         if (value == true) {
@@ -2422,7 +2359,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                   prefixIcon: const Icon(Icons.person_rounded)),
               validator: (v) => v!.isEmpty ? l10n.required : null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
 
             // Password
             TextFormField(
@@ -2446,7 +2383,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
 
             // Full Name
             TextFormField(
@@ -2456,7 +2393,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                   prefixIcon: const Icon(Icons.badge_rounded)),
               validator: (v) => v!.isEmpty ? l10n.required : null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
 
             // Phone
             TextFormField(
@@ -2474,7 +2411,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
 
             // Email
             TextFormField(
@@ -2504,7 +2441,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               DropdownButtonFormField<String>(
                 value: _subscriptionType,
                 decoration: InputDecoration(
@@ -2519,7 +2456,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                   if (value != null) setState(() => _subscriptionType = value);
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               if (_subscriptionType == 'coupon_book')
                 Consumer(
                   builder: (context, ref, child) {
@@ -2573,7 +2510,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                     );
                   },
                 ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               // Payment Status (only for coupon_book)
               if (_subscriptionType == 'coupon_book') ...[
                 SwitchListTile(
@@ -2583,7 +2520,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
                   activeColor: AppTheme.iosGreen,
                   onChanged: (value) => setState(() => _isPaid = value),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 // Payment Method (only if paid)
                 if (_isPaid)
                   DropdownButtonFormField<String>(
@@ -2825,7 +2762,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         children: [
           _buildSectionTitle(context, l10n.basicInformation),
           TextFormField(
@@ -2835,7 +2772,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
                 prefixIcon: const Icon(Icons.person_rounded)),
             validator: (v) => v!.isEmpty ? l10n.required : null,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
@@ -2851,7 +2788,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           TextFormField(
             controller: _phoneController,
             decoration: InputDecoration(
@@ -2867,7 +2804,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           TextFormField(
             controller: _emailController,
             decoration: InputDecoration(
@@ -2931,7 +2868,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
             validator: (v) => v!.isEmpty ? l10n.required : null,
           ),
           if (_selectedRoles.contains('client')) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             TextFormField(
               controller: _addressController,
               decoration: InputDecoration(
@@ -2939,7 +2876,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
                   prefixIcon: const Icon(Icons.location_on_rounded)),
               maxLines: 2,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             DropdownButtonFormField<String>(
               value: ['coupon_book', 'cash'].contains(_selectedSubscriptionType)
                   ? _selectedSubscriptionType
@@ -2957,7 +2894,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
               },
             ),
             if (_selectedSubscriptionType == 'coupon_book') ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               Consumer(
                 builder: (context, ref, child) {
                   final couponSizesAsync = ref.watch(couponSizesProvider);
@@ -3009,7 +2946,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
           ],
           if (_selectedRoles.contains('delivery_worker') ||
               _selectedRoles.contains('onsite_worker')) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             DropdownButtonFormField<String>(
               value: ['delivery', 'onsite'].contains(_selectedWorkerType)
                   ? _selectedWorkerType
@@ -3027,7 +2964,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
               ],
               onChanged: (v) => setState(() => _selectedWorkerType = v),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             TextFormField(
               controller: _salaryController,
               decoration: InputDecoration(
@@ -3035,7 +2972,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
                   prefixIcon: const Icon(Icons.payments_rounded)),
               keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             TextFormField(
               controller: _advanceController,
               decoration: InputDecoration(
@@ -3044,7 +2981,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
               keyboardType: TextInputType.number,
             ),
             if (_selectedRoles.contains('delivery_worker')) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               TextFormField(
                 controller: _capacityController,
                 decoration: InputDecoration(
