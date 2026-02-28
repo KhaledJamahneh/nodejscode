@@ -139,6 +139,48 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noActivity => 'لا يوجد نشاط مؤخرًا';
 
   @override
+  String get notificationDeliveryAssigned => 'مهمة جديدة';
+
+  @override
+  String get notificationDeliveryAssignedMsg => 'قام المسؤول بتعيين طلب توصيل جديد لك';
+
+  @override
+  String get notificationRequestAccepted => 'تم قبول الطلب';
+
+  @override
+  String notificationRequestAcceptedMsg(Object workerName) {
+    return 'تم تعيين $workerName لطلب التوصيل الخاص بك';
+  }
+
+  @override
+  String get notificationDeliveryCompleted => 'اكتمل التوصيل';
+
+  @override
+  String get notificationDeliveryCompletedMsg => 'تم إكمال عملية التوصيل الخاصة بك';
+
+  @override
+  String get notificationPaymentReceived => 'تم استلام الدفع';
+
+  @override
+  String notificationPaymentReceivedMsg(Object amount) {
+    return 'تم استلام دفعة بقيمة ₪$amount';
+  }
+
+  @override
+  String get notificationWorkerNearby => 'الموظف قريب';
+
+  @override
+  String notificationWorkerNearbyMsg(Object workerName) {
+    return '$workerName قريب من موقعك';
+  }
+
+  @override
+  String get notificationGeneric => 'إشعار';
+
+  @override
+  String get notificationGenericMsg => 'لديك إشعار جديد';
+
+  @override
   String get revenue => 'الإيرادات';
 
   @override

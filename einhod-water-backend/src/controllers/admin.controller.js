@@ -570,8 +570,8 @@ const assignWorkerToRequest = async (req, res) => {
       // Notify Worker
       const workerUser = await client.query('SELECT user_id FROM worker_profiles WHERE id = $1', [worker_id]);
       await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, 'New Task Assigned', 'Admin assigned you a new delivery request.', 'worker_assignment', $2, 'delivery_request')`,
+        `INSERT INTO notifications (user_id, notification_key, title, message, type, reference_id, reference_type, params)
+         VALUES ($1, 'notification.delivery.assigned', 'New Task Assigned', 'Admin assigned you a new delivery request.', 'worker_assignment', $2, 'delivery_request', '{}')`,
         [workerUser.rows[0].user_id, requestId]
       );
 
@@ -586,9 +586,9 @@ const assignWorkerToRequest = async (req, res) => {
       );
       
       await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, 'Request Accepted', $2 || ' has been assigned to your delivery request.', 'delivery_status', $3, 'delivery_request')`,
-        [clientRequest.rows[0].user_id, clientRequest.rows[0].worker_name, requestId]
+        `INSERT INTO notifications (user_id, notification_key, title, message, type, reference_id, reference_type, params)
+         VALUES ($1, 'notification.request.accepted', 'Request Accepted', $2 || ' has been assigned to your delivery request.', 'delivery_status', $3, 'delivery_request', $4)`,
+        [clientRequest.rows[0].user_id, clientRequest.rows[0].worker_name, requestId, JSON.stringify({workerName: clientRequest.rows[0].worker_name})]
       );
     });
 

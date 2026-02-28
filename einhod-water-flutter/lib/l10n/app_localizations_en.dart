@@ -139,6 +139,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noActivity => 'No recent activity';
 
   @override
+  String get notificationDeliveryAssigned => 'New Task Assigned';
+
+  @override
+  String get notificationDeliveryAssignedMsg => 'Admin assigned you a new delivery request';
+
+  @override
+  String get notificationRequestAccepted => 'Request Accepted';
+
+  @override
+  String notificationRequestAcceptedMsg(Object workerName) {
+    return '$workerName has been assigned to your delivery request';
+  }
+
+  @override
+  String get notificationDeliveryCompleted => 'Delivery Completed';
+
+  @override
+  String get notificationDeliveryCompletedMsg => 'Your delivery has been completed';
+
+  @override
+  String get notificationPaymentReceived => 'Payment Received';
+
+  @override
+  String notificationPaymentReceivedMsg(Object amount) {
+    return 'Payment of ₪$amount received';
+  }
+
+  @override
+  String get notificationWorkerNearby => 'Worker Nearby';
+
+  @override
+  String notificationWorkerNearbyMsg(Object workerName) {
+    return '$workerName is nearby your location';
+  }
+
+  @override
+  String get notificationGeneric => 'Notification';
+
+  @override
+  String get notificationGenericMsg => 'You have a new notification';
+
+  @override
   String get revenue => 'Revenue';
 
   @override

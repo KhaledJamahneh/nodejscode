@@ -359,6 +359,78 @@ abstract class AppLocalizations {
   /// **'No recent activity'**
   String get noActivity;
 
+  /// No description provided for @notificationDeliveryAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'New Task Assigned'**
+  String get notificationDeliveryAssigned;
+
+  /// No description provided for @notificationDeliveryAssignedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin assigned you a new delivery request'**
+  String get notificationDeliveryAssignedMsg;
+
+  /// No description provided for @notificationRequestAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Accepted'**
+  String get notificationRequestAccepted;
+
+  /// No description provided for @notificationRequestAcceptedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'{workerName} has been assigned to your delivery request'**
+  String notificationRequestAcceptedMsg(Object workerName);
+
+  /// No description provided for @notificationDeliveryCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Completed'**
+  String get notificationDeliveryCompleted;
+
+  /// No description provided for @notificationDeliveryCompletedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Your delivery has been completed'**
+  String get notificationDeliveryCompletedMsg;
+
+  /// No description provided for @notificationPaymentReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Received'**
+  String get notificationPaymentReceived;
+
+  /// No description provided for @notificationPaymentReceivedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment of ₪{amount} received'**
+  String notificationPaymentReceivedMsg(Object amount);
+
+  /// No description provided for @notificationWorkerNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Worker Nearby'**
+  String get notificationWorkerNearby;
+
+  /// No description provided for @notificationWorkerNearbyMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'{workerName} is nearby your location'**
+  String notificationWorkerNearbyMsg(Object workerName);
+
+  /// No description provided for @notificationGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification'**
+  String get notificationGeneric;
+
+  /// No description provided for @notificationGenericMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a new notification'**
+  String get notificationGenericMsg;
+
   /// No description provided for @revenue.
   ///
   /// In en, this message translates to:

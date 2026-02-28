@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/providers/notification_provider.dart';
+import '../../../../core/utils/notification_localizer.dart';
 import '../../../../widgets/shared_widgets.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
 
@@ -144,7 +145,11 @@ class _NotificationCard extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              notification['title'] ?? '',
+                              NotificationLocalizer.getTitle(
+                                notification['notification_key'],
+                                notification['title'] ?? '',
+                                l10n,
+                              ),
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: isRead ? FontWeight.w600 : FontWeight.w800,
@@ -164,7 +169,12 @@ class _NotificationCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        notification['message'] ?? '',
+                        NotificationLocalizer.getMessage(
+                          notification['notification_key'],
+                          notification['message'] ?? '',
+                          NotificationLocalizer.parseParams(notification['params']),
+                          l10n,
+                        ),
                         style: const TextStyle(fontSize: 13, color: AppTheme.iosGray),
                       ),
                       const SizedBox(height: 8),
