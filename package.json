@@ -1,0 +1,14 @@
+{
+  "name": "einhod-water-root",
+  "version": "1.0.0",
+  "description": "Root package to manage backend and frontend deployment",
+  "private": true,
+  "scripts": {
+    "install:backend": "cd einhod-water-backend && npm install",
+    "build": "npm run install:backend",
+    "start": "cd einhod-water-backend && node src/server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

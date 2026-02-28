@@ -1,0 +1,1 @@
+ /home/eito_new/Downloads/einhod-longterm/einhod-water-flutter/.dart_tool/flutter_build/6a02f451310feb605e3b21fec0065d11/native_assets.yaml: 
