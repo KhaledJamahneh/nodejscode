@@ -1754,7 +1754,6 @@ const getAnalyticsOverview = async (req, res) => {
         SELECT 
           COUNT(*) as total_requests,
           COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_requests,
-          COUNT(CASE WHEN status = 'assigned' THEN 1 END) as assigned_requests,
           COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_requests,
           COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_requests,
           COUNT(CASE WHEN priority = 'urgent' THEN 1 END) as urgent_requests,
