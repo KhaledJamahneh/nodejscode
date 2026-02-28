@@ -531,9 +531,9 @@ class _ExpenseCard extends ConsumerWidget {
     final destinationController = TextEditingController(text: expense['destination'] ?? '');
     final notesController = TextEditingController(text: expense['notes'] ?? '');
     
-    String paymentMethod = expense['payment_method'] ?? 'my_pocket';
-    if (!['my_pocket', 'company'].contains(paymentMethod)) {
-      paymentMethod = 'my_pocket';
+    String paymentMethod = expense['payment_method'] ?? 'worker_pocket';
+    if (!['worker_pocket', 'company_pocket'].contains(paymentMethod)) {
+      paymentMethod = 'worker_pocket';
     }
     
     String paymentStatus = expense['payment_status'] ?? 'unpaid';
@@ -563,8 +563,8 @@ class _ExpenseCard extends ConsumerWidget {
                   value: paymentMethod,
                   decoration: InputDecoration(labelText: l10n.paymentMethod),
                   items: [
-                    DropdownMenuItem(value: 'my_pocket', child: Text(l10n.myPocket)),
-                    DropdownMenuItem(value: 'company', child: Text(l10n.company)),
+                    DropdownMenuItem(value: 'worker_pocket', child: Text(l10n.myPocket)),
+                    DropdownMenuItem(value: 'company_pocket', child: Text(l10n.company)),
                   ],
                   onChanged: (v) => setState(() => paymentMethod = v!),
                 ),
@@ -612,7 +612,7 @@ class _ExpenseCard extends ConsumerWidget {
                       'notes': notesController.text,
                     },
                   );
-                  ref.refresh(adminExpensesProvider);
+                  ref.invalidate(adminExpensesProvider);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(l10n.statusUpdated)),
