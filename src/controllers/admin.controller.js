@@ -1582,7 +1582,10 @@ const getAnalyticsOverview = async (req, res) => {
       clientStats,
       onsiteWorkerStats,
       dailyTrend,
-      subscriptionBreakdown
+      subscriptionBreakdown,
+      requestStats,
+      avgResponseTime,
+      workerUtilization
     ] = await Promise.all([
       // ... previous queries ...
       // Delivery statistics
@@ -1744,19 +1747,86 @@ const getAnalyticsOverview = async (req, res) => {
           sum(current_debt) as total_debt
         FROM client_profiles
         GROUP BY subscription_type
+      `),
+
+      // Request statistics (operational efficiency)
+      query(`
+        SELECT 
+          COUNT(*) as total_requests,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_requests,
+          COUNT(CASE WHEN status = 'assigned' THEN 1 END) as assigned_requests,
+          COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_requests,
+          COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_requests,
+          COUNT(CASE WHEN priority = 'urgent' THEN 1 END) as urgent_requests,
+          ROUND(AVG(CASE WHEN status = 'completed' THEN requested_gallons END), 2) as avg_request_size
+        FROM delivery_requests
+        WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+      `),
+
+      // Average response time (request to delivery)
+      query(`
+        SELECT 
+          ROUND(AVG(EXTRACT(EPOCH FROM (d.delivery_date - dr.created_at))/3600), 2) as avg_response_hours,
+          ROUND(MIN(EXTRACT(EPOCH FROM (d.delivery_date - dr.created_at))/3600), 2) as fastest_response_hours,
+          ROUND(MAX(EXTRACT(EPOCH FROM (d.delivery_date - dr.created_at))/3600), 2) as slowest_response_hours
+        FROM delivery_requests dr
+        JOIN deliveries d ON dr.id = d.request_id
+        WHERE dr.created_at >= CURRENT_DATE - INTERVAL '30 days'
+          AND d.status = 'completed'
+      `),
+
+      // Worker utilization (active vs total)
+      query(`
+        SELECT 
+          COUNT(*) as total_workers,
+          COUNT(CASE WHEN u.is_active = true THEN 1 END) as active_workers,
+          COUNT(CASE WHEN s.id IS NOT NULL THEN 1 END) as workers_on_shift,
+          COUNT(CASE WHEN d.id IS NOT NULL THEN 1 END) as workers_with_deliveries_today
+        FROM worker_profiles wp
+        JOIN users u ON wp.user_id = u.id
+        LEFT JOIN shifts s ON wp.shift_id = s.id
+        LEFT JOIN deliveries d ON wp.id = d.worker_id 
+          AND DATE(d.delivery_date) = CURRENT_DATE
+          AND d.status IN ('pending', 'in_progress')
+        WHERE wp.worker_type = 'delivery'
       `)
     ]);
 
     const revenue = revenueStats.rows[0];
     const expenses = expenseStats.rows[0];
+    const delivery = deliveryStats.rows[0];
+    const requests = requestStats.rows[0];
+    const responseTime = avgResponseTime.rows[0];
+    const utilization = workerUtilization.rows[0];
+    
     const totalAdvances = salaryAdvances.rows.reduce((sum, row) => sum + parseFloat(row.advance_amount || 0), 0);
     const totalOutcome = (parseFloat(expenses.total_expenses_amount) || 0) + totalAdvances;
     const netIncome = (parseFloat(revenue.total_revenue) || 0) - totalOutcome;
 
+    // Calculate operational efficiency metrics
+    const completionRate = delivery.total_deliveries > 0 
+      ? ((delivery.completed_deliveries / delivery.total_deliveries) * 100).toFixed(1)
+      : 0;
+    const cancellationRate = delivery.total_deliveries > 0
+      ? ((delivery.cancelled_deliveries / delivery.total_deliveries) * 100).toFixed(1)
+      : 0;
+    const requestFulfillmentRate = requests.total_requests > 0
+      ? ((requests.completed_requests / requests.total_requests) * 100).toFixed(1)
+      : 0;
+    const workerUtilizationRate = utilization.active_workers > 0
+      ? ((utilization.workers_with_deliveries_today / utilization.active_workers) * 100).toFixed(1)
+      : 0;
+    const avgGallonsPerDelivery = delivery.completed_deliveries > 0
+      ? (delivery.total_gallons / delivery.completed_deliveries).toFixed(1)
+      : 0;
+    const avgRevenuePerDelivery = delivery.completed_deliveries > 0
+      ? (revenue.total_revenue / delivery.completed_deliveries).toFixed(2)
+      : 0;
+
     res.json({
       success: true,
       data: {
-        deliveries: deliveryStats.rows[0],
+        deliveries: delivery,
         revenue: revenue,
         expenses: expenses,
         salary_advances: {
@@ -1764,12 +1834,32 @@ const getAnalyticsOverview = async (req, res) => {
           workers_with_advances: salaryAdvances.rows.length,
           advance_details: salaryAdvances.rows
         },
+        operational_efficiency: {
+          completion_rate: parseFloat(completionRate),
+          cancellation_rate: parseFloat(cancellationRate),
+          request_fulfillment_rate: parseFloat(requestFulfillmentRate),
+          avg_response_time_hours: parseFloat(responseTime.avg_response_hours) || 0,
+          fastest_response_hours: parseFloat(responseTime.fastest_response_hours) || 0,
+          slowest_response_hours: parseFloat(responseTime.slowest_response_hours) || 0,
+          worker_utilization_rate: parseFloat(workerUtilizationRate),
+          active_workers: utilization.active_workers,
+          workers_on_shift: utilization.workers_on_shift,
+          workers_busy_today: utilization.workers_with_deliveries_today,
+          avg_gallons_per_delivery: parseFloat(avgGallonsPerDelivery),
+          avg_revenue_per_delivery: parseFloat(avgRevenuePerDelivery),
+          pending_requests: requests.pending_requests,
+          urgent_requests: requests.urgent_requests,
+          total_requests: requests.total_requests
+        },
         financial_summary: {
           total_income: revenue.total_revenue,
           total_expenses: expenses.total_expenses_amount,
           total_salary_advances: totalAdvances,
           total_outcome: totalOutcome,
           net_income: netIncome,
+          profit_margin: revenue.total_revenue > 0 
+            ? ((netIncome / revenue.total_revenue) * 100).toFixed(1)
+            : 0,
           paid_expenses: expenses.paid_expenses,
           unpaid_expenses: expenses.unpaid_expenses,
           payment_logs: paymentLogs.rows,
