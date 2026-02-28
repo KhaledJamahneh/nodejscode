@@ -2532,6 +2532,13 @@ const updateExpense = async (req, res) => {
     const expenseId = req.params.id;
     const { amount, payment_method, payment_status, destination, notes } = req.body;
 
+    if (amount === null || amount === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Amount is required'
+      });
+    }
+
     logger.debug('Updating expense:', { expenseId, amount, payment_method, payment_status, destination, notes });
 
     const result = await query(

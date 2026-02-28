@@ -1319,6 +1319,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markAsPaid => 'Mark as Paid';
 
   @override
+  String get reimburse => 'Reimburse';
+
+  @override
   String get myPocket => 'My Pocket';
 
   @override

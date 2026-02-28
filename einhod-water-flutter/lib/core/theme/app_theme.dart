@@ -12,37 +12,37 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Brand Colors - Premium Pure Aesthetic
-  static const Color primaryBlue = Color(0xFF0A4D8C); // Deep Ocean Blue
-  static const Color accentSkyBlue = Color(0xFF00B4D8); // Crystal Aqua
-  static const Color successGreen = Color(0xFF10B981);
-  static const Color midUrgentOrange = Color(0xFFF97316);
-  static const Color criticalRed = Color(0xFFEF4444);
+  // Brand Colors - Light Premium Formal
+  static const Color primaryBlue = Color(0xFF1E40AF); // Professional Blue
+  static const Color accentSkyBlue = Color(0xFF0EA5E9); // Clean Sky Blue
+  static const Color successGreen = Color(0xFF059669);
+  static const Color midUrgentOrange = Color(0xFFF59E0B);
+  static const Color criticalRed = Color(0xFFDC2626);
 
-  // iOS System Colors for auxiliary use
-  static const Color iosBlue = Color(0xFF007AFF);
-  static const Color iosGreen = Color(0xFF34C759);
-  static const Color iosIndigo = Color(0xFF5856D6);
-  static const Color iosOrange = Color(0xFFFF9500);
-  static const Color iosPink = Color(0xFFFF2D55);
-  static const Color iosPurple = Color(0xFFAF52DE);
-  static const Color iosRed = Color(0xFFFF3B30);
-  static const Color iosTeal = Color(0xFF5AC8FA);
-  static const Color iosYellow = Color(0xFFFFCC00);
-  static const Color iosGray = Color(0xFF8E8E93);
-  static const Color iosGray2 = Color(0xFFAEAEB2);
-  static const Color iosGray3 = Color(0xFFC7C7CC);
-  static const Color iosGray4 = Color(0xFFD1D1D6);
-  static const Color iosGray5 = Color(0xFFE5E5EA);
-  static const Color iosGray6 = Color(0xFFF2F2F7);
+  // Neutral Palette - Formal & Clean
+  static const Color iosBlue = Color(0xFF2563EB);
+  static const Color iosGreen = Color(0xFF10B981);
+  static const Color iosIndigo = Color(0xFF6366F1);
+  static const Color iosOrange = Color(0xFFF59E0B);
+  static const Color iosPink = Color(0xFFEC4899);
+  static const Color iosPurple = Color(0xFF8B5CF6);
+  static const Color iosRed = Color(0xFFEF4444);
+  static const Color iosTeal = Color(0xFF14B8A6);
+  static const Color iosYellow = Color(0xFFFBBF24);
+  static const Color iosGray = Color(0xFF6B7280);
+  static const Color iosGray2 = Color(0xFF9CA3AF);
+  static const Color iosGray3 = Color(0xFFD1D5DB);
+  static const Color iosGray4 = Color(0xFFE5E7EB);
+  static const Color iosGray5 = Color(0xFFF3F4F6);
+  static const Color iosGray6 = Color(0xFFF9FAFB);
 
-  // Semantic Colors - Premium Pure
+  // Semantic Colors - Light & Premium
   static const Color primary = primaryBlue;
   static const Color secondary = accentSkyBlue;
-  static const Color backgroundLight = Color(0xFFF8F9FA); // Off-White/Pearl
+  static const Color backgroundLight = Color(0xFFFAFAFA); // Soft White
   static const Color cardLight = Color(0xFFFFFFFF); // Pure White
-  static const Color textPrimaryLight = Color(0xFF1C1C1E);
-  static const Color textSecondaryLight = Color(0xFF636366);
+  static const Color textPrimaryLight = Color(0xFF111827);
+  static const Color textSecondaryLight = Color(0xFF6B7280);
 
   // Aliases for compatibility
   static const Color textPrimary = textPrimaryLight;
@@ -54,102 +54,111 @@ class AppTheme {
   static const Color textPrimaryDark = Color(0xFFFFFFFF);
   static const Color textSecondaryDark = Color(0xFFE5E5EA);
 
-  // Shadows
+  // Shadows - Subtle & Professional
   static List<BoxShadow> softShadow = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.04),
-      blurRadius: 12,
-      offset: const Offset(0, 4),
+      color: Colors.black.withOpacity(0.03),
+      blurRadius: 8,
+      offset: const Offset(0, 2),
     ),
   ];
 
   static List<BoxShadow> mediumShadow = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.08),
-      blurRadius: 24,
-      offset: const Offset(0, 8),
+      color: Colors.black.withOpacity(0.06),
+      blurRadius: 16,
+      offset: const Offset(0, 4),
     ),
   ];
 
   static List<BoxShadow> primaryGlow = [
     BoxShadow(
-      color: primary.withOpacity(0.3),
-      blurRadius: 15,
-      offset: const Offset(0, 5),
+      color: primary.withOpacity(0.15),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
     ),
   ];
 
-  // Typography - Modern Geometric Sans-Serif
+  // Typography - Clean & Professional
   static TextTheme _buildTextTheme(
       Color primaryColor, Color secondaryColor, bool isArabic) {
-    // Inter for English, Cairo for Arabic (seamless RTL support)
+    // Inter for English, Cairo for Arabic
     final base = isArabic 
         ? GoogleFonts.cairoTextTheme() 
         : GoogleFonts.interTextTheme();
-    final double letterSpacing = isArabic ? 0 : -0.2;
 
     return base.copyWith(
       displayLarge: TextStyle(
-        fontSize: 34,
-        fontWeight: FontWeight.w800,
-        letterSpacing: isArabic ? 0 : -1.0,
-        color: primaryColor,
-      ),
-      displayMedium: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        letterSpacing: isArabic ? 0 : -0.8,
-        color: primaryColor,
-      ),
-      displaySmall: TextStyle(
-        fontSize: 22,
+        fontSize: 32,
         fontWeight: FontWeight.w700,
         letterSpacing: isArabic ? 0 : -0.5,
         color: primaryColor,
+        height: 1.2,
+      ),
+      displayMedium: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
+        letterSpacing: isArabic ? 0 : -0.5,
+        color: primaryColor,
+        height: 1.2,
+      ),
+      displaySmall: TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        letterSpacing: isArabic ? 0 : -0.3,
+        color: primaryColor,
+        height: 1.3,
       ),
       headlineMedium: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        letterSpacing: isArabic ? 0 : -0.4,
+        letterSpacing: isArabic ? 0 : -0.2,
         color: primaryColor,
+        height: 1.3,
       ),
-      // FIX: headlineSmall was absent but referenced in admin_users_screen
       headlineSmall: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        letterSpacing: isArabic ? 0 : -0.3,
+        letterSpacing: isArabic ? 0 : -0.2,
         color: primaryColor,
+        height: 1.4,
       ),
       titleLarge: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        letterSpacing: letterSpacing,
+        letterSpacing: isArabic ? 0 : -0.1,
         color: primaryColor,
+        height: 1.4,
       ),
       titleMedium: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w500,
         color: secondaryColor,
+        height: 1.5,
       ),
       bodyLarge: TextStyle(
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: FontWeight.w400,
-        letterSpacing: isArabic ? 0 : -0.3,
+        letterSpacing: isArabic ? 0 : -0.1,
         color: primaryColor,
+        height: 1.5,
       ),
       bodyMedium: TextStyle(
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
         color: primaryColor,
+        height: 1.5,
       ),
       bodySmall: TextStyle(
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
         color: secondaryColor,
+        height: 1.5,
       ),
       labelLarge: TextStyle(
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
         color: primaryColor,
       ),
     );
@@ -185,12 +194,12 @@ class AppTheme {
       ),
       cardTheme: CardTheme(
         elevation: 0,
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           side: BorderSide(
               color: (isDark ? Colors.white : Colors.black)
-                  .withOpacity(isDark ? 0.1 : 0.05),
+                  .withOpacity(isDark ? 0.08 : 0.06),
               width: 1),
         ),
         color: isDark ? cardDark : cardLight,
@@ -200,15 +209,15 @@ class AppTheme {
           elevation: 0,
           backgroundColor: primary,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          minimumSize: const Size(double.infinity, 56),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            letterSpacing: isArabic ? 0 : -0.4,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
             fontFamily: isArabic
                 ? GoogleFonts.cairo().fontFamily
                 : GoogleFonts.inter().fontFamily,
@@ -218,16 +227,16 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primary,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          minimumSize: const Size(double.infinity, 56),
-          side: const BorderSide(color: primary, width: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          minimumSize: const Size(double.infinity, 52),
+          side: BorderSide(color: primary.withOpacity(0.5), width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            letterSpacing: isArabic ? 0 : -0.4,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
             fontFamily: isArabic
                 ? GoogleFonts.cairo().fontFamily
                 : GoogleFonts.inter().fontFamily,
@@ -248,32 +257,33 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+        fillColor: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFFAFAFA),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.12),
               width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.12),
               width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: iosRed, width: 1),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        hintStyle: const TextStyle(
-          color: iosGray,
-          fontSize: 16,
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        hintStyle: TextStyle(
+          color: iosGray2,
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
         ),
         prefixIconColor: iosGray,
         suffixIconColor: iosGray,
@@ -290,9 +300,17 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
       ),
       dividerTheme: DividerThemeData(
-        color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+        color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
         thickness: 1,
         space: 1,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        elevation: 2,
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
     );
   }
@@ -355,16 +373,18 @@ class ModernCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
-      margin: margin ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: margin ?? const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       decoration: BoxDecoration(
         color: color ?? Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(borderRadius ?? 20),
+        borderRadius: BorderRadius.circular(borderRadius ?? 16),
         boxShadow: boxShadow ?? AppTheme.softShadow,
         border: Border.all(
-          color: borderColor ?? (Theme.of(context).brightness == Brightness.light
-              ? Colors.black.withOpacity(0.05)
-              : Colors.white.withOpacity(0.1)),
+          color: borderColor ?? (isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.06)),
           width: borderWidth ?? 1,
         ),
       ),
@@ -373,9 +393,9 @@ class ModernCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(borderRadius ?? 20),
+          borderRadius: BorderRadius.circular(borderRadius ?? 16),
           child: Padding(
-            padding: padding ?? const EdgeInsets.all(20),
+            padding: padding ?? const EdgeInsets.all(16),
             child: child,
           ),
         ),
@@ -396,8 +416,8 @@ class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
     required this.child,
-    this.blur = 15,
-    this.opacity = 0.7,
+    this.blur = 10,
+    this.opacity = 0.5,
     this.color,
     this.borderRadius,
     this.padding,
@@ -411,18 +431,18 @@ class GlassCard extends StatelessWidget {
         color ?? (isDark ? Colors.black : Colors.white);
 
     return Container(
-      margin: margin ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: margin ?? const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(20),
+        borderRadius: borderRadius ?? BorderRadius.circular(16),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
           child: Container(
-            padding: padding ?? const EdgeInsets.all(20),
+            padding: padding ?? const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: effectiveColor.withOpacity(opacity),
-              borderRadius: borderRadius ?? BorderRadius.circular(20),
+              borderRadius: borderRadius ?? BorderRadius.circular(16),
               border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
                 width: 1,
               ),
             ),

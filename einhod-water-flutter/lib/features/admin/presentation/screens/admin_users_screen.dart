@@ -1813,8 +1813,8 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(l10n.deleteUserConfirm(user.username)),
-        content: Text(l10n.cannotBeUndone),
+        title: Text('Deactivate ${user.username}?'),
+        content: const Text('This will deactivate the account but keep all records (deliveries, payments, etc.). The user will not be able to login.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1822,9 +1822,8 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.iosRed),
-            child:
-                Text(l10n.delete, style: const TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.iosOrange),
+            child: const Text('Deactivate', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1844,7 +1843,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
       state.when(
         data: (_) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.userDeleted)),
+            const SnackBar(
+              content: Text('User deactivated. All records preserved.'),
+              backgroundColor: AppTheme.successGreen,
+            ),
           );
           ref.invalidate(usersProvider);
         },

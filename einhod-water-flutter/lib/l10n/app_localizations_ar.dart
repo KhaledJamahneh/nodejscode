@@ -1319,6 +1319,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get markAsPaid => 'تحديد كمدفوع';
 
   @override
+  String get reimburse => 'سداد للعامل';
+
+  @override
   String get myPocket => 'من جيبي';
 
   @override
