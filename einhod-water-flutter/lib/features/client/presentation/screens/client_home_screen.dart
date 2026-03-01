@@ -815,7 +815,7 @@ class _ClientDashboardTabState extends ConsumerState<ClientDashboardTab> {
   }
 
   Widget _buildNotificationBadge(ProximityState ps) {
-    final unreadCountAsync = ref.watch(unreadCountPollingProvider);
+    final unreadCountAsync = ref.watch(unreadCountPollingProvider('client'));
     final unreadCount = unreadCountAsync.value ?? 0;
     final hasUnread = unreadCount > 0;
     final showBadge = (ps.isNear && !widget.proximityNotificationSeen) || hasUnread;

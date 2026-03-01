@@ -29,8 +29,16 @@ class NotificationService {
     return response.data['data'];
   }
 
-  Future<int> getUnreadCount() async {
-    final response = await _dio.get(ApiEndpoints.unreadCount);
+  Future<int> getUnreadCount({String? viewAs}) async {
+    final queryParams = <String, dynamic>{};
+    if (viewAs != null) {
+      queryParams['view_as'] = viewAs;
+    }
+    
+    final response = await _dio.get(
+      ApiEndpoints.unreadCount,
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+    );
     return response.data['data']['unread_count'];
   }
 

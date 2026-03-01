@@ -51,6 +51,8 @@ class LoginNotifier extends StateNotifier<AsyncValue<void>> {
       await _authService.logout();
       // Clear worker data on logout
       _ref.read(workerOpsProvider.notifier).invalidateAll();
+      // Invalidate all providers to clear cached data
+      _ref.invalidate(currentUserProvider);
     });
   }
 }

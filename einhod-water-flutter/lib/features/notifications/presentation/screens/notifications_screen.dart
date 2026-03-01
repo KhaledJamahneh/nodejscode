@@ -27,7 +27,7 @@ class NotificationsScreen extends ConsumerWidget {
             onPressed: () async {
               await ref.read(notificationServiceProvider).markAllAsRead();
               ref.invalidate(notificationsProvider(viewAs));
-              ref.invalidate(unreadCountProvider);
+              ref.invalidate(unreadCountProvider(viewAs));
             },
             child: const Text('Mark all read'),
           ),

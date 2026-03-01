@@ -456,7 +456,7 @@ PreferredSizeWidget _buildWorkerAppBar(
           ),
           Consumer(
             builder: (context, ref, _) {
-              final unreadCountAsync = ref.watch(unreadCountPollingProvider);
+              final unreadCountAsync = ref.watch(unreadCountPollingProvider('worker'));
               return unreadCountAsync.when(
                 data: (count) => count > 0
                     ? Positioned(

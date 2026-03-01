@@ -92,11 +92,29 @@ const getNotifications = async (req, res) => {
 const getUnreadCount = async (req, res) => {
   try {
     const userId = req.user.id;
+    const userRole = req.user.role;
+    const { view_as } = req.query;
 
-    const result = await query(
-      'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND is_read = false',
-      [userId]
-    );
+    const roles = Array.isArray(userRole) ? userRole : [userRole];
+    const isClient = roles.includes('client');
+    const isWorker = roles.includes('delivery_worker') || roles.includes('onsite_worker');
+    const isAdmin = roles.includes('administrator') || roles.includes('owner');
+
+    let queryText = 'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND is_read = false';
+    const params = [userId];
+
+    // Apply same filtering as getNotifications
+    const currentView = view_as || (isAdmin ? 'admin' : isWorker ? 'worker' : 'client');
+    
+    if (currentView === 'admin' && isAdmin) {
+      queryText += " AND type IN ('low_inventory', 'new_request', 'system', 'urgent', 'important', 'announcement', 'worker_assignment', 'delivery_status')";
+    } else if (currentView === 'worker' && isWorker) {
+      queryText += " AND type IN ('worker_assignment', 'delivery_status', 'system', 'announcement')";
+    } else if (currentView === 'client' && isClient) {
+      queryText += " AND type IN ('delivery_status', 'coupon_status', 'announcement', 'system', 'payment')";
+    }
+
+    const result = await query(queryText, params);
 
     res.json({
       success: true,

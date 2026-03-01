@@ -111,7 +111,7 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
               ),
               Consumer(
                 builder: (context, ref, _) {
-                  final unreadCountAsync = ref.watch(unreadCountPollingProvider);
+                  final unreadCountAsync = ref.watch(unreadCountPollingProvider('admin'));
                   return unreadCountAsync.when(
                     data: (count) => count > 0
                         ? Positioned(
