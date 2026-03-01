@@ -674,8 +674,8 @@ class _WorkerDrawer extends ConsumerWidget {
               isDestructive: true,
               onTap: () async {
                 Navigator.pop(context);
-                if (context.mounted) context.go('/login');
                 await ref.read(loginProvider.notifier).logout();
+                if (context.mounted) context.go('/login');
               },
             ),
           ),

@@ -127,8 +127,8 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             onPressed: () async {
-              if (context.mounted) context.go('/login');
               await ref.read(loginProvider.notifier).logout();
+              if (context.mounted) context.go('/login');
             },
             tooltip: 'Logout',
           ),

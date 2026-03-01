@@ -50,6 +50,9 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    // Clear storage first to prevent redirect issues
+    await StorageService.clearAll();
+    
     try {
       final refreshToken = await StorageService.getRefreshToken();
 
@@ -58,9 +61,7 @@ class AuthService {
         data: {'refreshToken': refreshToken},
       );
     } catch (e) {
-      // Ignore logout errors as we clear local storage anyway
-    } finally {
-      await StorageService.clearAll();
+      // Ignore logout errors as storage is already cleared
     }
   }
 
