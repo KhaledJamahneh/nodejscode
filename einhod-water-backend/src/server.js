@@ -23,6 +23,7 @@ const locationRoutes = require('./routes/location.routes');
 const gpsRoutes = require('./routes/gps.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const userRoutes = require('./routes/user.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -107,6 +108,7 @@ app.use(`${API_PREFIX}/location`, locationRoutes);
 app.use(`${API_PREFIX}/gps`, gpsRoutes);
 app.use(`${API_PREFIX}/payments`, paymentRoutes);
 app.use(`${API_PREFIX}/notifications`, notificationRoutes);
+app.use(`${API_PREFIX}/users`, userRoutes);
 
 // 404 handler
 app.use((req, res) => {
