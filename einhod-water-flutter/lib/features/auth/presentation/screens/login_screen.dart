@@ -621,25 +621,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
 
                       const SizedBox(height: 48),
-
-                      Center(
-                        child: TextButton(
-                          onPressed: _showDemoAccounts,
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppTheme.iosGray,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.info_outline_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              Text(l10n.useDemoAccount,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
