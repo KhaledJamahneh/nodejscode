@@ -1698,4 +1698,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordChangedSuccessfully => 'Password changed successfully';
+
+  @override
+  String get selectLanguage => 'Select Language';
+
+  @override
+  String get languageUpdated => 'Language updated successfully';
 }

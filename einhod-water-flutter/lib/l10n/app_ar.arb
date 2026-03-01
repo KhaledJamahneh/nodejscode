@@ -626,5 +626,7 @@
   "failedToUpdateProfile": "فشل تحديث الملف الشخصي",
   "profileUpdatedSuccessfully": "تم تحديث الملف الشخصي بنجاح",
   "failedToChangePassword": "فشل تغيير كلمة المرور",
-  "passwordChangedSuccessfully": "تم تغيير كلمة المرور بنجاح"
+  "passwordChangedSuccessfully": "تم تغيير كلمة المرور بنجاح",
+  "selectLanguage": "اختر اللغة",
+  "languageUpdated": "تم تحديث اللغة بنجاح"
 }

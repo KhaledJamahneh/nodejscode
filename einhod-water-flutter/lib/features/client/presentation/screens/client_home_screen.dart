@@ -15,6 +15,7 @@ import '../../../../core/providers/notification_provider.dart';
 import '../../../../core/utils/double_utils.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/data/auth_service.dart';
 import '../../../worker/presentation/providers/worker_provider.dart';
 import '../../../worker/data/models/worker_models.dart';
 import '../../../location/presentation/providers/location_provider.dart';
@@ -106,7 +107,22 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
               ref.watch(localeProvider).languageCode == 'en' ? 'ع' : 'En',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            onPressed: () => ref.read(localeProvider.notifier).toggleLocale(),
+            onPressed: () async {
+              final locale = ref.read(localeProvider);
+              final newLang = locale.languageCode == 'en' ? 'ar' : 'en';
+              
+              try {
+                // Update in database
+                final authService = ref.read(authServiceProvider);
+                await authService.updateLanguage(newLang);
+                
+                // Update UI
+                ref.read(localeProvider.notifier).setLocale(Locale(newLang));
+              } catch (e) {
+                // Silently fail, just update UI
+                ref.read(localeProvider.notifier).setLocale(Locale(newLang));
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
@@ -325,7 +341,40 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                     locale.languageCode == 'en' ? 'English' : 'العربية',
                     style: const TextStyle(color: AppTheme.iosGray, fontWeight: FontWeight.w600),
                   ),
-                  onTap: () => ref.read(localeProvider.notifier).toggleLocale(),
+                  onTap: () async {
+                    final newLang = locale.languageCode == 'en' ? 'ar' : 'en';
+                    
+                    // Show loading
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Updating language...'), duration: Duration(seconds: 1)),
+                    );
+                    
+                    try {
+                      print('🌐 Updating language to: $newLang');
+                      
+                      // Update in database
+                      final authService = ref.read(authServiceProvider);
+                      await authService.updateLanguage(newLang);
+                      
+                      print('✅ Language updated in database');
+                      
+                      // Update UI
+                      ref.read(localeProvider.notifier).setLocale(Locale(newLang));
+                      
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.languageUpdated)),
+                        );
+                      }
+                    } catch (e) {
+                      print('❌ Language update error: $e');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to update language: $e')),
+                        );
+                      }
+                    }
+                  },
                   contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 ),
               ],

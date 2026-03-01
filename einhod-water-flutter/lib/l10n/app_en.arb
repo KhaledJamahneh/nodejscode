@@ -709,5 +709,7 @@
   "failedToUpdateProfile": "Failed to update profile",
   "profileUpdatedSuccessfully": "Profile updated successfully",
   "failedToChangePassword": "Failed to change password",
-  "passwordChangedSuccessfully": "Password changed successfully"
+  "passwordChangedSuccessfully": "Password changed successfully",
+  "selectLanguage": "Select Language",
+  "languageUpdated": "Language updated successfully"
 }

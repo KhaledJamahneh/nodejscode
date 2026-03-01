@@ -21,6 +21,7 @@ import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/notification_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/data/auth_service.dart';
 import '../providers/worker_provider.dart';
 import '../../data/models/worker_models.dart';
 
@@ -428,7 +429,18 @@ PreferredSizeWidget _buildWorkerAppBar(
           ref.watch(localeProvider).languageCode == 'en' ? 'ع' : 'En',
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        onPressed: () => ref.read(localeProvider.notifier).toggleLocale(),
+        onPressed: () async {
+          final locale = ref.read(localeProvider);
+          final newLang = locale.languageCode == 'en' ? 'ar' : 'en';
+          
+          try {
+            final authService = ref.read(authServiceProvider);
+            await authService.updateLanguage(newLang);
+            ref.read(localeProvider.notifier).setLocale(Locale(newLang));
+          } catch (e) {
+            ref.read(localeProvider.notifier).setLocale(Locale(newLang));
+          }
+        },
       ),
       IconButton(
         icon: const Icon(Icons.refresh_rounded),

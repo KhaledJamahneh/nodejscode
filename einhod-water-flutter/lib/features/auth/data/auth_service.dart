@@ -103,4 +103,11 @@ class AuthService {
       },
     );
   }
+
+  Future<void> updateLanguage(String language) async {
+    await _dio.put(
+      'users/language',
+      data: {'language': language},
+    );
+  }
 }

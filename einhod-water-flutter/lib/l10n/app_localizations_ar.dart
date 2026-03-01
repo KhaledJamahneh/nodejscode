@@ -1698,4 +1698,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get passwordChangedSuccessfully => 'تم تغيير كلمة المرور بنجاح';
+
+  @override
+  String get selectLanguage => 'اختر اللغة';
+
+  @override
+  String get languageUpdated => 'تم تحديث اللغة بنجاح';
 }

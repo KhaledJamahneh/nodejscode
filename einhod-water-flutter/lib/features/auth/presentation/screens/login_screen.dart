@@ -68,6 +68,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  void _showLanguageDialog() {
+    final currentLocale = ref.read(localeProvider);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.selectLanguage),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('English'),
+              leading: Radio<String>(
+                value: 'en',
+                groupValue: currentLocale.languageCode,
+                onChanged: (value) {
+                  ref.read(localeProvider.notifier).setLocale(Locale(value!));
+                  Navigator.pop(context);
+                },
+              ),
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(const Locale('en'));
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('العربية'),
+              leading: Radio<String>(
+                value: 'ar',
+                groupValue: currentLocale.languageCode,
+                onChanged: (value) {
+                  ref.read(localeProvider.notifier).setLocale(Locale(value!));
+                  Navigator.pop(context);
+                },
+              ),
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(const Locale('ar'));
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showDemoAccounts() {
     final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
@@ -401,6 +446,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const Color(0xFF1C1C1E),
                         const Color(0xFF001220)
                       ],
+              ),
+            ),
+          ),
+
+          // Language selector button
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: IconButton(
+                icon: Icon(Icons.language, size: 28),
+                onPressed: () => _showLanguageDialog(),
+                tooltip: l10n.selectLanguage,
               ),
             ),
           ),

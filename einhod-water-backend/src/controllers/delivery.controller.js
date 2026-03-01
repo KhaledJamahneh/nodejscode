@@ -4,6 +4,7 @@
 const { query, transaction } = require('../config/database');
 const logger = require('../utils/logger');
 const { getStatusCode } = require('../middleware/error-handler.middleware');
+const { t, getUnit } = require('../utils/i18n');
 
 /**
  * POST /api/v1/deliveries/request
@@ -33,7 +34,7 @@ const createDeliveryRequest = async (req, res) => {
       // 1. Get client profile and system config (LOCK ROW)
       const clientResult = await client.query(
         `SELECT cp.id, cp.remaining_coupons, cp.subscription_type, cp.subscription_expiry_date, 
-                cp.current_debt, u.is_active
+                cp.current_debt, u.is_active, u.preferred_language
          FROM client_profiles cp
          JOIN users u ON cp.user_id = u.id
          WHERE cp.user_id = $1 FOR UPDATE`,
@@ -150,13 +151,15 @@ const createDeliveryRequest = async (req, res) => {
 
       // 9. Create notification (fire-and-forget, don't fail transaction)
       try {
+        const lang = clientData.preferred_language || 'en';
+        const unit = getUnit(lang, 'gallon', requested_gallons);
         await client.query(
           `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
            VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery_request')`,
           [
             userId,
-            'Delivery Request Submitted',
-            `Your ${priority || 'non_urgent'} delivery request for ${requested_gallons} gallons has been received.`,
+            t(lang, 'request_submitted_title'),
+            t(lang, 'request_submitted_body', { amount: requested_gallons, unit }),
             newRequest.id
           ]
         );
@@ -479,7 +482,11 @@ const cancelDeliveryRequest = async (req, res) => {
 
     // Check if request exists and is pending
     const checkResult = await query(
-      'SELECT id, status, priority FROM delivery_requests WHERE id = $1 AND client_id = $2 FOR UPDATE',
+      `SELECT dr.id, dr.status, dr.priority, u.preferred_language 
+       FROM delivery_requests dr
+       JOIN client_profiles cp ON dr.client_id = cp.id
+       JOIN users u ON cp.user_id = u.id
+       WHERE dr.id = $1 AND dr.client_id = $2 FOR UPDATE`,
       [requestId, clientId]
     );
 
@@ -506,10 +513,11 @@ const cancelDeliveryRequest = async (req, res) => {
     );
 
     // Create notification
+    const lang = checkResult.rows[0].preferred_language || 'en';
     await query(
       `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
        VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery_request')`,
-      [userId, 'Request Cancelled', 'Your delivery request has been cancelled.', requestId]
+      [userId, t(lang, 'request_cancelled_title'), t(lang, 'request_cancelled_body'), requestId]
     );
 
     logger.info('Delivery request cancelled:', { userId, requestId });

@@ -569,27 +569,30 @@ const assignWorkerToRequest = async (req, res) => {
       );
 
       // Notify Worker
-      const workerUser = await client.query('SELECT user_id FROM worker_profiles WHERE id = $1', [worker_id]);
+      const workerUser = await client.query('SELECT u.id as user_id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.id = $1', [worker_id]);
+      const workerLang = workerUser.rows[0].preferred_language || 'en';
       await client.query(
         `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, 'New Task Assigned', 'Admin assigned you a new delivery request.', 'worker_assignment', $2, 'delivery_request')`,
-        [workerUser.rows[0].user_id, requestId]
+         VALUES ($1, $2, $3, 'worker_assignment', $4, 'delivery_request')`,
+        [workerUser.rows[0].user_id, t(workerLang, 'new_task_assigned_title'), t(workerLang, 'new_task_assigned_body'), requestId]
       );
 
       // Notify Client
       const clientRequest = await client.query(
-        `SELECT cp.user_id, wp.full_name as worker_name 
+        `SELECT cp.user_id, u.preferred_language, wp.full_name as worker_name 
          FROM delivery_requests dr
          JOIN client_profiles cp ON dr.client_id = cp.id
+         JOIN users u ON cp.user_id = u.id
          JOIN worker_profiles wp ON wp.id = $1
          WHERE dr.id = $2`,
         [worker_id, requestId]
       );
       
+      const clientLang = clientRequest.rows[0].preferred_language || 'en';
       await client.query(
         `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, 'Request Accepted', $2 || ' has been assigned to your delivery request.', 'delivery_status', $3, 'delivery_request')`,
-        [clientRequest.rows[0].user_id, clientRequest.rows[0].worker_name, requestId]
+         VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery_request')`,
+        [clientRequest.rows[0].user_id, t(clientLang, 'request_assigned_title'), t(clientLang, 'request_assigned_body'), requestId]
       );
     });
 
@@ -853,28 +856,31 @@ const assignWorkerToDelivery = async (req, res) => {
       );
 
       // Notify Worker
-      const workerUser = await client.query('SELECT user_id FROM worker_profiles WHERE id = $1', [worker_id]);
+      const workerUser = await client.query('SELECT u.id as user_id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.id = $1', [worker_id]);
+      const workerLang = workerUser.rows[0].preferred_language || 'en';
       await client.query(
         `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, 'Delivery Assigned', 'Admin assigned you a scheduled delivery.', 'worker_assignment', $2, 'delivery')`,
-        [workerUser.rows[0].user_id, deliveryId]
+         VALUES ($1, $2, $3, 'worker_assignment', $4, 'delivery')`,
+        [workerUser.rows[0].user_id, t(workerLang, 'new_task_assigned_title'), t(workerLang, 'new_task_assigned_body'), deliveryId]
       );
 
       // Notify Client (Optional but good for flow)
       const clientDelivery = await client.query(
-        `SELECT cp.user_id, wp.full_name as worker_name 
+        `SELECT cp.user_id, u.preferred_language, wp.full_name as worker_name 
          FROM deliveries d
          JOIN client_profiles cp ON d.client_id = cp.id
+         JOIN users u ON cp.user_id = u.id
          JOIN worker_profiles wp ON wp.id = $1
          WHERE d.id = $2`,
         [worker_id, deliveryId]
       );
 
       if (clientDelivery.rows.length > 0) {
+        const clientLang = clientDelivery.rows[0].preferred_language || 'en';
         await client.query(
           `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-           VALUES ($1, 'Delivery Update', $2, 'delivery_status', $3, 'delivery')`,
-          [clientDelivery.rows[0].user_id, `${clientDelivery.rows[0].worker_name} has been assigned to your delivery.`, deliveryId]
+           VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery')`,
+          [clientDelivery.rows[0].user_id, t(clientLang, 'request_assigned_title'), t(clientLang, 'request_assigned_body'), deliveryId]
         );
       }
     });

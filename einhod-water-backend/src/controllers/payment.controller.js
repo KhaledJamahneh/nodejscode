@@ -2,6 +2,7 @@
 const { query, transaction } = require('../config/database');
 const logger = require('../utils/logger');
 const { getStatusCode } = require('../middleware/error-handler.middleware');
+const { t } = require('../utils/i18n');
 
 /**
  * POST /api/v1/payments/record
@@ -21,7 +22,10 @@ const recordPayment = async (req, res) => {
     const result = await transaction(async (client) => {
       // 1. Lock the client profile row to prevent race conditions on debt
       const profileRes = await client.query(
-        'SELECT current_debt, user_id FROM client_profiles WHERE id = $1 FOR UPDATE',
+        `SELECT cp.current_debt, cp.user_id, u.preferred_language 
+         FROM client_profiles cp
+         JOIN users u ON cp.user_id = u.id
+         WHERE cp.id = $1 FOR UPDATE`,
         [client_id]
       );
 
@@ -51,12 +55,14 @@ const recordPayment = async (req, res) => {
       );
 
       // 4. Create notification
+      const lang = profileRes.rows[0].preferred_language || 'en';
       await client.query(
         `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, 'Payment Received', $2, 'payment', $3, 'payment')`,
+         VALUES ($1, $2, $3, 'payment', $4, 'payment')`,
         [
           userId,
-          `We have received your payment of ₪${paymentAmount}. Your new balance is ₪${newDebt}.`,
+          t(lang, 'payment_received_title'),
+          t(lang, 'payment_received_body', { amount: paymentAmount, currency: '₪', quantity: '', unit: '' }),
           paymentRes.rows[0].id
         ]
       );
