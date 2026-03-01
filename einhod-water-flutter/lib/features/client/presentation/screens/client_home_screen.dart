@@ -875,9 +875,81 @@ class _ClientDashboardTabState extends ConsumerState<ClientDashboardTab> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () => _showPaymentDialog(context, debt),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.criticalRed, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), minimumSize: const Size(0, 0)),
             child: Text(l10n.payNow),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentDialog(BuildContext context, double debt) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.payNow),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${l10n.debt}: ₪$debt', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            Text('Select payment method:', style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.credit_card),
+              title: const Text('Electronic Payment'),
+              subtitle: const Text('Pay online with credit card'),
+              onTap: () {
+                Navigator.pop(context);
+                _processElectronicPayment(context, debt);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.payments),
+              title: const Text('Cash Payment'),
+              subtitle: const Text('Pay in person'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please pay in person to our representative')),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _processElectronicPayment(BuildContext context, double amount) {
+    // TODO: Integrate with payment gateway (Stripe, PayPal, etc.)
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Electronic Payment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.credit_card, size: 64, color: AppTheme.primary),
+            const SizedBox(height: 16),
+            Text('Amount: ₪$amount', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            const Text('Payment gateway integration coming soon!'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
           ),
         ],
       ),
