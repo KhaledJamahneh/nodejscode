@@ -211,6 +211,121 @@ CHECK (price > 0);
 
 ---
 
+## 7. Startup Deadlock Prevention
+
+### Problem
+- Type parser setup never called `global.__resolveTypeParsers()`
+- Every database query would hang at `await typeParserPromise`
+- Application completely frozen on startup
+- No error logs (silent deadlock)
+
+### Solution
+- Added `finally` block to always resolve the promise
+- Ensures `typeParsersReady` flag is set even if setup fails
+
+### Implementation
+```javascript
+finally {
+  // Always mark parsers as ready to prevent startup deadlock
+  if (global.__resolveTypeParsers) {
+    global.__resolveTypeParsers();
+    typeParsersReady = true;
+  }
+}
+```
+
+### Testing Results
+- ✅ Database connects without hanging
+- ✅ Type parser registered (OID: 17192)
+- ✅ Queries execute immediately
+
+### Changes
+- **Files Modified:** `src/config/database.js`
+
+---
+
+## 8. Stack Trace Sanitization (Security)
+
+### Problem
+- Stack traces exposed full file system paths
+- Example: `/home/eito_new/Downloads/einhod-longterm/einhod-water-backend/...`
+- Provides attackers with internal directory structure
+- Risk if logs exposed via Sentry, Datadog, or compromised
+
+### Solution
+- Added `sanitizeStack()` Winston format
+- Only activates in production (`NODE_ENV=production`)
+- Strips absolute paths while keeping relative structure
+
+### Implementation
+```javascript
+const sanitizeStack = winston.format((info) => {
+  if (process.env.NODE_ENV === 'production') {
+    // Sanitize all stack properties
+    Object.keys(info).forEach(key => {
+      if (typeof info[key] === 'string' && info[key].includes('    at ')) {
+        info[key] = info[key]
+          .split('\n')
+          .map(line => line.replace(/\/.*?\/(einhod-water-backend|src)\//g, '$1/'))
+          .join('\n');
+      }
+    });
+  }
+  return info;
+});
+```
+
+### Results
+- **Before:** `/home/eito_new/Downloads/einhod-longterm/einhod-water-backend/scripts/test.js`
+- **After:** `einhod-water-backend/scripts/test.js`
+
+### Coverage
+- ✅ Console logs sanitized
+- ✅ File logs (error.log, combined.log) sanitized
+- ✅ Development mode unchanged (full paths for debugging)
+- ✅ Node internal paths preserved (`node:internal/*`)
+
+### Changes
+- **Files Modified:** `src/utils/logger.js`
+
+---
+
+## 9. Robust Array Parsing
+
+### Problem
+- Brittle parsing: `val.replace(/[{}]/g, '').split(',')`
+- Vulnerable to comma-in-value errors
+- Would break on: `{"admin","support,level1"}` → `['"admin"', '"support"', 'level1"']`
+- Security risk if role names contain special characters
+
+### Solution
+- Installed `postgres-array` package
+- Uses proper PostgreSQL array parsing algorithm
+- Handles all edge cases: quotes, commas, spaces, escapes
+
+### Implementation
+```javascript
+const parseArray = require('postgres-array').parse;
+
+types.setTypeParser(oid, (val) => {
+  if (!val || val === '{}') return [];
+  return parseArray(val);
+});
+```
+
+### Testing Results
+- ✅ Simple values: `{admin}` → `["admin"]`
+- ✅ Multiple values: `{admin,worker}` → `["admin","worker"]`
+- ✅ Empty arrays: `{}` → `[]`
+- ✅ Commas in values: `{"admin","support,level1"}` → `["admin","support,level1"]`
+- ✅ Spaces in values: `{"admin user","worker"}` → `["admin user","worker"]`
+
+### Changes
+- **Package Added:** `postgres-array`
+- **Files Modified:** `src/config/database.js`
+
+---
+
 ## Defense in Depth Summary
 
 ### Application Layer
@@ -221,9 +336,22 @@ CHECK (price > 0);
 ### Database Layer (NEW)
 - ✅ CHECK constraints on inventory (>= 0, <= capacity)
 - ✅ CHECK constraints on financial amounts (> 0)
-- ✅ Type parsers for enum arrays
+- ✅ Type parsers for enum arrays (robust, handles edge cases)
 - ✅ Single source of truth for user preferences
 - ✅ NOT NULL constraints on critical fields
+
+### Security Layer (NEW)
+- ✅ Stack trace sanitization in production logs
+- ✅ XSS protection in i18n
+- ✅ Input validation
+- ✅ Proper error handling
+- ✅ Transaction safety
+
+### Reliability Layer (NEW)
+- ✅ Startup deadlock prevention
+- ✅ Robust array parsing (handles commas, quotes, spaces)
+- ✅ Type parser promise resolution
+- ✅ Graceful error handling
 
 ---
 
@@ -246,6 +374,10 @@ CHECK (price > 0);
 15. `08c559e` - Fix: Add custom type parser for user_role[] enum array
 16. `e31fe1d` - Fix: Add database constraints to prevent negative inventory
 17. `75e04fa` - Fix: Add database constraints for financial integrity
+18. `66a385b` - Docs: Add comprehensive production fixes documentation
+19. `7cb1ab3` - Fix: Prevent startup deadlock in type parser initialization
+20. `f158b3e` - Security: Sanitize stack traces in production logs
+21. `64934b9` - Fix: Use postgres-array for robust enum array parsing
 
 ---
 
@@ -258,6 +390,9 @@ CHECK (price > 0);
 - [x] Zero/negative payments rejected by database
 - [x] Role arrays parse correctly
 - [x] Language preference consistent across features
+- [x] Startup deadlock prevented
+- [x] Stack traces sanitized in production
+- [x] Array parser handles edge cases (commas, quotes, spaces)
 
 ### Flutter
 - [x] Error messages display in user's language
@@ -270,17 +405,25 @@ CHECK (price > 0);
 - [x] Invalid data rejected
 - [x] Migration scripts tested
 - [x] No data corruption
+- [x] Type parsers registered correctly
+
+### Security
+- [x] Stack traces don't expose full paths in production
+- [x] XSS protection active
+- [x] Input validation working
+- [x] Transaction safety verified
 
 ---
 
 ## Documentation Added
 
-1. `docs/DATABASE_SCHEMA.md` - Complete schema with all 34 tables
+1. `docs/DATABASE_SCHEMA.md` - Complete schema with all 34 tables + recent changes
 2. `docs/LANGUAGE_CONSOLIDATION.md` - Language migration plan
 3. `docs/INVENTORY_INTEGRITY.md` - Inventory constraints documentation
 4. `docs/FINANCIAL_INTEGRITY.md` - Financial constraints documentation
 5. `docs/ERROR_HANDLING_IMPROVEMENTS.md` - HTTP status code mapping
 6. `docs/FLUTTER_ERROR_HANDLING.md` - Flutter integration guide
+7. `docs/PRODUCTION_FIXES_2026-03-01.md` - This comprehensive fixes document
 
 ---
 
