@@ -1,6 +1,7 @@
 // src/controllers/payment.controller.js
 const { query, transaction } = require('../config/database');
 const logger = require('../utils/logger');
+const { getStatusCode } = require('../middleware/error-handler.middleware');
 
 /**
  * POST /api/v1/payments/record

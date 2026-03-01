@@ -87,7 +87,7 @@ const getRevenueData = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching revenue data:', error);
-    res.status(500).json({ error: 'Failed to fetch revenue data' });
+    res.status(getStatusCode(error)).json({ error: 'Failed to fetch revenue data' });
   }
 };
 

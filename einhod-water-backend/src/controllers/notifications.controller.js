@@ -1,6 +1,7 @@
 // src/controllers/notifications.controller.js
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
+const { getStatusCode } = require('../middleware/error-handler.middleware');
 
 /**
  * GET /api/v1/notifications
@@ -75,7 +76,7 @@ const getNotifications = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get notifications error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get notifications'
     });
@@ -103,7 +104,7 @@ const getUnreadCount = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get unread count error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get unread count'
     });
@@ -140,7 +141,7 @@ const markAsRead = async (req, res) => {
     });
   } catch (error) {
     logger.error('Mark as read error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to mark notification as read'
     });
@@ -168,7 +169,7 @@ const markAllAsRead = async (req, res) => {
     });
   } catch (error) {
     logger.error('Mark all as read error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to mark all as read'
     });
@@ -202,7 +203,7 @@ const deleteNotification = async (req, res) => {
     });
   } catch (error) {
     logger.error('Delete notification error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to delete notification'
     });

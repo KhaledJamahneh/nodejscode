@@ -3,6 +3,7 @@
 
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
+const { getStatusCode } = require('../middleware/error-handler.middleware');
 
 /**
  * GET /api/v1/clients/profile
@@ -74,7 +75,7 @@ const getProfile = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get profile error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get profile'
     });
@@ -201,7 +202,7 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update profile'
     });
@@ -253,7 +254,7 @@ const getSubscription = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get subscription error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get subscription information'
     });
@@ -339,7 +340,7 @@ const getUsageHistory = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get usage history error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get usage history'
     });
@@ -394,7 +395,7 @@ const getAssets = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get assets error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get assets'
     });
@@ -456,7 +457,7 @@ const getDebtInfo = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get debt info error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get debt information'
     });
@@ -500,7 +501,7 @@ const saveHomeLocation = async (req, res) => {
     });
   } catch (error) {
     logger.error('Save home location error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to save home location'
     });
@@ -544,7 +545,7 @@ const getWorkerLocationForDelivery = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get worker location error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get worker location'
     });
@@ -586,7 +587,7 @@ const getWorkerLocationForRequest = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get worker location request error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get worker location'
     });
@@ -617,7 +618,7 @@ const getCouponSizes = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get coupon sizes error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to retrieve coupon sizes'
     });
@@ -771,7 +772,7 @@ const getCouponBookRequests = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get coupon book requests error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to retrieve coupon book requests'
     });

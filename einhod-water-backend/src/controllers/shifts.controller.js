@@ -8,7 +8,7 @@ exports.getShifts = async (req, res) => {
     res.json({ shifts: result.rows });
   } catch (error) {
     console.error('Error fetching shifts:', error);
-    res.status(500).json({ message: 'Failed to fetch shifts' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to fetch shifts' });
   }
 };
 
@@ -25,7 +25,7 @@ exports.createShift = async (req, res) => {
     res.status(201).json({ shift: result.rows[0] });
   } catch (error) {
     console.error('Error creating shift:', error);
-    res.status(500).json({ message: 'Failed to create shift' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to create shift' });
   }
 };
 
@@ -47,7 +47,7 @@ exports.updateShift = async (req, res) => {
     res.json({ shift: result.rows[0] });
   } catch (error) {
     console.error('Error updating shift:', error);
-    res.status(500).json({ message: 'Failed to update shift' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to update shift' });
   }
 };
 
@@ -59,7 +59,7 @@ exports.deleteShift = async (req, res) => {
     res.json({ message: 'Shift deleted successfully' });
   } catch (error) {
     console.error('Error deleting shift:', error);
-    res.status(500).json({ message: 'Failed to delete shift' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to delete shift' });
   }
 };
 
@@ -76,7 +76,7 @@ exports.assignShift = async (req, res) => {
     res.json({ message: 'Shift assigned successfully' });
   } catch (error) {
     console.error('Error assigning shift:', error);
-    res.status(500).json({ message: 'Failed to assign shift' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to assign shift' });
   }
 };
 
@@ -108,7 +108,7 @@ exports.getLeaves = async (req, res) => {
     res.json({ leaves: result.rows });
   } catch (error) {
     console.error('Error fetching leaves:', error);
-    res.status(500).json({ message: 'Failed to fetch leaves' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to fetch leaves' });
   }
 };
 
@@ -125,7 +125,7 @@ exports.createLeave = async (req, res) => {
     res.status(201).json({ leave: result.rows[0] });
   } catch (error) {
     console.error('Error creating leave:', error);
-    res.status(500).json({ message: 'Failed to create leave' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to create leave' });
   }
 };
 
@@ -147,7 +147,7 @@ exports.updateLeave = async (req, res) => {
     res.json({ leave: result.rows[0] });
   } catch (error) {
     console.error('Error updating leave:', error);
-    res.status(500).json({ message: 'Failed to update leave' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to update leave' });
   }
 };
 
@@ -159,6 +159,6 @@ exports.deleteLeave = async (req, res) => {
     res.json({ message: 'Leave deleted successfully' });
   } catch (error) {
     console.error('Error deleting leave:', error);
-    res.status(500).json({ message: 'Failed to delete leave' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to delete leave' });
   }
 };

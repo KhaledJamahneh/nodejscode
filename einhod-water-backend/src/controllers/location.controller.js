@@ -56,7 +56,7 @@ exports.updateLocation = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating location:', error);
-    res.status(500).json({ message: 'Failed to update location' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to update location' });
   }
 };
 
@@ -81,7 +81,7 @@ exports.getWorkerLocation = async (req, res) => {
     res.json({ location: result.rows[0] });
   } catch (error) {
     console.error('Error fetching location:', error);
-    res.status(500).json({ message: 'Failed to fetch location' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to fetch location' });
   }
 };
 
@@ -101,6 +101,6 @@ exports.getActiveWorkerLocations = async (req, res) => {
     res.json({ locations: result.rows });
   } catch (error) {
     console.error('Error fetching locations:', error);
-    res.status(500).json({ message: 'Failed to fetch locations' });
+    res.status(getStatusCode(error)).json({ message: 'Failed to fetch locations' });
   }
 };

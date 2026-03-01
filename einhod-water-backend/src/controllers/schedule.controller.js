@@ -16,7 +16,7 @@ exports.getSchedules = async (req, res) => {
     res.json({ success: true, data: result.rows });
   } catch (error) {
     console.error('Error fetching schedules:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch schedules' });
+    res.status(getStatusCode(error)).json({ success: false, error: 'Failed to fetch schedules' });
   }
 };
 
@@ -41,7 +41,7 @@ exports.getSchedule = async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching schedule:', error);
-    res.status(500).json({ error: 'Failed to fetch schedule' });
+    res.status(getStatusCode(error)).json({ error: 'Failed to fetch schedule' });
   }
 };
 
@@ -82,7 +82,7 @@ exports.createSchedule = async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error creating schedule:', error);
-    res.status(500).json({ error: 'Failed to create schedule' });
+    res.status(getStatusCode(error)).json({ error: 'Failed to create schedule' });
   }
 };
 
@@ -132,7 +132,7 @@ exports.updateSchedule = async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error updating schedule:', error);
-    res.status(500).json({ error: 'Failed to update schedule' });
+    res.status(getStatusCode(error)).json({ error: 'Failed to update schedule' });
   }
 };
 
@@ -151,7 +151,7 @@ exports.deleteSchedule = async (req, res) => {
     res.json({ message: 'Schedule deleted successfully' });
   } catch (error) {
     console.error('Error deleting schedule:', error);
-    res.status(500).json({ error: 'Failed to delete schedule' });
+    res.status(getStatusCode(error)).json({ error: 'Failed to delete schedule' });
   }
 };
 
@@ -166,6 +166,6 @@ exports.batchDeleteSchedules = async (req, res) => {
     res.json({ message: `Deleted ${ids.length} schedules` });
   } catch (error) {
     console.error('Error batch deleting schedules:', error);
-    res.status(500).json({ error: 'Failed to delete schedules' });
+    res.status(getStatusCode(error)).json({ error: 'Failed to delete schedules' });
   }
 };

@@ -6,6 +6,7 @@ const { t } = require('../utils/i18n');
 const logger = require('../utils/logger');
 const bcrypt = require('bcrypt');
 const { isValidTransition } = require('../utils/state-machine');
+const { getStatusCode } = require('../middleware/error-handler.middleware');
 
 /**
  * GET /api/v1/admin/coupon-book-requests
@@ -55,7 +56,7 @@ const getAllCouponBookRequests = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get all coupon book requests error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get coupon book requests'
     });
@@ -164,7 +165,7 @@ const deleteCouponBookRequest = async (req, res) => {
     });
   } catch (error) {
     logger.error('Delete coupon book request error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to delete coupon book request'
     });
@@ -196,7 +197,7 @@ const getCouponSizes = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get coupon sizes error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to retrieve coupon sizes'
     });
@@ -236,7 +237,7 @@ const updateCouponSize = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update coupon size error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update coupon size'
     });
@@ -413,7 +414,7 @@ const getDashboard = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get dashboard error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get dashboard data'
     });
@@ -509,7 +510,7 @@ const getAllRequests = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get all requests error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get delivery requests'
     });
@@ -600,7 +601,7 @@ const assignWorkerToRequest = async (req, res) => {
     });
   } catch (error) {
     logger.error('Assign worker error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to assign worker'
     });
@@ -759,7 +760,7 @@ const getAllDeliveries = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get all deliveries error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get deliveries'
     });
@@ -884,7 +885,7 @@ const assignWorkerToDelivery = async (req, res) => {
     });
   } catch (error) {
     console.error('Error assigning worker to delivery:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to assign worker'
     });
@@ -913,7 +914,7 @@ const deleteDelivery = async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting delivery:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to delete delivery'
     });
@@ -1056,7 +1057,7 @@ const createQuickDelivery = async (req, res) => {
     });
   } catch (error) {
     logger.error('Create quick delivery error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: error.message || 'Failed to create delivery'
     });
@@ -1159,7 +1160,7 @@ const updateDelivery = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update delivery error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: error.message || 'Failed to update delivery'
     });
@@ -1365,7 +1366,7 @@ const getAllUsers = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get all users error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get users'
     });
@@ -1495,7 +1496,7 @@ const createUser = async (req, res) => {
       });
     }
 
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to create user'
     });
@@ -1543,7 +1544,7 @@ const toggleUserActive = async (req, res) => {
     });
   } catch (error) {
     logger.error('Toggle user active error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to toggle user status'
     });
@@ -1878,7 +1879,7 @@ const getAnalyticsOverview = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get analytics error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get analytics'
     });
@@ -1926,7 +1927,7 @@ const deleteDeliveryRequest = async (req, res) => {
       });
     }
 
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to delete delivery request'
     });
@@ -1982,7 +1983,7 @@ const deleteUser = async (req, res) => {
       });
     }
 
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to delete user'
     });
@@ -2060,7 +2061,7 @@ const getUserById = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get user by ID error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get user details'
     });
@@ -2266,7 +2267,7 @@ const updateUser = async (req, res) => {
         message: 'Email or phone number already exists'
       });
     }
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update user'
     });
@@ -2301,7 +2302,7 @@ const createStation = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating station:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to create station'
     });
@@ -2341,7 +2342,7 @@ const updateStation = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating station:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update station'
     });
@@ -2370,7 +2371,7 @@ const deleteStation = async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting station:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to delete station'
     });
@@ -2399,7 +2400,7 @@ const getScheduledDeliveries = async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting scheduled deliveries:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get scheduled deliveries'
     });
@@ -2424,7 +2425,7 @@ const createScheduledDelivery = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating scheduled delivery:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to create scheduled delivery'
     });
@@ -2459,7 +2460,7 @@ const updateScheduledDelivery = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating scheduled delivery:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update scheduled delivery'
     });
@@ -2488,7 +2489,7 @@ const deleteScheduledDelivery = async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting scheduled delivery:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to delete scheduled delivery'
     });
@@ -2532,7 +2533,7 @@ const updateWorkerAdvance = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update worker advance error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update salary advance'
     });
@@ -2590,7 +2591,7 @@ const getAllExpenses = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get all expenses error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get expenses'
     });
@@ -2628,7 +2629,7 @@ const updateExpenseStatus = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update expense status error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update expense status'
     });
@@ -2711,7 +2712,7 @@ const updateExpense = async (req, res) => {
   } catch (error) {
     logger.error('Update expense error:', error);
     logger.error('Error details:', { message: error.message, stack: error.stack });
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update expense',
       error: error.message
@@ -2732,7 +2733,7 @@ const getDispensers = async (req, res) => {
     res.json({ success: true, dispensers: result.rows });
   } catch (error) {
     logger.error('Get dispensers error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch dispensers' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to fetch dispensers' });
   }
 };
 
@@ -2748,7 +2749,7 @@ const createDispenser = async (req, res) => {
     res.json({ success: true, message: 'Dispenser created' });
   } catch (error) {
     logger.error('Create dispenser error:', error);
-    res.status(500).json({ success: false, message: 'Failed to create dispenser' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to create dispenser' });
   }
 };
 
@@ -2795,7 +2796,7 @@ const updateDispenser = async (req, res) => {
     res.json({ success: true, message: 'Dispenser updated' });
   } catch (error) {
     logger.error('Update dispenser error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update dispenser' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to update dispenser' });
   }
 };
 
@@ -2807,7 +2808,7 @@ const deleteDispenser = async (req, res) => {
     res.json({ success: true, message: 'Dispenser deleted' });
   } catch (error) {
     logger.error('Delete dispenser error:', error);
-    res.status(500).json({ success: false, message: 'Failed to delete dispenser' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to delete dispenser' });
   }
 };
 
@@ -2818,7 +2819,7 @@ const getDispenserTypes = async (req, res) => {
     res.json({ success: true, types: result.rows });
   } catch (error) {
     logger.error('Get types error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch types' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to fetch types' });
   }
 };
 
@@ -2829,7 +2830,7 @@ const createDispenserType = async (req, res) => {
     res.json({ success: true, message: 'Type created' });
   } catch (error) {
     logger.error('Create type error:', error);
-    res.status(500).json({ success: false, message: 'Failed to create type' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to create type' });
   }
 };
 
@@ -2841,7 +2842,7 @@ const updateDispenserType = async (req, res) => {
     res.json({ success: true, message: 'Type updated' });
   } catch (error) {
     logger.error('Update type error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update type' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to update type' });
   }
 };
 
@@ -2852,7 +2853,7 @@ const deleteDispenserType = async (req, res) => {
     res.json({ success: true, message: 'Type deleted' });
   } catch (error) {
     logger.error('Delete type error:', error);
-    res.status(500).json({ success: false, message: 'Failed to delete type' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to delete type' });
   }
 };
 
@@ -2863,7 +2864,7 @@ const getDispenserFeatures = async (req, res) => {
     res.json({ success: true, features: result.rows });
   } catch (error) {
     logger.error('Get features error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch features' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to fetch features' });
   }
 };
 
@@ -2874,7 +2875,7 @@ const createDispenserFeature = async (req, res) => {
     res.json({ success: true, message: 'Feature created' });
   } catch (error) {
     logger.error('Create feature error:', error);
-    res.status(500).json({ success: false, message: 'Failed to create feature' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to create feature' });
   }
 };
 
@@ -2886,7 +2887,7 @@ const updateDispenserFeature = async (req, res) => {
     res.json({ success: true, message: 'Feature updated' });
   } catch (error) {
     logger.error('Update feature error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update feature' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to update feature' });
   }
 };
 
@@ -2897,7 +2898,7 @@ const deleteDispenserFeature = async (req, res) => {
     res.json({ success: true, message: 'Feature deleted' });
   } catch (error) {
     logger.error('Delete feature error:', error);
-    res.status(500).json({ success: false, message: 'Failed to delete feature' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to delete feature' });
   }
 };
 
@@ -2913,7 +2914,7 @@ const getAllAssets = async (req, res) => {
     res.json({ success: true, assets: result.rows });
   } catch (error) {
     logger.error('Get all assets error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch assets' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to fetch assets' });
   }
 };
 
@@ -2926,7 +2927,7 @@ const getAllClients = async (req, res) => {
     res.json({ success: true, clients: result.rows });
   } catch (error) {
     logger.error('Get clients error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch clients' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to fetch clients' });
   }
 };
 
@@ -2941,7 +2942,7 @@ const getClientAssets = async (req, res) => {
     res.json({ success: true, assets: result.rows });
   } catch (error) {
     logger.error('Get client assets error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch assets' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to fetch assets' });
   }
 };
 
@@ -2958,7 +2959,7 @@ const createClientAsset = async (req, res) => {
     res.json({ success: true, message: 'Asset created' });
   } catch (error) {
     logger.error('Create asset error:', error);
-    res.status(500).json({ success: false, message: 'Failed to create asset' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to create asset' });
   }
 };
 
@@ -2974,7 +2975,7 @@ const updateClientAsset = async (req, res) => {
     res.json({ success: true, message: 'Asset updated' });
   } catch (error) {
     logger.error('Update asset error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update asset' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to update asset' });
   }
 };
 
@@ -2986,7 +2987,7 @@ const deleteClientAsset = async (req, res) => {
     res.json({ success: true, message: 'Asset deleted' });
   } catch (error) {
     logger.error('Delete asset error:', error);
-    res.status(500).json({ success: false, message: 'Failed to delete asset' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to delete asset' });
   }
 };
 

@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
+const { getStatusCode } = require('../middleware/error-handler.middleware');
 
 // In-memory store for refresh tokens (in production, use Redis)
 const refreshTokens = new Set();
@@ -117,7 +118,7 @@ const login = async (req, res) => {
     });
   } catch (error) {
     logger.error('Login error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Login failed'
     });
@@ -184,7 +185,7 @@ const refreshToken = async (req, res) => {
     });
   } catch (error) {
     logger.error('Token refresh error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Token refresh failed'
     });
@@ -212,7 +213,7 @@ const logout = async (req, res) => {
     });
   } catch (error) {
     logger.error('Logout error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Logout failed'
     });
@@ -269,7 +270,7 @@ const requestPasswordReset = async (req, res) => {
     });
   } catch (error) {
     logger.error('Password reset request error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Password reset request failed'
     });
@@ -335,7 +336,7 @@ const verifyAndResetPassword = async (req, res) => {
     });
   } catch (error) {
     logger.error('Password reset error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Password reset failed'
     });
@@ -394,7 +395,7 @@ const changePassword = async (req, res) => {
     });
   } catch (error) {
     logger.error('Change password error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Password change failed'
     });
@@ -451,7 +452,7 @@ const getCurrentUser = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get current user error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get user info'
     });

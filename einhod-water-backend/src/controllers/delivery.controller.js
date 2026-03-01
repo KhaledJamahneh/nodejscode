@@ -3,6 +3,7 @@
 
 const { query, transaction } = require('../config/database');
 const logger = require('../utils/logger');
+const { getStatusCode } = require('../middleware/error-handler.middleware');
 
 /**
  * POST /api/v1/deliveries/request
@@ -180,7 +181,7 @@ const createDeliveryRequest = async (req, res) => {
     });
   } catch (error) {
     logger.error('Create delivery request error:', error);
-    res.status(error.status || 500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: error.message || 'Failed to create delivery request'
     });
@@ -280,7 +281,7 @@ const getClientRequests = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get client requests error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get delivery requests'
     });
@@ -345,7 +346,7 @@ const getRequestById = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get request by ID error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get delivery request'
     });
@@ -445,7 +446,7 @@ const updateDeliveryRequest = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update delivery request error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to update delivery request'
     });
@@ -519,7 +520,7 @@ const cancelDeliveryRequest = async (req, res) => {
     });
   } catch (error) {
     logger.error('Cancel delivery request error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to cancel delivery request'
     });
@@ -622,7 +623,7 @@ const getDeliveryHistory = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get delivery history error:', error);
-    res.status(500).json({
+    res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get delivery history'
     });

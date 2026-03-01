@@ -10,7 +10,7 @@ const getCouponSizes = async (req, res) => {
     const result = await query('SELECT * FROM coupon_sizes ORDER BY size ASC');
     res.json({ success: true, data: result.rows });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get coupon sizes' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to get coupon sizes' });
   }
 };
 
@@ -36,7 +36,7 @@ const createCouponSize = async (req, res) => {
     if (error.code === '23505') {
       return res.status(400).json({ success: false, message: 'Size already exists' });
     }
-    res.status(500).json({ success: false, message: 'Failed to create coupon size' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to create coupon size' });
   }
 };
 
@@ -67,7 +67,7 @@ const updateCouponSize = async (req, res) => {
     if (error.code === '23505') {
       return res.status(400).json({ success: false, message: 'Size already exists' });
     }
-    res.status(500).json({ success: false, message: 'Failed to update coupon size' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to update coupon size' });
   }
 };
 
@@ -87,7 +87,7 @@ const deleteCouponSize = async (req, res) => {
     
     res.json({ success: true, message: 'Coupon size deleted' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to delete coupon size' });
+    res.status(getStatusCode(error)).json({ success: false, message: 'Failed to delete coupon size' });
   }
 };
 
