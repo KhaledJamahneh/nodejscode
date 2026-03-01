@@ -44,11 +44,13 @@ Critical production issues fixed in backend and database to ensure data integrit
 - Language stored in both `client_profiles.preferred_language` and `worker_profiles.preferred_language`
 - Conflicts for dual-role users (worker + client)
 - Inconsistent language across features
+- **CRITICAL:** Redundant columns remained after initial migration, creating data desync risk
 
 ### Solution
 - Added `preferred_language` column to `users` table
 - Migrated existing preferences from profile tables
 - Updated all queries to use `users.preferred_language`
+- **Dropped redundant columns from profile tables**
 
 ### Migration
 ```sql
@@ -59,18 +61,32 @@ FROM client_profiles cp WHERE u.id = cp.user_id;
 
 UPDATE users u SET preferred_language = wp.preferred_language
 FROM worker_profiles wp WHERE u.id = wp.user_id;
+
+-- CRITICAL: Drop redundant columns to prevent desync
+ALTER TABLE client_profiles DROP COLUMN preferred_language;
 ```
 
 ### Changes
-- **Database:** `users.preferred_language` column added
+- **Database:** `users.preferred_language` column added, redundant columns dropped
 - **Files Modified:**
-  - `src/controllers/worker.controller.js` - Query `users.preferred_language`
+  - `src/controllers/worker.controller.js` - Query `users.preferred_language` (2 queries)
+  - `src/controllers/client.controller.js` - Query `users.preferred_language` (2 queries)
+  - `src/controllers/admin.controller.js` - Query `users.preferred_language` (1 query)
   - `migrations/consolidate_language.sql` - Migration script
+  - `migrations/drop_redundant_language_columns.sql` - Drop redundant columns
 
 ### Statistics
 - 21 total users migrated
 - 1 Arabic user
 - 20 English users
+- **1 table with preferred_language (users only)**
+- **0 redundant columns remaining**
+
+### Verification
+✅ Single source of truth: Only `users.preferred_language` exists
+✅ No data duplication risk
+✅ All queries updated to JOIN users table
+✅ No code references to profile table language columns
 
 ---
 
@@ -378,6 +394,8 @@ types.setTypeParser(oid, (val) => {
 19. `7cb1ab3` - Fix: Prevent startup deadlock in type parser initialization
 20. `f158b3e` - Security: Sanitize stack traces in production logs
 21. `64934b9` - Fix: Use postgres-array for robust enum array parsing
+22. `4ff62a7` - Docs: Update production fixes with latest changes
+23. `97a92a7` - Fix: Complete language consolidation - drop redundant columns
 
 ---
 
