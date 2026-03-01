@@ -49,6 +49,10 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Request context tracking (for audit logs)
+const contextMiddleware = require('./middleware/context.middleware');
+app.use(contextMiddleware);
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
@@ -139,6 +143,10 @@ const startServer = async () => {
     // Connect to database
     await connectDatabase();
     logger.info('Database connected successfully');
+
+    // Setup domain-specific type parsers
+    const { setupDomainTypeParsers } = require('./config/domain-types');
+    await setupDomainTypeParsers();
 
     // Initialize scheduled tasks
     initCronJobs();

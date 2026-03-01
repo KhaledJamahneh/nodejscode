@@ -1,0 +1,30 @@
+{
+  "en": {
+    "delivery_completed_title": "Delivery Completed",
+    "delivery_completed_body": "Your delivery of {amount} {unit} has been completed.",
+    "request_accepted_title": "Request Accepted",
+    "request_accepted_body": "{worker} has accepted your delivery request and is on the way.",
+    "scheduled_accepted_title": "Delivery Accepted",
+    "scheduled_accepted_body": "{worker} has accepted your scheduled delivery and is on the way.",
+    "water_delivered_title": "Water Delivered",
+    "water_delivered_body": "{amount} {unit} delivered to your location.",
+    "delivery_eta_title": "Delivery Update",
+    "delivery_eta_body": "{worker} will arrive with {amount} {unit} at approximately {delivery_time}.",
+    "payment_received_title": "Payment Received",
+    "payment_received_body": "Payment of {amount} {currency} received for {quantity} {unit}. Thank you!"
+  },
+  "ar": {
+    "delivery_completed_title": "اكتمل التوصيل",
+    "delivery_completed_body": "تم اكتمال توصيل {amount} {unit} بنجاح.",
+    "request_accepted_title": "تم قبول الطلب",
+    "request_accepted_body": "قام {worker} بقبول طلب التوصيل الخاص بك وهو في الطريق إليك.",
+    "scheduled_accepted_title": "تم قبول التوصيل",
+    "scheduled_accepted_body": "قام {worker} بقبول التوصيل المجدول وهو في الطريق إليك.",
+    "water_delivered_title": "تم توصيل المياه",
+    "water_delivered_body": "تم توصيل {amount} {unit} إلى موقعك.",
+    "delivery_eta_title": "تحديث التوصيل",
+    "delivery_eta_body": "سيصل {worker} مع {amount} {unit} في تمام الساعة {delivery_time} تقريباً.",
+    "payment_received_title": "تم استلام الدفع",
+    "payment_received_body": "تم استلام دفعة بقيمة {amount} {currency} مقابل {quantity} {unit}. شكراً لك!"
+  }
+}

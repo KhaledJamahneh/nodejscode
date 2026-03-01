@@ -32,7 +32,7 @@ const createDeliveryRequest = async (req, res) => {
       // 1. Get client profile and system config (LOCK ROW)
       const clientResult = await client.query(
         `SELECT cp.id, cp.remaining_coupons, cp.subscription_type, cp.subscription_expiry_date, 
-                cp.current_debt, cp.grace_period_days, u.is_active
+                cp.current_debt, u.is_active
          FROM client_profiles cp
          JOIN users u ON cp.user_id = u.id
          WHERE cp.user_id = $1 FOR UPDATE`,
@@ -47,7 +47,7 @@ const createDeliveryRequest = async (req, res) => {
 
       // Get system config
       const configResult = await client.query(
-        `SELECT key, value FROM system_config WHERE key IN ('max_pending_requests', 'debt_limit_ils')`
+        `SELECT setting_key as key, setting_value as value FROM system_settings WHERE setting_key IN ('max_pending_requests', 'debt_limit_ils')`
       );
       const config = Object.fromEntries(configResult.rows.map(r => [r.key, r.value]));
       const maxPendingRequests = parseInt(config.max_pending_requests || '3');

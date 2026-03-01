@@ -3,6 +3,7 @@
 
 const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
+const { getContext } = require('../utils/context');
 
 /**
  * Verify JWT token and attach user to request
@@ -32,6 +33,14 @@ const authenticateToken = (req, res, next) => {
 
       // Attach user to request
       req.user = user;
+      
+      // Update context with user info
+      const context = getContext();
+      if (context) {
+        context.userId = user.userId || user.id;
+        context.userRole = user.role || user.roles?.[0];
+      }
+      
       next();
     });
   } catch (error) {

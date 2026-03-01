@@ -447,6 +447,62 @@ const completeDelivery = async (req, res) => {
       total_price
     } = req.body;
 
+    // Validate numeric inputs
+    if (gallons_delivered === undefined || gallons_delivered === null) {
+      return res.status(400).json({
+        success: false,
+        message: 'gallons_delivered is required'
+      });
+    }
+
+    const gallonsNum = Number(gallons_delivered);
+    if (isNaN(gallonsNum) || gallonsNum <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'gallons_delivered must be a positive number'
+      });
+    }
+
+    if (empty_gallons_returned !== undefined && empty_gallons_returned !== null) {
+      const emptyNum = Number(empty_gallons_returned);
+      if (isNaN(emptyNum) || emptyNum < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'empty_gallons_returned must be a non-negative number'
+        });
+      }
+    }
+
+    if (paid_amount !== undefined && paid_amount !== null) {
+      const paidNum = Number(paid_amount);
+      if (isNaN(paidNum) || paidNum < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'paid_amount must be a non-negative number'
+        });
+      }
+    }
+
+    if (total_price !== undefined && total_price !== null) {
+      const priceNum = Number(total_price);
+      if (isNaN(priceNum) || priceNum < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'total_price must be a non-negative number'
+        });
+      }
+    }
+
+    if (paid_coupons_count !== undefined && paid_coupons_count !== null) {
+      const couponsNum = Number(paid_coupons_count);
+      if (isNaN(couponsNum) || couponsNum < 0 || !Number.isInteger(couponsNum)) {
+        return res.status(400).json({
+          success: false,
+          message: 'paid_coupons_count must be a non-negative integer'
+        });
+      }
+    }
+
     // Get worker profile ID
     const workerResult = await query(
       'SELECT id FROM worker_profiles WHERE user_id = $1',
@@ -506,14 +562,8 @@ const completeDelivery = async (req, res) => {
       if (gallons_delivered > delivery.requested_gallons * 1.1) {
         throw new Error(`Delivered amount (${gallons_delivered}) significantly exceeds request (${delivery.requested_gallons}). Max 10% over-delivery allowed.`);
       }
-      if (paid_amount !== undefined && paid_amount < 0) {
-        throw new Error('Amount paid cannot be negative');
-      }
-      if (paid_amount !== undefined && effectiveTotalPrice !== undefined && paid_amount > effectiveTotalPrice) {
+      if (paid_amount !== undefined && paid_amount > effectiveTotalPrice) {
         throw new Error('Amount paid cannot exceed total price');
-      }
-      if (empty_gallons_returned !== undefined && empty_gallons_returned < 0) {
-        throw new Error('Empty gallons returned cannot be negative');
       }
       
       const maxReturnable = parseInt(gallons_delivered) + parseInt(delivery.gallons_on_hand || 0);
@@ -527,9 +577,10 @@ const completeDelivery = async (req, res) => {
       );
       const hasPaymentColumns = columnCheck.rows.length > 0;
 
-      // Update delivery
+      // Update delivery with idempotency check (enforce state transition)
+      let updateResult;
       if (hasPaymentColumns) {
-        await client.query(
+        updateResult = await client.query(
           `UPDATE deliveries 
            SET status = 'completed',
                gallons_delivered = $1,
@@ -542,11 +593,11 @@ const completeDelivery = async (req, res) => {
                paid_amount = $7,
                total_price = $8,
                updated_at = CURRENT_TIMESTAMP
-           WHERE id = $9`,
+           WHERE id = $9 AND status != 'completed'`,
           [gallons_delivered, empty_gallons_returned || 0, delivery_latitude, delivery_longitude, notes, photo_url, paid_amount || 0, effectiveTotalPrice, deliveryId]
         );
       } else {
-        await client.query(
+        updateResult = await client.query(
           `UPDATE deliveries 
            SET status = 'completed',
                gallons_delivered = $1,
@@ -557,9 +608,14 @@ const completeDelivery = async (req, res) => {
                notes = $5,
                photo_url = $6,
                updated_at = CURRENT_TIMESTAMP
-           WHERE id = $7`,
+           WHERE id = $7 AND status != 'completed'`,
           [gallons_delivered, empty_gallons_returned || 0, delivery_latitude, delivery_longitude, notes, photo_url, deliveryId]
         );
+      }
+      
+      // Idempotency check: If no rows updated, delivery was already completed
+      if (updateResult.rowCount === 0) {
+        throw new Error('Delivery is already completed');
       }
 
       // 5. Update client coupons/debt
@@ -620,11 +676,15 @@ const completeDelivery = async (req, res) => {
         [gallons_delivered, workerId]
       );
 
-      // Create notification for client
+      // Create notification for client (database insert is fast, OK inside transaction)
       const clientUser = await client.query(
         'SELECT user_id FROM client_profiles WHERE id = $1',
         [delivery.client_id]
       );
+
+      if (clientUser.rows.length === 0) {
+        throw new Error('Client profile not found');
+      }
 
       await client.query(
         `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
@@ -636,7 +696,39 @@ const completeDelivery = async (req, res) => {
           deliveryId
         ]
       );
+      
+      // Return data needed for deferred tasks
+      return {
+        clientUserId: clientUser.rows[0].user_id,
+        language: delivery.preferred_language,
+        gallonsDelivered: gallons_delivered
+      };
     });
+
+    // ✅ CORRECT: External API calls AFTER transaction commits
+    // This prevents holding database connections during slow network calls
+    // 
+    // IMPORTANT: Transaction has already committed at this point
+    // - Database state is permanent (delivery marked completed)
+    // - If FCM fails, we log but don't rollback (can't rollback after commit)
+    // - User can still see notification in app by pulling notification history
+    try {
+      // TODO: When FCM is implemented, send push notification here
+      // await fcmService.sendNotification(result.clientUserId, {
+      //   title: t(result.language, 'delivery_completed_title'),
+      //   body: t(result.language, 'delivery_completed_body', result.gallonsDelivered),
+      //   lang: result.language
+      // });
+    } catch (notificationError) {
+      // Log but don't fail the request - notification is non-critical
+      // The notification record is already in the database, user can see it in-app
+      logger.error('Failed to send push notification (delivery still completed):', {
+        error: notificationError.message,
+        userId: result.clientUserId,
+        deliveryId,
+        note: 'User can view notification in app notification history'
+      });
+    }
 
     logger.info('Delivery completed:', { userId, deliveryId, gallons_delivered });
 

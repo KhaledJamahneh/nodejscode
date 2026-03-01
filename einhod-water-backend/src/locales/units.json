@@ -1,0 +1,42 @@
+{
+  "en": {
+    "gallon": {
+      "one": "gallon",
+      "other": "gallons"
+    },
+    "liter": {
+      "one": "liter",
+      "other": "liters"
+    },
+    "bottle": {
+      "one": "bottle",
+      "other": "bottles"
+    }
+  },
+  "ar": {
+    "gallon": {
+      "zero": "جالون",
+      "one": "جالون",
+      "two": "جالونان",
+      "few": "جالونات",
+      "many": "جالوناً",
+      "other": "جالون"
+    },
+    "liter": {
+      "zero": "لتر",
+      "one": "لتر",
+      "two": "لتران",
+      "few": "لترات",
+      "many": "لتراً",
+      "other": "لتر"
+    },
+    "bottle": {
+      "zero": "زجاجة",
+      "one": "زجاجة",
+      "two": "زجاجتان",
+      "few": "زجاجات",
+      "many": "زجاجة",
+      "other": "زجاجة"
+    }
+  }
+}
