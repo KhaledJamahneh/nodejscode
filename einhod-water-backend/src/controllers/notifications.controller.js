@@ -11,7 +11,7 @@ const getNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
-    const { limit = 50, offset = 0, unread_only = false } = req.query;
+    const { limit = 50, offset = 0, unread_only = false, view_as } = req.query;
 
     const roles = Array.isArray(userRole) ? userRole : [userRole];
     const isClient = roles.includes('client');
@@ -42,20 +42,19 @@ const getNotifications = async (req, res) => {
 
     const params = [userId];
 
-    // Filter notifications by type based on role and current view
-    // If user has multiple roles, filter based on what they're currently viewing
-    const viewingAsWorker = isWorker && !isAdmin; // Pure worker
-    const viewingAsAdmin = isAdmin; // Admin view takes precedence
+    // Filter notifications by type based on current view
+    // Use view_as parameter if provided, otherwise infer from roles
+    const currentView = view_as || (isAdmin ? 'admin' : isWorker ? 'worker' : 'client');
     
-    if (viewingAsAdmin && !viewingAsWorker) {
+    if (currentView === 'admin') {
       // Admin view: only admin-relevant notifications
       queryText += " AND type IN ('low_inventory', 'new_request', 'system', 'urgent', 'important', 'announcement')";
-    } else if (isClient && !isWorker && !isAdmin) {
-      // Pure client
-      queryText += " AND type IN ('delivery_status', 'coupon_status', 'announcement', 'system', 'payment')";
-    } else if (viewingAsWorker) {
+    } else if (currentView === 'worker') {
       // Worker view: only worker notifications
       queryText += " AND type IN ('worker_assignment', 'delivery_status', 'system', 'announcement')";
+    } else if (currentView === 'client') {
+      // Client view
+      queryText += " AND type IN ('delivery_status', 'coupon_status', 'announcement', 'system', 'payment')";
     }
 
     if (unread_only === 'true') {
