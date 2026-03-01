@@ -5,6 +5,27 @@
 **Database:** Einhod Water Management System  
 **Total Tables:** 34
 
+## Recent Changes (2026-03-01)
+
+### New Columns
+- `users.preferred_language` - Single source of truth for language preference
+
+### New Constraints
+**Inventory Integrity:**
+- `worker_profiles.check_vehicle_current_gallons_non_negative` - Prevents negative inventory
+- `worker_profiles.check_vehicle_current_gallons_within_capacity` - Prevents over-capacity
+- `worker_profiles.check_vehicle_capacity_positive` - Ensures valid capacity
+
+**Financial Integrity:**
+- `payments.check_payment_amount_positive` - Minimum $0.01
+- `expenses.check_expense_amount_positive` - Minimum $0.01
+- `deliveries.check_delivery_paid_amount_non_negative` - No negative amounts
+- `deliveries.check_delivery_total_price_non_negative` - No negative prices
+- `coupon_sizes.check_coupon_price_positive` - Minimum $0.01
+
+### Type Parsers
+- Custom parser for `_user_role` enum array (converts `"{owner}"` to `["owner"]`)
+
 ---
 
 === DATABASE SCHEMA ===
@@ -357,6 +378,7 @@
   created_at                     timestamp without time zone NULL DEFAULT CURRENT_TIMESTAMP
   updated_at                     timestamp without time zone NULL DEFAULT CURRENT_TIMESTAMP
   last_login                     timestamp without time zone NULL
+  preferred_language             character varying(10) NULL DEFAULT 'en'::character varying
 
 📋 WORK_SHIFTS
 ────────────────────────────────────────────────────────────────────────────────
