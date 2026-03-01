@@ -31,7 +31,7 @@ const getProfile = async (req, res) => {
         cp.remaining_coupons,
         cp.monthly_usage_gallons,
         cp.current_debt,
-        cp.preferred_language,
+        u.preferred_language,
         cp.proximity_notifications_enabled,
         cp.home_latitude,
         cp.home_longitude,
@@ -178,7 +178,7 @@ const updateProfile = async (req, res) => {
         cp.address,
         cp.home_latitude,
         cp.home_longitude,
-        cp.preferred_language,
+        u.preferred_language,
         cp.proximity_notifications_enabled
       FROM users u
       LEFT JOIN client_profiles cp ON u.id = cp.user_id

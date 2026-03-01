@@ -426,9 +426,10 @@ const acceptScheduledDelivery = async (req, res) => {
 
       // Notify client
       const clientDelivery = await client.query(
-        `SELECT cp.user_id, cp.preferred_language, wp.full_name as worker_name 
+        `SELECT cp.user_id, u.preferred_language, wp.full_name as worker_name 
          FROM deliveries d
          JOIN client_profiles cp ON d.client_id = cp.id
+         JOIN users u ON cp.user_id = u.id
          JOIN worker_profiles wp ON wp.id = $1
          WHERE d.id = $2`,
         [workerId, deliveryId]
@@ -847,9 +848,10 @@ const acceptRequest = async (req, res) => {
 
       // Notify client
       const clientRequest = await client.query(
-        `SELECT cp.user_id, cp.preferred_language, wp.full_name as worker_name 
+        `SELECT cp.user_id, u.preferred_language, wp.full_name as worker_name 
          FROM delivery_requests dr
          JOIN client_profiles cp ON dr.client_id = cp.id
+         JOIN users u ON cp.user_id = u.id
          JOIN worker_profiles wp ON wp.id = $1
          WHERE dr.id = $2`,
         [workerId, requestId]

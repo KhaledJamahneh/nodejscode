@@ -934,7 +934,7 @@ const createQuickDelivery = async (req, res) => {
     await transaction(async (client) => {
       // Get client profile
       const clientProfile = await client.query(
-        `SELECT cp.user_id, cp.subscription_type, cp.remaining_coupons, cp.current_debt, cp.preferred_language, u.is_active 
+        `SELECT cp.user_id, cp.subscription_type, cp.remaining_coupons, cp.current_debt, u.preferred_language, u.is_active 
          FROM client_profiles cp
          JOIN users u ON cp.user_id = u.id
          WHERE cp.id = $1 FOR UPDATE`,
