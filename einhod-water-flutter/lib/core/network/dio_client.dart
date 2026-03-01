@@ -48,16 +48,10 @@ class DioClient {
           final path = error.requestOptions.path;
           final response = error.response;
 
-          // Attempt token refresh only for 403 responses that explicitly
-          // mention a token problem (avoids triggering on role-based 403s).
+          // Token refresh on 401 Unauthorized (proper HTTP semantics)
+          // Avoids false triggers on role-based 403 Forbidden
           final isTokenError = response != null &&
-              response.statusCode == 403 &&
-              response.data is Map &&
-              (response.data['message']
-                      ?.toString()
-                      .toLowerCase()
-                      .contains('token') ??
-                  false);
+              response.statusCode == 401;
 
           if (isTokenError &&
               path != ApiEndpoints.refreshToken &&
