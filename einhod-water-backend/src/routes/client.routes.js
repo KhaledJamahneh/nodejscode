@@ -109,6 +109,18 @@ router.post('/coupon-book-request', clientController.createCouponBookRequest);
 router.get('/coupon-book-requests', clientController.getCouponBookRequests);
 
 /**
+ * PATCH /api/v1/clients/coupon-books/:id
+ * Update a coupon book request (only if pending)
+ */
+router.patch('/coupon-books/:id', clientController.updateCouponBookRequest);
+
+/**
+ * DELETE /api/v1/clients/coupon-books/:id
+ * Delete/cancel a coupon book request (only if pending)
+ */
+router.delete('/coupon-books/:id', clientController.deleteCouponBookRequest);
+
+/**
  * GET /api/v1/clients/assets
  * Get list of company assets (dispensers, bottles) in client's possession
  */

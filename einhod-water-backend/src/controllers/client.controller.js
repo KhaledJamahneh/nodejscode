@@ -779,6 +779,111 @@ const getCouponBookRequests = async (req, res) => {
   }
 };
 
+/**
+ * PATCH /api/v1/clients/coupon-books/:id
+ * Update coupon book request (only if pending)
+ */
+const updateCouponBookRequest = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const requestId = req.params.id;
+    const { coupon_size_id, book_type } = req.body;
+
+    const result = await transaction(async (client) => {
+      // Check if request exists and belongs to user
+      const checkResult = await client.query(
+        `SELECT cbr.id, cbr.status, cp.user_id
+         FROM coupon_book_requests cbr
+         JOIN client_profiles cp ON cbr.client_id = cp.id
+         WHERE cbr.id = $1`,
+        [requestId]
+      );
+
+      if (checkResult.rows.length === 0) {
+        throw new Error('Coupon book request not found');
+      }
+
+      if (checkResult.rows[0].user_id !== userId) {
+        throw new Error('Unauthorized');
+      }
+
+      if (checkResult.rows[0].status !== 'pending') {
+        throw new Error('Can only edit pending requests');
+      }
+
+      // Update request
+      const updateResult = await client.query(
+        `UPDATE coupon_book_requests 
+         SET coupon_size_id = $1, book_type = $2, updated_at = NOW()
+         WHERE id = $3
+         RETURNING *`,
+        [coupon_size_id, book_type, requestId]
+      );
+
+      return updateResult.rows[0];
+    });
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('Update coupon book request error:', error);
+    res.status(getStatusCode(error)).json({
+      success: false,
+      message: error.message || 'Failed to update coupon book request'
+    });
+  }
+};
+
+/**
+ * DELETE /api/v1/clients/coupon-books/:id
+ * Delete/cancel coupon book request (only if pending)
+ */
+const deleteCouponBookRequest = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const requestId = req.params.id;
+
+    await transaction(async (client) => {
+      // Check if request exists and belongs to user
+      const checkResult = await client.query(
+        `SELECT cbr.id, cbr.status, cp.user_id
+         FROM coupon_book_requests cbr
+         JOIN client_profiles cp ON cbr.client_id = cp.id
+         WHERE cbr.id = $1`,
+        [requestId]
+      );
+
+      if (checkResult.rows.length === 0) {
+        throw new Error('Coupon book request not found');
+      }
+
+      if (checkResult.rows[0].user_id !== userId) {
+        throw new Error('Unauthorized');
+      }
+
+      if (checkResult.rows[0].status !== 'pending') {
+        throw new Error('Can only delete pending requests');
+      }
+
+      // Delete request
+      await client.query('DELETE FROM coupon_book_requests WHERE id = $1', [requestId]);
+    });
+
+    res.json({
+      success: true,
+      message: 'Coupon book request deleted successfully'
+    });
+  } catch (error) {
+    logger.error('Delete coupon book request error:', error);
+    res.status(getStatusCode(error)).json({
+      success: false,
+      message: error.message || 'Failed to delete coupon book request'
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -791,5 +896,7 @@ module.exports = {
   getWorkerLocationForRequest,
   getCouponSizes,
   createCouponBookRequest,
-  getCouponBookRequests
+  getCouponBookRequests,
+  updateCouponBookRequest,
+  deleteCouponBookRequest
 };
