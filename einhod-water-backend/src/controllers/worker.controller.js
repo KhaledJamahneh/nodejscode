@@ -926,7 +926,7 @@ const completeRequest = async (req, res) => {
       // 2. Get request details
       const requestResult = await client.query(
         `SELECT dr.id, dr.client_id, dr.assigned_worker_id, dr.status, dr.requested_gallons,
-                c.subscription_type, c.remaining_coupons, c.gallons_on_hand, c.preferred_language, u.is_active
+                c.subscription_type, c.remaining_coupons, c.gallons_on_hand, u.preferred_language, u.is_active
          FROM delivery_requests dr
          JOIN client_profiles c ON dr.client_id = c.id
          JOIN users u ON c.user_id = u.id
