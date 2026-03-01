@@ -1,7 +1,7 @@
 // src/controllers/client.controller.js
 // Client profile management: view, update profile and subscription info
 
-const { query } = require('../config/database');
+const { query, transaction } = require('../config/database');
 const logger = require('../utils/logger');
 const { getStatusCode } = require('../middleware/error-handler.middleware');
 
