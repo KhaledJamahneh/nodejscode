@@ -17,10 +17,8 @@ const verificationCodes = new Map();
  * Generate JWT access token
  */
 const generateAccessToken = (user) => {
-  // Ensure roles is always an array for the JWT payload
-  const roles = Array.isArray(user.roles) 
-    ? user.roles 
-    : (user.role ? [user.role] : []);
+  // Database returns 'role' as array, ensure it's always an array
+  const roles = Array.isArray(user.role) ? user.role : [user.role];
 
   return jwt.sign(
     {

@@ -37,6 +37,32 @@ const poolConfig = process.env.DATABASE_URL
 // Create the connection pool
 const pool = new Pool(poolConfig);
 
+// Setup custom type parser for user_role[] enum array
+(async () => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(`
+      SELECT oid FROM pg_type WHERE typname = '_user_role'
+    `);
+    
+    if (result.rows.length > 0) {
+      const oid = result.rows[0].oid;
+      types.setTypeParser(oid, (val) => {
+        // Parse PostgreSQL array format: {value1,value2}
+        if (!val || val === '{}') return [];
+        return val.replace(/[{}]/g, '').split(',');
+      });
+      logger.info(`Custom type parser registered for _user_role (OID: ${oid})`);
+    } else {
+      logger.warn('_user_role type not found - roles may not parse correctly');
+    }
+    
+    client.release();
+  } catch (error) {
+    logger.error('Failed to setup custom type parser:', error.message);
+  }
+})();
+
 // Handle pool errors (idle connections)
 pool.on('error', (err, client) => {
   logger.error('Unexpected error on idle client', err);
