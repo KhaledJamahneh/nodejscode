@@ -1155,8 +1155,52 @@ class ClientRequestsTab extends ConsumerWidget {
                   ],
                 ),
               ),
-              Text('₪${request['total_price']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primaryBlue)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('₪${request['total_price']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primaryBlue)),
+                  if (status == 'pending') ...[
+                    const SizedBox(height: 8),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      color: AppTheme.criticalRed,
+                      onPressed: () => _confirmDeleteCouponRequest(context, request['id']),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ],
+              ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteCouponRequest(BuildContext context, int requestId) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.cancel),
+        content: const Text('Are you sure you want to cancel this coupon book request?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await ref.read(couponBookRequestsProvider.notifier).deleteCouponBookRequest(requestId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Coupon book request cancelled')),
+                );
+              }
+            },
+            child: Text(l10n.yes, style: const TextStyle(color: AppTheme.criticalRed)),
           ),
         ],
       ),

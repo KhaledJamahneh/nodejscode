@@ -95,6 +95,10 @@ class ClientService {
     return List<Map<String, dynamic>>.from(response.data['data']);
   }
 
+  Future<void> deleteCouponBookRequest(int requestId) async {
+    await _dio.delete('${ApiConfig.baseUrl}clients/coupon-books/$requestId');
+  }
+
   Future<void> saveHomeLocation({
     required double latitude,
     required double longitude,

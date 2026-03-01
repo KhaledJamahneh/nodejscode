@@ -164,6 +164,14 @@ class CouponBookRequestsNotifier extends StateNotifier<AsyncValue<List<Map<Strin
     // Refresh profile to get updated coupon balance
     _ref.invalidate(clientProfileProvider);
   }
+
+  Future<void> deleteCouponBookRequest(int requestId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await _service.deleteCouponBookRequest(requestId);
+      await loadRequests();
+    });
+  }
 }
 
 final couponBookRequestsProvider =
