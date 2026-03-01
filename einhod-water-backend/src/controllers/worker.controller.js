@@ -565,7 +565,12 @@ const completeDelivery = async (req, res) => {
       
       const currentGallons = workerLock.rows[0].vehicle_current_gallons;
       if (currentGallons < gallons_delivered) {
-        const unit = t(workerLang, 'unit_gallon'); throw new ValidationError(t(workerLang, 'error_insufficient_inventory', { current: currentGallons, delivered: gallons_delivered, unit }));
+        throw new ValidationError(t(workerLang, 'error_insufficient_inventory', { 
+          current: currentGallons, 
+          delivered: gallons_delivered, 
+          unit: 'gallon',
+          amount: currentGallons 
+        }));
       }
 
       // 2. Check if delivery exists and belongs to this worker (LOCK client profile)
@@ -929,8 +934,12 @@ const completeRequest = async (req, res) => {
       
       const currentGallons = workerLock.rows[0].vehicle_current_gallons;
       if (currentGallons < gallons_delivered) {
-        const unit = t(workerLang, 'unit_gallon');
-        throw new Error(t(workerLang, 'error_insufficient_inventory', { current: currentGallons, delivered: gallons_delivered, unit }));
+        throw new Error(t(workerLang, 'error_insufficient_inventory', { 
+          current: currentGallons, 
+          delivered: gallons_delivered, 
+          unit: 'gallon',
+          amount: currentGallons 
+        }));
       }
 
       // 2. Get request details
