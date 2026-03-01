@@ -452,7 +452,7 @@ PreferredSizeWidget _buildWorkerAppBar(
         children: [
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: () => context.push('/notifications'),
+            onPressed: () => context.push('/notifications?view_as=worker'),
           ),
           Consumer(
             builder: (context, ref, _) {

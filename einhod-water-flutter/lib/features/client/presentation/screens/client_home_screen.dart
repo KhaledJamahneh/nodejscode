@@ -1160,7 +1160,7 @@ class ClientNotificationsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final proximityState = ref.watch(proximityMonitorProvider);
-    final notificationsAsync = ref.watch(notificationsProvider);
+    final notificationsAsync = ref.watch(notificationsProvider('client'));
     final l10n = AppLocalizations.of(context)!;
 
     return notificationsAsync.when(
@@ -1168,7 +1168,7 @@ class ClientNotificationsTab extends ConsumerWidget {
         final notifications = data['notifications'] as List;
 
         return RefreshIndicator(
-          onRefresh: () => ref.refresh(notificationsProvider.future),
+          onRefresh: () => ref.refresh(notificationsProvider('client').future),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics()),

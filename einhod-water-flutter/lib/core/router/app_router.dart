@@ -61,9 +61,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         name: 'notifications',
-        pageBuilder: (context, state) => const CupertinoPage(
-          child: NotificationsScreen(),
-        ),
+        pageBuilder: (context, state) {
+          final viewAs = state.uri.queryParameters['view_as'];
+          return CupertinoPage(
+            child: NotificationsScreen(viewAs: viewAs),
+          );
+        },
       ),
 
       // Admin Routes

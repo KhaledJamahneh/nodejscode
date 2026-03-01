@@ -106,7 +106,7 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
                 icon: const Icon(Icons.notifications_none_rounded),
                 onPressed: () {
                   setState(() => _notificationsSeen = true);
-                  context.push('/notifications');
+                  context.push('/notifications?view_as=admin');
                 },
               ),
               Consumer(

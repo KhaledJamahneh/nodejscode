@@ -10,12 +10,14 @@ import '../../../../widgets/shared_widgets.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
 
 class NotificationsScreen extends ConsumerWidget {
-  const NotificationsScreen({super.key});
+  final String? viewAs;
+  
+  const NotificationsScreen({super.key, this.viewAs});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final notificationsAsync = ref.watch(notificationsProvider);
+    final notificationsAsync = ref.watch(notificationsProvider(viewAs));
 
     return Scaffold(
       appBar: AppBar(
@@ -24,7 +26,7 @@ class NotificationsScreen extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               await ref.read(notificationServiceProvider).markAllAsRead();
-              ref.invalidate(notificationsProvider);
+              ref.invalidate(notificationsProvider(viewAs));
               ref.invalidate(unreadCountProvider);
             },
             child: const Text('Mark all read'),
@@ -49,7 +51,7 @@ class NotificationsScreen extends ConsumerWidget {
           }
 
           return RefreshIndicator(
-            onRefresh: () => ref.refresh(notificationsProvider.future),
+            onRefresh: () => ref.refresh(notificationsProvider(viewAs).future),
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: notifications.length,
@@ -70,7 +72,7 @@ class NotificationsScreen extends ConsumerWidget {
               Text('Error: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => ref.invalidate(notificationsProvider),
+                onPressed: () => ref.invalidate(notificationsProvider(viewAs)),
                 child: Text(l10n.retry),
               ),
             ],

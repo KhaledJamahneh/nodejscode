@@ -6,9 +6,9 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
 });
 
-final notificationsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final notificationsProvider = FutureProvider.family<Map<String, dynamic>, String?>((ref, viewAs) async {
   final service = ref.read(notificationServiceProvider);
-  return await service.getNotifications();
+  return await service.getNotifications(viewAs: viewAs);
 });
 
 final unreadCountProvider = FutureProvider<int>((ref) async {

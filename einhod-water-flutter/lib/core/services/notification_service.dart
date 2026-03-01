@@ -10,14 +10,21 @@ class NotificationService {
     int limit = 50,
     int offset = 0,
     bool unreadOnly = false,
+    String? viewAs,
   }) async {
+    final queryParams = {
+      'limit': limit,
+      'offset': offset,
+      'unread_only': unreadOnly,
+    };
+    
+    if (viewAs != null) {
+      queryParams['view_as'] = viewAs;
+    }
+    
     final response = await _dio.get(
       ApiEndpoints.notifications,
-      queryParameters: {
-        'limit': limit,
-        'offset': offset,
-        'unread_only': unreadOnly,
-      },
+      queryParameters: queryParams,
     );
     return response.data['data'];
   }
