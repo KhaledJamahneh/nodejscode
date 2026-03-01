@@ -43,19 +43,16 @@ const getNotifications = async (req, res) => {
     const params = [userId];
 
     // Filter notifications by type based on current view
-    // Use view_as parameter if provided, otherwise infer from roles
     const currentView = view_as || (isAdmin ? 'admin' : isWorker ? 'worker' : 'client');
     
-    if (currentView === 'admin') {
-      // Admin view: only admin-relevant notifications
-      queryText += " AND type IN ('low_inventory', 'new_request', 'system', 'urgent', 'important', 'announcement')";
-    } else if (currentView === 'worker') {
-      // Worker view: only worker notifications
+    if (currentView === 'admin' && isAdmin) {
+      queryText += " AND type IN ('low_inventory', 'new_request', 'system', 'urgent', 'important', 'announcement', 'worker_assignment', 'delivery_status')";
+    } else if (currentView === 'worker' && isWorker) {
       queryText += " AND type IN ('worker_assignment', 'delivery_status', 'system', 'announcement')";
-    } else if (currentView === 'client') {
-      // Client view
+    } else if (currentView === 'client' && isClient) {
       queryText += " AND type IN ('delivery_status', 'coupon_status', 'announcement', 'system', 'payment')";
     }
+    // If no filter matched, show all notifications (fallback)
 
     if (unread_only === 'true') {
       queryText += ' AND is_read = false';
