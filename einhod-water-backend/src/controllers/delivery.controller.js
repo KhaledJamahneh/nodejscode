@@ -15,8 +15,11 @@ const createDeliveryRequest = async (req, res) => {
     const userId = req.user.id;
     const { priority, requested_gallons, payment_method, notes } = req.body;
 
+    logger.info('Create delivery request attempt:', { userId, body: req.body });
+
     // Validate required fields
     if (!payment_method) {
+      logger.warn('Missing payment_method', { userId });
       return res.status(400).json({
         success: false,
         message: 'payment_method is required'
@@ -24,6 +27,7 @@ const createDeliveryRequest = async (req, res) => {
     }
 
     if (!requested_gallons || requested_gallons <= 0) {
+      logger.warn('Invalid requested_gallons', { userId, requested_gallons });
       return res.status(400).json({
         success: false,
         message: 'requested_gallons must be greater than 0'
@@ -149,22 +153,23 @@ const createDeliveryRequest = async (req, res) => {
 
       const newRequest = result.rows[0];
 
-      // 9. Create notification (fire-and-forget, don't fail transaction)
+      // 9. Create notification (Tier 1 & Tier 2)
       try {
         const lang = clientData.preferred_language || 'en';
         const unit = getUnit(lang, 'gallon', requested_gallons);
-        await client.query(
-          `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-           VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery_request')`,
-          [
-            userId,
-            t(lang, 'request_submitted_title'),
-            t(lang, 'request_submitted_body', { amount: requested_gallons, unit }),
-            newRequest.id
-          ]
-        );
+        
+        await notificationService.createNotification({
+          userId,
+          title: t(lang, 'request_submitted_title'),
+          message: t(lang, 'request_submitted_body', { amount: requested_gallons, unit }),
+          type: 'delivery_status',
+          referenceId: newRequest.id,
+          referenceType: 'delivery_request',
+          notificationKey: 'notification.request.submitted', // For frontend localization
+          params: { amount: requested_gallons, unit }
+        });
       } catch (notifError) {
-        logger.warn('Failed to create notification:', notifError);
+        logger.warn('Non-blocking notification failure in createDeliveryRequest:', notifError);
       }
 
       return newRequest;
