@@ -7,6 +7,7 @@ import 'package:einhod_water/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/locale_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../providers/deliveries_provider.dart';
 import '../providers/users_provider.dart';
 import '../providers/requests_provider.dart';
@@ -49,8 +50,7 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Error: ${next.error.toString().replaceAll('Exception: ', '')}'),
+            content: Text(ErrorHandler.getMessage(next.error)),
             backgroundColor: AppTheme.iosRed,
           ),
         );
@@ -66,8 +66,7 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Error: ${next.error.toString().replaceAll('Exception: ', '')}'),
+            content: Text(ErrorHandler.getMessage(next.error)),
             backgroundColor: AppTheme.iosRed,
           ),
         );

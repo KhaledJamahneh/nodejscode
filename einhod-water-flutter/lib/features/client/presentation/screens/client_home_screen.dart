@@ -13,6 +13,7 @@ import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/notification_provider.dart';
 import '../../../../core/utils/double_utils.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../worker/presentation/providers/worker_provider.dart';
 import '../../../worker/data/models/worker_models.dart';
@@ -218,25 +219,31 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   void _setupListeners() {
     ref.listen(cancelRequestProvider, (previous, next) {
       if (next is AsyncError) {
-        _showSnackBar(context, 'Failed to cancel request: ${next.error}', isError: true);
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar(context, '${l10n.failedToCancelRequest}: ${ErrorHandler.getMessage(next.error)}', isError: true);
       } else if (next is AsyncData && previous is AsyncLoading) {
-        _showSnackBar(context, 'Request cancelled successfully');
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar(context, l10n.requestCancelledSuccessfully);
       }
     });
 
     ref.listen(updateClientProfileProvider, (previous, next) {
       if (next is AsyncError) {
-        _showSnackBar(context, 'Failed to update profile: ${next.error}', isError: true);
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar(context, '${l10n.failedToUpdateProfile}: ${ErrorHandler.getMessage(next.error)}', isError: true);
       } else if (next is AsyncData && previous is AsyncLoading) {
-        _showSnackBar(context, 'Profile updated successfully');
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar(context, l10n.profileUpdatedSuccessfully);
       }
     });
 
     ref.listen(changePasswordProvider, (previous, next) {
       if (next is AsyncError) {
-        _showSnackBar(context, 'Failed to change password: ${next.error}', isError: true);
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar(context, '${l10n.failedToChangePassword}: ${ErrorHandler.getMessage(next.error)}', isError: true);
       } else if (next is AsyncData && previous is AsyncLoading) {
-        _showSnackBar(context, 'Password changed successfully');
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar(context, l10n.passwordChangedSuccessfully);
       }
     });
 

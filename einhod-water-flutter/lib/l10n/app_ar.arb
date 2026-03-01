@@ -618,5 +618,13 @@
   "serialNumber": "الرقم التسلسلي",
   "assignedTo": "مخصص لـ",
   "viewDetails": "عرض التفاصيل",
-  "location": "الموقع"
+  "location": "الموقع",
+  "operationFailed": "فشلت العملية",
+  "updateSuccessful": "تم التحديث بنجاح",
+  "failedToCancelRequest": "فشل إلغاء الطلب",
+  "requestCancelledSuccessfully": "تم إلغاء الطلب بنجاح",
+  "failedToUpdateProfile": "فشل تحديث الملف الشخصي",
+  "profileUpdatedSuccessfully": "تم تحديث الملف الشخصي بنجاح",
+  "failedToChangePassword": "فشل تغيير كلمة المرور",
+  "passwordChangedSuccessfully": "تم تغيير كلمة المرور بنجاح"
 }

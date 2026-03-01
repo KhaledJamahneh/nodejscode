@@ -13,6 +13,7 @@ import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/premium_button.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/search_bar_widget.dart';
 import '../../../worker/presentation/providers/worker_provider.dart';
 import '../../../worker/data/models/worker_models.dart';
@@ -142,7 +143,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
                     const Icon(Icons.error_outline_rounded,
                         size: 48, color: AppTheme.iosRed),
                     const SizedBox(height: AppSpacing.lg),
-                    Text('${l10n.error}: ${error.toString()}',
+                    Text('${l10n.error}: ${ErrorHandler.getMessage(error)}',
                         style: const TextStyle(color: AppTheme.iosGray)),
                     const SizedBox(height: 24),
                     ElevatedButton(
@@ -1818,7 +1819,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen>
         },
         loading: () {},
         error: (error, _) {
-          final errorKey = error.toString().replaceAll('Exception: ', '');
+          final errorKey = ErrorHandler.getMessage(error).replaceAll('Exception: ', '');
           final message = errorKey == 'cannotDeleteUserWithRecords'
               ? l10n.cannotDeleteUserWithRecords
               : errorKey;
@@ -2634,7 +2635,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
         },
         loading: () {},
         error: (error, _) {
-          String message = error.toString().replaceAll('Exception: ', '');
+          String message = ErrorHandler.getMessage(error).replaceAll('Exception: ', '');
           if (error is DioException) {
             final data = error.response?.data;
             if (data is Map && data.containsKey('message')) {
@@ -3062,7 +3063,7 @@ class _EditUserScreenState extends ConsumerState<EditUserScreen> {
         },
         loading: () {},
         error: (error, _) {
-          String message = error.toString().replaceAll('Exception: ', '');
+          String message = ErrorHandler.getMessage(error).replaceAll('Exception: ', '');
           if (error is DioException) {
             final data = error.response?.data;
             if (data is Map && data.containsKey('message')) {

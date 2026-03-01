@@ -116,16 +116,19 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
       if (next is AsyncError) {
         _showSnackBar(ErrorHandler.getMessage(next.error), isError: true);
       } else if (next is AsyncData && previous is AsyncLoading) {
-        _showSnackBar('Update successful');
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar(l10n.updateSuccessful);
       }
     });
 
     ref.listen(changePasswordProvider, (previous, next) {
       if (next is AsyncError) {
-        _showSnackBar(ErrorHandler.getMessage(next.error),
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar('${l10n.failedToChangePassword}: ${ErrorHandler.getMessage(next.error)}',
             isError: true);
       } else if (next is AsyncData && previous is AsyncLoading) {
-        _showSnackBar('Password changed successfully');
+        final l10n = AppLocalizations.of(context)!;
+        _showSnackBar(l10n.passwordChangedSuccessfully);
       }
     });
   }

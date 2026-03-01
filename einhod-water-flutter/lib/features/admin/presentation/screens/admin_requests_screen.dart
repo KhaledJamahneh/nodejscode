@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../providers/requests_provider.dart';
 import '../../data/models/request_model.dart';
 
@@ -169,7 +170,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
           children: [
             const Icon(Icons.error_outline_rounded, size: 48, color: AppTheme.iosRed),
             const SizedBox(height: 16),
-            Text('${l10n.error}: ${error.toString()}', style: const TextStyle(color: AppTheme.iosGray)),
+            Text('${l10n.error}: ${ErrorHandler.getMessage(error)}', style: const TextStyle(color: AppTheme.iosGray)),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => ref.invalidate(adminCouponBookRequestsProvider),
@@ -373,7 +374,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
             const Icon(Icons.error_outline_rounded,
                 size: 48, color: AppTheme.iosRed),
             const SizedBox(height: 16),
-            Text('${l10n.error}: ${error.toString()}',
+            Text('${l10n.error}: ${ErrorHandler.getMessage(error)}',
                 style: const TextStyle(color: AppTheme.iosGray)),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -1208,7 +1209,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Error: ${error.toString().replaceAll('Exception: ', '')}'),
+                  'Error: ${ErrorHandler.getMessage(error).replaceAll('Exception: ', '')}'),
               backgroundColor: AppTheme.iosRed,
             ),
           );
@@ -1286,7 +1287,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Error: ${error.toString().replaceAll('Exception: ', '')}'),
+                  'Error: ${ErrorHandler.getMessage(error).replaceAll('Exception: ', '')}'),
               backgroundColor: AppTheme.iosRed,
             ),
           );
@@ -1342,7 +1343,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Error: ${error.toString().replaceAll('Exception: ', '')}'),
+                  'Error: ${ErrorHandler.getMessage(error).replaceAll('Exception: ', '')}'),
               backgroundColor: AppTheme.iosRed,
             ),
           );

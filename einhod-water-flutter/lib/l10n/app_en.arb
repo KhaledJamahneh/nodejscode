@@ -701,5 +701,13 @@
   "serialNumber": "Serial Number",
   "assignedTo": "Assigned To",
   "viewDetails": "View Details",
-  "location": "Location"
+  "location": "Location",
+  "operationFailed": "Operation failed",
+  "updateSuccessful": "Update successful",
+  "failedToCancelRequest": "Failed to cancel request",
+  "requestCancelledSuccessfully": "Request cancelled successfully",
+  "failedToUpdateProfile": "Failed to update profile",
+  "profileUpdatedSuccessfully": "Profile updated successfully",
+  "failedToChangePassword": "Failed to change password",
+  "passwordChangedSuccessfully": "Password changed successfully"
 }
