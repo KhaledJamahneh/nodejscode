@@ -1268,13 +1268,14 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
     int? selectedWorkerId;
     String? selectedClientSubscription;
     int? remainingCoupons;
+    String paymentMethod = 'coupon_book'; // Default payment method
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          final isCouponBook = selectedClientSubscription == 'coupon_book';
-          final isCash = selectedClientSubscription == 'cash' || selectedClientSubscription == 'pay_as_you_go';
+          final useCoupons = paymentMethod == 'coupon_book';
+          final useCash = paymentMethod == 'cash';
           
           return AlertDialog(
             title: Text(l10n.quickDelivery),
@@ -1301,7 +1302,9 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
                             selectedClientSubscription = client['profile']['subscription_type'];
                             remainingCoupons = client['profile']['remaining_coupons'] ?? 0;
                             paidCoupons = 0;
-                            if (!isCouponBook) {
+                            // Set default payment method based on subscription
+                            paymentMethod = selectedClientSubscription == 'coupon_book' ? 'coupon_book' : 'cash';
+                            if (useCash) {
                               paidAmount = gallons * 10.0;
                               priceController.text = paidAmount.toStringAsFixed(2);
                             }
@@ -1327,6 +1330,50 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
                       );
                     },
                   ),
+                  
+                  if (selectedClientId != null) ...[
+                    const SizedBox(height: 16),
+                    // Payment Method Selector
+                    DropdownButtonFormField<String>(
+                      value: paymentMethod,
+                      decoration: InputDecoration(
+                        labelText: '${l10n.paymentMethod} *',
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'coupon_book',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.confirmation_number_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text('From Coupons (${remainingCoupons ?? 0} available)'),
+                            ],
+                          ),
+                        ),
+                        const DropdownMenuItem(
+                          value: 'cash',
+                          child: Row(
+                            children: [
+                              Icon(Icons.payments_rounded, size: 20),
+                              SizedBox(width: 8),
+                              Text('Cash'),
+                            ],
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) => setState(() {
+                        paymentMethod = v!;
+                        if (useCash) {
+                          paidAmount = gallons * 10.0;
+                          priceController.text = paidAmount.toStringAsFixed(2);
+                        } else {
+                          paidCoupons = 0;
+                        }
+                      }),
+                    ),
+                  ],
+                  
                   const SizedBox(height: 24),
                   
                   // Gallons Delivered
@@ -1339,7 +1386,7 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
                         onPressed: () => setState(() {
                           if (gallons > 0) {
                             gallons--;
-                            if (isCash) {
+                            if (useCash) {
                               paidAmount = gallons * 10.0;
                               priceController.text = paidAmount.toStringAsFixed(2);
                             }
@@ -1355,7 +1402,7 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
                       IconButton.filled(
                         onPressed: () => setState(() {
                           gallons++;
-                          if (isCash) {
+                          if (useCash) {
                             paidAmount = gallons * 10.0;
                             priceController.text = paidAmount.toStringAsFixed(2);
                           }
@@ -1391,8 +1438,8 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Coupon Book specific
-                  if (isCouponBook) ...[
+                  // Coupon payment
+                  if (useCoupons) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -1433,8 +1480,8 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
                     ),
                   ],
                   
-                  // Cash specific
-                  if (isCash) ...[
+                  // Cash payment
+                  if (useCash) ...[
                     Row(
                       children: [
                         Expanded(
@@ -1507,11 +1554,12 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
                       'worker_id': selectedWorkerId,
                       'gallons_delivered': gallons,
                       'empty_gallons_returned': emptyGallons,
+                      'payment_method': paymentMethod,
                       'notes': notesController.text.isEmpty ? null : notesController.text,
                     };
-                    if (isCouponBook) {
+                    if (useCoupons) {
                       data['paid_coupons'] = paidCoupons;
-                    } else if (isCash) {
+                    } else if (useCash) {
                       data['custom_amount'] = double.tryParse(priceController.text) ?? (gallons * 10.0);
                       data['is_paid'] = paidAmount > 0;
                     }

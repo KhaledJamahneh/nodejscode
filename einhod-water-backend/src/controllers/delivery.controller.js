@@ -87,29 +87,17 @@ const createDeliveryRequest = async (req, res) => {
         throw error;
       }
 
-      // 5. Check coupon balance for coupon subscriptions
-            throw error;
-          }
-        }
-      }
-
-      // 6. Check and deduct coupons atomically (if using coupon book)
+      // 5. Check coupon balance for coupon subscriptions (if using coupon payment)
       if (payment_method === 'coupon_book') {
         const couponsNeeded = Math.ceil(requested_gallons / 20);
-        
-        const couponResult = await client.query(
-          'SELECT use_coupons($1, $2) as success',
-          [clientData.id, couponsNeeded]
-        );
-
-        if (!couponResult.rows[0].success) {
+        if (clientData.remaining_coupons < couponsNeeded) {
           const error = new Error(`Insufficient coupons. You need ${couponsNeeded} coupons but only have ${clientData.remaining_coupons}.`);
           error.status = 400;
           throw error;
         }
       }
 
-      // 7. Check for pending requests limit
+      // 6. Check for pending requests limit
       const pendingRequests = await client.query(
         `SELECT COUNT(*) as count 
          FROM delivery_requests 
