@@ -11,7 +11,14 @@
     "delivery_eta_title": "Delivery Update",
     "delivery_eta_body": "{worker} will arrive with {amount} {unit} at approximately {delivery_time}.",
     "payment_received_title": "Payment Received",
-    "payment_received_body": "Payment of {amount} {currency} received for {quantity} {unit}. Thank you!"
+    "payment_received_body": "Payment of {amount} {currency} received for {quantity} {unit}. Thank you!",
+    "error_insufficient_inventory": "Insufficient inventory. You have {current} {unit} but reported {delivered} delivered.",
+    "error_insufficient_coupons": "Insufficient coupons. Client has {remaining} coupons but {required} are needed.",
+    "error_request_not_found": "Delivery request not found",
+    "error_delivery_not_found": "Delivery not found",
+    "error_client_inactive": "Client account is inactive",
+    "error_already_completed": "This delivery has already been completed",
+    "error_not_assigned": "This delivery is not assigned to you"
   },
   "ar": {
     "delivery_completed_title": "اكتمل التوصيل",
@@ -25,6 +32,13 @@
     "delivery_eta_title": "تحديث التوصيل",
     "delivery_eta_body": "سيصل {worker} مع {amount} {unit} في تمام الساعة {delivery_time} تقريباً.",
     "payment_received_title": "تم استلام الدفع",
-    "payment_received_body": "تم استلام دفعة بقيمة {amount} {currency} مقابل {quantity} {unit}. شكراً لك!"
+    "payment_received_body": "تم استلام دفعة بقيمة {amount} {currency} مقابل {quantity} {unit}. شكراً لك!",
+    "error_insufficient_inventory": "المخزون غير كافٍ. لديك {current} {unit} ولكن تم الإبلاغ عن توصيل {delivered}.",
+    "error_insufficient_coupons": "الكوبونات غير كافية. لدى العميل {remaining} كوبون ولكن يحتاج إلى {required}.",
+    "error_request_not_found": "طلب التوصيل غير موجود",
+    "error_delivery_not_found": "التوصيل غير موجود",
+    "error_client_inactive": "حساب العميل غير نشط",
+    "error_already_completed": "تم إكمال هذا التوصيل بالفعل",
+    "error_not_assigned": "هذا التوصيل غير مخصص لك"
   }
 }

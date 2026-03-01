@@ -537,9 +537,9 @@ const completeDelivery = async (req, res) => {
       }
     }
 
-    // Get worker profile ID
+    // Get worker profile and language
     const workerResult = await query(
-      'SELECT id FROM worker_profiles WHERE user_id = $1',
+      'SELECT wp.id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.user_id = $1',
       [userId]
     );
 
@@ -551,6 +551,7 @@ const completeDelivery = async (req, res) => {
     }
 
     const workerId = workerResult.rows[0].id;
+    const workerLang = workerResult.rows[0].preferred_language;
 
     const effectiveTotalPrice = total_price !== undefined ? total_price : (gallons_delivered * 10);
 
@@ -563,7 +564,7 @@ const completeDelivery = async (req, res) => {
       
       const currentGallons = workerLock.rows[0].vehicle_current_gallons;
       if (currentGallons < gallons_delivered) {
-        throw new ValidationError(`Insufficient inventory. You have ${currentGallons} gallons but reported ${gallons_delivered} delivered.`);
+        const unit = t(workerLang, 'unit_gallon'); throw new ValidationError(t(workerLang, 'error_insufficient_inventory', { current: currentGallons, delivered: gallons_delivered, unit }));
       }
 
       // 2. Check if delivery exists and belongs to this worker (LOCK client profile)
@@ -579,17 +580,17 @@ const completeDelivery = async (req, res) => {
       );
 
       if (deliveryResult.rows.length === 0) {
-        throw new NotFoundError('Delivery not found or not assigned to you');
+        throw new NotFoundError(t(workerLang, 'error_delivery_not_found'));
       }
 
       const delivery = deliveryResult.rows[0];
 
       if (!delivery.is_active) {
-        throw new AuthorizationError('Client account is inactive');
+        throw new AuthorizationError(t(workerLang, 'error_client_inactive'));
       }
 
       if (delivery.status === 'completed') {
-        throw new ValidationError('Delivery is already completed');
+        throw new ValidationError(t(workerLang, 'error_already_completed'));
       }
 
       // 3. Business Logic Validations
@@ -666,7 +667,7 @@ const completeDelivery = async (req, res) => {
         
         const currentCoupons = freshBalance.rows[0].remaining_coupons;
         if (currentCoupons < couponsUsed) {
-          throw new Error(`Insufficient coupons. Client has ${currentCoupons} but this delivery requires ${couponsUsed}.`);
+          throw new Error(t(workerLang, 'error_insufficient_coupons', { remaining: currentCoupons, required: couponsUsed }));
         }
 
         await client.query(
@@ -901,9 +902,9 @@ const completeRequest = async (req, res) => {
       total_price
     } = req.body;
 
-    // Get worker profile ID
+    // Get worker profile and language
     const workerResult = await query(
-      'SELECT id FROM worker_profiles WHERE user_id = $1',
+      'SELECT wp.id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.user_id = $1',
       [userId]
     );
 
@@ -915,6 +916,7 @@ const completeRequest = async (req, res) => {
     }
 
     const workerId = workerResult.rows[0].id;
+    const workerLang = workerResult.rows[0].preferred_language;
 
     await transaction(async (client) => {
       // 1. Lock worker profile to check and update inventory safely
@@ -925,7 +927,8 @@ const completeRequest = async (req, res) => {
       
       const currentGallons = workerLock.rows[0].vehicle_current_gallons;
       if (currentGallons < gallons_delivered) {
-        throw new Error(`Insufficient inventory. You have ${currentGallons} gallons but reported ${gallons_delivered} delivered.`);
+        const unit = t(workerLang, 'unit_gallon');
+        throw new Error(t(workerLang, 'error_insufficient_inventory', { current: currentGallons, delivered: gallons_delivered, unit }));
       }
 
       // 2. Get request details
@@ -941,21 +944,21 @@ const completeRequest = async (req, res) => {
       );
 
       if (requestResult.rows.length === 0) {
-        throw new Error('Delivery request not found');
+        throw new Error(t(workerLang, 'error_request_not_found'));
       }
 
       const request = requestResult.rows[0];
 
       if (!request.is_active) {
-        throw new Error('Client account is inactive');
+        throw new Error(t(workerLang, 'error_client_inactive'));
       }
 
       if (request.assigned_worker_id !== workerId) {
-        throw new Error('Request is not assigned to you');
+        throw new Error(t(workerLang, 'error_not_assigned'));
       }
 
       if (request.status === 'completed') {
-        throw new Error('Request is already completed');
+        throw new Error(t(workerLang, 'error_already_completed'));
       }
 
       // 3. Business Logic Validations
@@ -1051,7 +1054,7 @@ const completeRequest = async (req, res) => {
         
         const currentCoupons = freshBalance.rows[0].remaining_coupons;
         if (currentCoupons < couponsUsed) {
-          throw new Error(`Insufficient coupons. Client has ${currentCoupons} but this delivery requires ${couponsUsed}.`);
+          throw new Error(t(workerLang, 'error_insufficient_coupons', { remaining: currentCoupons, required: couponsUsed }));
         }
 
         await client.query(
