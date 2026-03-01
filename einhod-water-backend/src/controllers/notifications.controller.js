@@ -42,13 +42,19 @@ const getNotifications = async (req, res) => {
 
     const params = [userId];
 
-    // Filter notifications by type based on role
-    if (isAdmin) {
-      // Admins should only see admin-relevant notifications (NOT worker assignments)
+    // Filter notifications by type based on role and current view
+    // If user has multiple roles, filter based on what they're currently viewing
+    const viewingAsWorker = isWorker && !isAdmin; // Pure worker
+    const viewingAsAdmin = isAdmin; // Admin view takes precedence
+    
+    if (viewingAsAdmin && !viewingAsWorker) {
+      // Admin view: only admin-relevant notifications
       queryText += " AND type IN ('low_inventory', 'new_request', 'system', 'urgent', 'important', 'announcement')";
-    } else if (isClient) {
-      queryText += " AND type IN ('delivery_status', 'coupon_status', 'announcement', 'system')";
-    } else if (isWorker) {
+    } else if (isClient && !isWorker && !isAdmin) {
+      // Pure client
+      queryText += " AND type IN ('delivery_status', 'coupon_status', 'announcement', 'system', 'payment')";
+    } else if (viewingAsWorker) {
+      // Worker view: only worker notifications
       queryText += " AND type IN ('worker_assignment', 'delivery_status', 'system', 'announcement')";
     }
 
