@@ -1,5 +1,9 @@
 
 const translationLoader = require('./translation-loader');
+const logger = require('./logger');
+
+// Deduplicate warning logs in production
+const warnedKeys = new Set();
 
 /**
  * Escape HTML special characters to prevent XSS
@@ -103,23 +107,30 @@ const t = (lang, key, params = {}, options = { escape: true }) => {
   if (!message && userLang !== 'en') {
     message = messages.en?.[key];
     if (message) {
-      const logger = require('./logger');
-      logger.warn('Missing translation', {
-        key,
-        requestedLang: userLang,
-        fallbackLang: 'en'
-      });
+      // Deduplicate warnings in production
+      const warnKey = `${key}:${userLang}`;
+      if (!warnedKeys.has(warnKey)) {
+        warnedKeys.add(warnKey);
+        logger.warn('Missing translation', {
+          key,
+          requestedLang: userLang,
+          fallbackLang: 'en'
+        });
+      }
     }
   }
   
   // Last resort: return key itself
   if (!message) {
-    const logger = require('./logger');
-    logger.error('Translation key not found', {
-      key,
-      requestedLang: userLang,
-      availableLanguages: Object.keys(messages)
-    });
+    // Deduplicate errors in production
+    if (!warnedKeys.has(key)) {
+      warnedKeys.add(key);
+      logger.error('Translation key not found', {
+        key,
+        requestedLang: userLang,
+        availableLanguages: Object.keys(messages)
+      });
+    }
     return key;
   }
   
