@@ -1835,7 +1835,7 @@ class _RecordDeliverySheetContentState extends State<_RecordDeliverySheetContent
     gallons = widget.delivery.scheduledGallons;
     emptyGallons = 0;
     paidCoupons = widget.delivery.scheduledGallons;
-    paidAmount = (gallons * 10).toDouble();
+    paidAmount = (gallons * widget.delivery.pricePerGallon);
     priceController = TextEditingController(text: paidAmount.toStringAsFixed(2));
     
     _captureLocation();
@@ -1918,7 +1918,7 @@ class _RecordDeliverySheetContentState extends State<_RecordDeliverySheetContent
                           if (gallons > 0) {
                             gallons--;
                             if (!widget.delivery.isCouponBook) {
-                              paidAmount = (gallons * 10).toDouble();
+                              paidAmount = (gallons * widget.delivery.pricePerGallon);
                               priceController.text = paidAmount.toStringAsFixed(2);
                             }
                           }
@@ -1933,7 +1933,7 @@ class _RecordDeliverySheetContentState extends State<_RecordDeliverySheetContent
                     Icons.add, () => setState(() {
                       gallons++;
                       if (!widget.delivery.isCouponBook) {
-                        paidAmount = (gallons * 10).toDouble();
+                        paidAmount = (gallons * widget.delivery.pricePerGallon);
                         priceController.text = paidAmount.toStringAsFixed(2);
                       }
                     })),
@@ -2101,7 +2101,7 @@ class _RecordDeliverySheetContentState extends State<_RecordDeliverySheetContent
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () async {
-                final totalPriceValue = double.tryParse(priceController.text) ?? (gallons * 10);
+                final totalPriceValue = double.tryParse(priceController.text) ?? (gallons * widget.delivery.pricePerGallon);
 
                 if (widget.delivery.isRequest) {
                   widget.ref.read(workerOpsProvider.notifier).completeRequest({

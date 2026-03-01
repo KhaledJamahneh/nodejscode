@@ -128,6 +128,8 @@ class WorkerDelivery {
   // FIX: New field — number of coupon-book coupons used (paid) for this delivery
   final int paidCouponsCount;
   final bool isRequest;
+  // FIX: Price per gallon from backend (defaults to 10 if not provided)
+  final double pricePerGallon;
 
   WorkerDelivery({
     required this.id,
@@ -146,6 +148,7 @@ class WorkerDelivery {
     required this.subscriptionType,
     this.paidCouponsCount = 0,
     this.isRequest = false,
+    this.pricePerGallon = 10.0,
   });
 
   factory WorkerDelivery.fromJson(Map<String, dynamic> json) {
@@ -167,6 +170,8 @@ class WorkerDelivery {
       // FIX: parse paid_coupons_count from API, defaulting to 0
       paidCouponsCount: json['paid_coupons_count'] ?? 0,
       isRequest: json['is_request'] ?? false,
+      // FIX: parse price_per_gallon from API, defaulting to 10.0
+      pricePerGallon: (json['price_per_gallon'] ?? 10.0).toDouble(),
     );
   }
 
