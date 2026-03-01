@@ -1351,9 +1351,9 @@ class ClientProfileTab extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 20),
-        Text(profile.fullName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+        Text(profile.fullName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
         const SizedBox(height: 4),
-        Text(profile.address, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.iosGray, fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(profile.address, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.iosGray, fontWeight: FontWeight.w600, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
       ],
     );
   }

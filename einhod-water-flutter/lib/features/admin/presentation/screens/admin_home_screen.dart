@@ -1051,8 +1051,10 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
               leading:
                   const Icon(Icons.factory_rounded, color: AppTheme.primary),
               title: Text(station.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(station.address ?? l10n.noAddress),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis),
+              subtitle: Text(station.address ?? l10n.noAddress,
+                  overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(height: 16),
             _buildSectionHeader(l10n.updateStatus),

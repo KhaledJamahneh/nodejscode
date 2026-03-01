@@ -407,7 +407,7 @@ class _ScheduleCard extends ConsumerWidget {
         leading: Checkbox(value: isSelected, onChanged: (_) => onToggle()),
         title: InkWell(
           onTap: () => _showClientInfo(context, ref, schedule.clientIds.first, schedule.clientName),
-          child: Text(schedule.clientName, style: const TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+          child: Text(schedule.clientName, style: const TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.underline), overflow: TextOverflow.ellipsis),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

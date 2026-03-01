@@ -950,8 +950,8 @@ class _DeliveryDashboardTabState extends ConsumerState<DeliveryDashboardTab>
             ListTile(
               leading:
                   const Icon(Icons.factory_rounded, color: AppTheme.primary),
-              title: Text(station.name),
-              subtitle: Text(station.address ?? l10n.noAddress),
+              title: Text(station.name, overflow: TextOverflow.ellipsis),
+              subtitle: Text(station.address ?? l10n.noAddress, overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(height: 16),
             Container(
@@ -1618,7 +1618,9 @@ class WorkerMainList extends ConsumerWidget {
                 children: [
                   Text(delivery.clientName,
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w800)),
+                          fontSize: 18, fontWeight: FontWeight.w800),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
                   Text(delivery.clientAddress,
                       style: const TextStyle(
                           color: AppTheme.iosGray, fontSize: 13),
