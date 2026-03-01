@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: einhod-water-backend
+    env: node
+    rootDir: einhod-water-backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
