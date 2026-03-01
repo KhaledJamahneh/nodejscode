@@ -1674,4 +1674,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get location => 'Location';
+
+  @override
+  String get operationFailed => 'Operation failed';
+
+  @override
+  String get updateSuccessful => 'Update successful';
+
+  @override
+  String get failedToCancelRequest => 'Failed to cancel request';
+
+  @override
+  String get requestCancelledSuccessfully => 'Request cancelled successfully';
+
+  @override
+  String get failedToUpdateProfile => 'Failed to update profile';
+
+  @override
+  String get profileUpdatedSuccessfully => 'Profile updated successfully';
+
+  @override
+  String get failedToChangePassword => 'Failed to change password';
+
+  @override
+  String get passwordChangedSuccessfully => 'Password changed successfully';
 }

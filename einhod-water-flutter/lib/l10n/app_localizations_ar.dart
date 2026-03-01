@@ -1674,4 +1674,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get location => 'الموقع';
+
+  @override
+  String get operationFailed => 'فشلت العملية';
+
+  @override
+  String get updateSuccessful => 'تم التحديث بنجاح';
+
+  @override
+  String get failedToCancelRequest => 'فشل إلغاء الطلب';
+
+  @override
+  String get requestCancelledSuccessfully => 'تم إلغاء الطلب بنجاح';
+
+  @override
+  String get failedToUpdateProfile => 'فشل تحديث الملف الشخصي';
+
+  @override
+  String get profileUpdatedSuccessfully => 'تم تحديث الملف الشخصي بنجاح';
+
+  @override
+  String get failedToChangePassword => 'فشل تغيير كلمة المرور';
+
+  @override
+  String get passwordChangedSuccessfully => 'تم تغيير كلمة المرور بنجاح';
 }
