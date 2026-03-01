@@ -6,7 +6,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/providers/notification_provider.dart';
 import '../../../../core/utils/notification_localizer.dart';
-import 'package:einhod_water/core/widgets/widgets.dart';
+import '../../../../widgets/shared_widgets.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
 
 class NotificationsScreen extends ConsumerWidget {

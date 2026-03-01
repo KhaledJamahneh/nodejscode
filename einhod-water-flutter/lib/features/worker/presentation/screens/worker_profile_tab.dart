@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
-import 'package:einhod_water/core/widgets/widgets.dart';
+import '../../../../widgets/shared_widgets.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/location_tracking_service.dart';

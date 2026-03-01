@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:einhod_water/core/theme/app_theme.dart';
-import 'package:einhod_water/core/widgets/widgets.dart';
+import '../../widgets/shared_widgets.dart';
 import '../../models/models.dart';
 
 class WorkerHomeScreen extends StatefulWidget {

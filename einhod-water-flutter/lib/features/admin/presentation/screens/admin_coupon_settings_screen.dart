@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
-import 'package:einhod_water/core/widgets/widgets.dart';
+import '../../../../widgets/shared_widgets.dart';
 import '../providers/coupon_settings_provider.dart';
 import '../../data/admin_service.dart';
 import '../providers/admin_provider.dart';
