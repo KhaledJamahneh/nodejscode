@@ -10,7 +10,7 @@ import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/api_config.dart';
 import 'worker_expenses_tab.dart';
 import 'worker_profile_tab.dart';
-import '../../../../widgets/shared_widgets.dart';
+import 'package:einhod_water/core/widgets/widgets.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/storage_service.dart';

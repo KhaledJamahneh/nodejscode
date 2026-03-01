@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../widgets/shared_widgets.dart';
+import 'package:einhod_water/core/widgets/widgets.dart';
 import '../providers/admin_provider.dart';
 
 final _typesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {

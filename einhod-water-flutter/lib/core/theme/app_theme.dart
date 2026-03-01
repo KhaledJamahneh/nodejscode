@@ -404,56 +404,6 @@ class ModernCard extends StatelessWidget {
   }
 }
 
-class GlassCard extends StatelessWidget {
-  final Widget child;
-  final double blur;
-  final double opacity;
-  final Color? color;
-  final BorderRadius? borderRadius;
-  final EdgeInsetsGeometry? padding;
-  final EdgeInsetsGeometry? margin;
-
-  const GlassCard({
-    super.key,
-    required this.child,
-    this.blur = 10,
-    this.opacity = 0.5,
-    this.color,
-    this.borderRadius,
-    this.padding,
-    this.margin,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color effectiveColor =
-        color ?? (isDark ? Colors.black : Colors.white);
-
-    return Container(
-      margin: margin ?? const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-      child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: Container(
-            padding: padding ?? const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: effectiveColor.withOpacity(opacity),
-              borderRadius: borderRadius ?? BorderRadius.circular(16),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
-                width: 1,
-              ),
-            ),
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // Priority Colors Helper
 class PriorityColors {
   static Color getColor(String priority) {
@@ -511,36 +461,5 @@ class StatusColors {
       default:
         return Icons.help_outline_rounded;
     }
-  }
-}
-
-// Legacy Alias for compatibility
-class GlassContainer extends StatelessWidget {
-  final Widget child;
-  final double blur;
-  final double opacity;
-  final Color color;
-  final BorderRadius? borderRadius;
-
-  const GlassContainer({
-    super.key,
-    required this.child,
-    this.blur = 10,
-    this.opacity = 0.1,
-    this.color = Colors.white,
-    this.borderRadius,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      blur: blur,
-      opacity: opacity,
-      color: color,
-      borderRadius: borderRadius,
-      margin: EdgeInsets.zero,
-      padding: EdgeInsets.zero,
-      child: child,
-    );
   }
 }
