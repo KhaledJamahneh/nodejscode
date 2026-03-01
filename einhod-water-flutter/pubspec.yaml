@@ -39,6 +39,7 @@ dependencies:
   mobile_scanner: ^5.0.0
   geolocator_linux: ^0.2.4
   geocoding: ^4.0.0
+  battery_plus: ^7.0.0
   
   # Notifications
   flutter_local_notifications: ^17.0.0

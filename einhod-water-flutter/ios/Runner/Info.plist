@@ -49,5 +49,9 @@
 	<string>We use your location to notify clients when you are nearby for delivery.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We use your location to notify clients when you are nearby for delivery.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

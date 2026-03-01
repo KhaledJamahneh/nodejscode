@@ -1,6 +1,7 @@
 // lib/core/services/location_tracking_service.dart
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
+import 'package:battery_plus/battery_plus.dart';
 import 'package:dio/dio.dart';
 import '../config/api_config.dart';
 import 'storage_service.dart';
@@ -8,6 +9,7 @@ import 'storage_service.dart';
 class LocationTrackingService {
   static StreamSubscription<Position>? _positionStream;
   static final Dio _dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
+  static final Battery _battery = Battery();
   static bool _isTracking = false;
 
   static Future<bool> startTracking() async {
@@ -54,12 +56,35 @@ class LocationTrackingService {
     _isTracking = true;
     print('✅ Starting location stream');
 
-    // Update location every 30 seconds
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
+    // Battery-aware adaptive location tracking (2026 best practice)
+    final batteryLevel = await _battery.batteryLevel;
+    final LocationSettings settings;
+    
+    if (batteryLevel > 50) {
+      // High battery: High accuracy for best UX
+      settings = const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 50,
-      ),
+        distanceFilter: 50, // Update every 50m
+      );
+      print('🔋 Battery $batteryLevel% - High accuracy mode');
+    } else if (batteryLevel > 20) {
+      // Medium battery: Balanced mode
+      settings = const LocationSettings(
+        accuracy: LocationAccuracy.medium,
+        distanceFilter: 100, // Update every 100m
+      );
+      print('🔋 Battery $batteryLevel% - Balanced mode');
+    } else {
+      // Low battery: Power saving mode
+      settings = const LocationSettings(
+        accuracy: LocationAccuracy.low,
+        distanceFilter: 200, // Update every 200m
+      );
+      print('🔋 Battery $batteryLevel% - Power saving mode');
+    }
+
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: settings,
     ).listen((Position position) {
       _updateLocation(position);
     });
