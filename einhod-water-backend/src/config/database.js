@@ -2,6 +2,7 @@
 // Database connection configuration using pg (node-postgres)
 
 const { Pool, types } = require('pg');
+const parseArray = require('postgres-array').parse;
 const logger = require('../utils/logger');
 const { getContext } = require('../utils/context');
 
@@ -48,9 +49,9 @@ const pool = new Pool(poolConfig);
     if (result.rows.length > 0) {
       const oid = result.rows[0].oid;
       types.setTypeParser(oid, (val) => {
-        // Parse PostgreSQL array format: {value1,value2}
+        // Use postgres-array for safe parsing (handles commas, quotes, escapes)
         if (!val || val === '{}') return [];
-        return val.replace(/[{}]/g, '').split(',');
+        return parseArray(val);
       });
       logger.info(`Custom type parser registered for _user_role (OID: ${oid})`);
     } else {
