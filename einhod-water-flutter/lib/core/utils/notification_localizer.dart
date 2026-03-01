@@ -18,6 +18,7 @@ class NotificationLocalizer {
         return l10n.notificationWorkerNearby;
       case 'notification.generic':
       default:
+        // Graceful fallback for new notification types from backend
         return fallbackTitle;
     }
   }
@@ -41,6 +42,7 @@ class NotificationLocalizer {
         return l10n.notificationWorkerNearbyMsg(workerName);
       case 'notification.generic':
       default:
+        // Graceful fallback for new notification types from backend
         return fallbackMessage;
     }
   }
