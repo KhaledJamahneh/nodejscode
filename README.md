@@ -6,17 +6,11 @@ Water delivery management system with Flutter frontend and Node.js backend.
 
 ```
 einhod-longterm/
-├── src/                         # Backend source (for Render deployment)
-├── package.json                 # Backend dependencies (for Render)
-├── .env                         # Backend config (for Render)
-│
-├── einhod-water-backend/        # Backend development folder
-├── einhod-water-flutter/        # Frontend development folder
+├── einhod-water-backend/        # Backend (Node.js + Express + PostgreSQL)
+├── einhod-water-flutter/        # Frontend (Flutter)
 ├── docs/                        # Documentation
 └── README.md                    # This file
 ```
-
-**Note**: Backend files exist in both root (for Render) and `einhod-water-backend/` (for organization). When making backend changes, update both locations or copy from `einhod-water-backend/` to root before pushing.
 
 ## 🚀 Quick Start
 

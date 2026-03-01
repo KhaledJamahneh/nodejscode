@@ -16,6 +16,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/location_tracking_service.dart';
 import '../../../../core/utils/dialog_utils.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/notification_provider.dart';
@@ -113,7 +114,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
   void _setupListeners() {
     ref.listen(workerOpsProvider, (previous, next) {
       if (next is AsyncError) {
-        _showSnackBar('Operation failed: ${next.error}', isError: true);
+        _showSnackBar(ErrorHandler.getMessage(next.error), isError: true);
       } else if (next is AsyncData && previous is AsyncLoading) {
         _showSnackBar('Update successful');
       }
@@ -121,7 +122,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
 
     ref.listen(changePasswordProvider, (previous, next) {
       if (next is AsyncError) {
-        _showSnackBar('Failed to change password: ${next.error}',
+        _showSnackBar(ErrorHandler.getMessage(next.error),
             isError: true);
       } else if (next is AsyncData && previous is AsyncLoading) {
         _showSnackBar('Password changed successfully');
