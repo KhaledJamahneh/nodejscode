@@ -162,6 +162,17 @@ const query = async (text, params) => {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
     
+    // Warn if query returns excessive rows (potential memory issue)
+    if (result.rowCount > 10000) {
+      logger.warn('Large result set detected', {
+        query: text.length > 100 ? text.substring(0, 100) + '...' : text,
+        rowCount: result.rowCount,
+        duration: `${duration}ms`,
+        hint: 'Consider adding LIMIT clause or pagination',
+        requestId: context.requestId
+      });
+    }
+    
     logger.debug('Executed query', {
       query: text.length > 500 ? text.substring(0, 500) + '...' : text,
       params: sanitizeParams(params),
