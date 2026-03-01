@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import 'package:einhod_water/core/theme/app_theme.dart';
 
 class StatusBadge extends StatelessWidget {
   final String status;

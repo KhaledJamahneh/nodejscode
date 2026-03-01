@@ -1,7 +1,7 @@
 // lib/core/widgets/feedback_widgets.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_theme.dart';
+import 'package:einhod_water/core/theme/app_theme.dart';
 
 /// Interactive button with loading state and haptic feedback
 class FeedbackButton extends StatefulWidget {

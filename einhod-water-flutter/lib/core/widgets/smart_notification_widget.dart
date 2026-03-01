@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+import 'package:einhod_water/core/theme/app_theme.dart';
 import 'glass_card.dart';
 
 class SmartNotificationList extends StatelessWidget {

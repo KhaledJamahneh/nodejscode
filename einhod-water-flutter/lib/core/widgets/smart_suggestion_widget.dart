@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../theme/app_theme.dart';
+import 'package:einhod_water/core/theme/app_theme.dart';
 import '../services/ai_prediction_service.dart';
 import 'glass_card.dart';
 

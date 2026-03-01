@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:einhod_water/theme/app_theme.dart';
+import 'package:einhod_water/core/theme/app_theme.dart';
 
 class LiquidLoadingIndicator extends StatefulWidget {
   final double size;

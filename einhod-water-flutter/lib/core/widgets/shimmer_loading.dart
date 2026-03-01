@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../theme/app_theme.dart';
+import 'package:einhod_water/core/theme/app_theme.dart';
 
 class ShimmerLoading extends StatelessWidget {
   final Widget child;

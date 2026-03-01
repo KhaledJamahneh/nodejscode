@@ -4,7 +4,7 @@
 // Any callers that imported this file must update their usage accordingly.
 
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import 'package:einhod_water/core/theme/app_theme.dart';
 
 class CoreOfflineBanner extends StatelessWidget {
   final bool isOffline;

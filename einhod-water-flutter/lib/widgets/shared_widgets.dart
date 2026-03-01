@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
-import '../theme/app_theme.dart';
+import 'package:einhod_water/core/theme/app_theme.dart';
 
 // ─── App Bar with language toggle ────────────────────────────────────────────
 class EinhodAppBar extends StatelessWidget implements PreferredSizeWidget {
