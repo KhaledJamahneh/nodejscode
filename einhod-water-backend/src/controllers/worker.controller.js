@@ -4,6 +4,7 @@
 const { query, transaction } = require('../config/database');
 const { t } = require('../utils/i18n');
 const logger = require('../utils/logger');
+const { ValidationError, NotFoundError, AuthorizationError } = require('../utils/errors');
 
 /**
  * GET /api/v1/workers/profile
@@ -529,7 +530,7 @@ const completeDelivery = async (req, res) => {
       
       const currentGallons = workerLock.rows[0].vehicle_current_gallons;
       if (currentGallons < gallons_delivered) {
-        throw new Error(`Insufficient inventory. You have ${currentGallons} gallons but reported ${gallons_delivered} delivered.`);
+        throw new ValidationError(`Insufficient inventory. You have ${currentGallons} gallons but reported ${gallons_delivered} delivered.`);
       }
 
       // 2. Check if delivery exists and belongs to this worker (LOCK client profile)
@@ -545,30 +546,30 @@ const completeDelivery = async (req, res) => {
       );
 
       if (deliveryResult.rows.length === 0) {
-        throw new Error('Delivery not found or not assigned to you');
+        throw new NotFoundError('Delivery not found or not assigned to you');
       }
 
       const delivery = deliveryResult.rows[0];
 
       if (!delivery.is_active) {
-        throw new Error('Client account is inactive');
+        throw new AuthorizationError('Client account is inactive');
       }
 
       if (delivery.status === 'completed') {
-        throw new Error('Delivery is already completed');
+        throw new ValidationError('Delivery is already completed');
       }
 
       // 3. Business Logic Validations
       if (gallons_delivered > delivery.requested_gallons * 1.1) {
-        throw new Error(`Delivered amount (${gallons_delivered}) significantly exceeds request (${delivery.requested_gallons}). Max 10% over-delivery allowed.`);
+        throw new ValidationError(`Delivered amount (${gallons_delivered}) significantly exceeds request (${delivery.requested_gallons}). Max 10% over-delivery allowed.`);
       }
       if (paid_amount !== undefined && paid_amount > effectiveTotalPrice) {
-        throw new Error('Amount paid cannot exceed total price');
+        throw new ValidationError('Amount paid cannot exceed total price');
       }
       
       const maxReturnable = parseInt(gallons_delivered) + parseInt(delivery.gallons_on_hand || 0);
       if (empty_gallons_returned !== undefined && empty_gallons_returned > maxReturnable) {
-        throw new Error(`Empty gallons returned (${empty_gallons_returned}) cannot exceed total reserved gallons (${maxReturnable} = ${gallons_delivered} delivered + ${delivery.gallons_on_hand || 0} on hand)`);
+        throw new ValidationError(`Empty gallons returned (${empty_gallons_returned}) cannot exceed total reserved gallons (${maxReturnable} = ${gallons_delivered} delivered + ${delivery.gallons_on_hand || 0} on hand)`);
       }
 
       // Check if payment columns exist
@@ -738,7 +739,39 @@ const completeDelivery = async (req, res) => {
     });
   } catch (error) {
     logger.error('Complete delivery error:', error);
-    res.status(500).json({
+    
+    // Determine status code based on error type or message
+    let statusCode = 500;
+    
+    if (error.statusCode) {
+      // Custom error with statusCode property
+      statusCode = error.statusCode;
+    } else if (
+      error.message.includes('Insufficient inventory') ||
+      error.message.includes('Insufficient coupons') ||
+      error.message.includes('already completed') ||
+      error.message.includes('exceeds request') ||
+      error.message.includes('cannot be negative') ||
+      error.message.includes('cannot exceed') ||
+      error.message.includes('must be')
+    ) {
+      // Business validation errors
+      statusCode = 400;
+    } else if (
+      error.message.includes('not found') ||
+      error.message.includes('not assigned')
+    ) {
+      // Resource not found
+      statusCode = 404;
+    } else if (
+      error.message.includes('inactive') ||
+      error.message.includes('cannot deliver to themselves')
+    ) {
+      // Authorization errors
+      statusCode = 403;
+    }
+    
+    res.status(statusCode).json({
       success: false,
       message: error.message || 'Failed to complete delivery'
     });
