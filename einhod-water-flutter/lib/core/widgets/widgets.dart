@@ -10,6 +10,5 @@ export 'premium_text_field.dart';
 export 'search_bar_widget.dart';
 export 'shimmer_loading.dart';
 export 'skeletons.dart';
-export 'smart_notification_widget.dart';
 export 'smart_suggestion_widget.dart';
 export 'status_badge.dart';

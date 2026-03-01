@@ -4,6 +4,7 @@
 const { query, transaction } = require('../config/database');
 const { t } = require('../utils/i18n');
 const logger = require('../utils/logger');
+const notificationService = require('../services/notification.service');
 const { ValidationError, NotFoundError, AuthorizationError } = require('../utils/errors');
 
 /**
@@ -727,49 +728,29 @@ const completeDelivery = async (req, res) => {
         throw new Error('Client profile not found');
       }
 
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery')`,
-        [
-          clientUser.rows[0].user_id,
-          t(delivery.preferred_language, 'delivery_completed_title'),
-          t(delivery.preferred_language, 'delivery_completed_body', gallons_delivered),
-          deliveryId
-        ]
-      );
+      const notification = await notificationService.createNotification({
+        userId: clientUser.rows[0].user_id,
+        title: t(delivery.preferred_language, 'delivery_completed_title'),
+        message: t(delivery.preferred_language, 'delivery_completed_body', gallons_delivered),
+        type: 'delivery_status',
+        referenceId: deliveryId,
+        referenceType: 'delivery',
+        notificationKey: 'notification.delivery.completed',
+        params: { amount: gallons_delivered },
+        dbClient: client, // INSIDE transaction
+        sendPush: false // DON'T send push yet, wait for commit
+      });
       
-      // Return data needed for deferred tasks
+      // Return data needed for deferred push
       return {
-        clientUserId: clientUser.rows[0].user_id,
-        language: delivery.preferred_language,
-        gallonsDelivered: gallons_delivered
+        userId: clientUser.rows[0].user_id,
+        notification
       };
     });
 
-    // ✅ CORRECT: External API calls AFTER transaction commits
-    // This prevents holding database connections during slow network calls
-    // 
-    // IMPORTANT: Transaction has already committed at this point
-    // - Database state is permanent (delivery marked completed)
-    // - If FCM fails, we log but don't rollback (can't rollback after commit)
-    // - User can still see notification in app by pulling notification history
-    try {
-      // TODO: When FCM is implemented, send push notification here
-      // await fcmService.sendNotification(result.clientUserId, {
-      //   title: t(result.language, 'delivery_completed_title'),
-      //   body: t(result.language, 'delivery_completed_body', result.gallonsDelivered),
-      //   lang: result.language
-      // });
-    } catch (notificationError) {
-      // Log but don't fail the request - notification is non-critical
-      // The notification record is already in the database, user can see it in-app
-      logger.error('Failed to send push notification (delivery still completed):', {
-        error: notificationError.message,
-        userId: result.clientUserId,
-        deliveryId,
-        note: 'User can view notification in app notification history'
-      });
-    }
+    // ✅ CORRECT: External push notification AFTER transaction commits
+    // Database state is permanent (delivery marked completed)
+    notificationService.sendPush(result.userId, result.notification);
 
     logger.info('Delivery completed:', { userId, deliveryId, gallons_delivered });
 

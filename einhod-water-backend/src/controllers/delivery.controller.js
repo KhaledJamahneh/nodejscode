@@ -5,6 +5,7 @@ const { query, transaction } = require('../config/database');
 const logger = require('../utils/logger');
 const { getStatusCode } = require('../middleware/error-handler.middleware');
 const { t, getUnit } = require('../utils/i18n');
+const notificationService = require('../services/notification.service');
 
 /**
  * POST /api/v1/deliveries/request

@@ -126,6 +126,7 @@ class CreateRequestNotifier extends StateNotifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       await _service.createRequest(
         requestedGallons: gallons,
+        paymentMethod: 'cash', // Default payment method
         notes: notes,
       );
       _ref.invalidate(clientRequestsProvider);

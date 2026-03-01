@@ -3,6 +3,7 @@ const { query, transaction } = require('../config/database');
 const logger = require('../utils/logger');
 const { getStatusCode } = require('../middleware/error-handler.middleware');
 const { t } = require('../utils/i18n');
+const notificationService = require('../services/notification.service');
 
 /**
  * POST /api/v1/payments/record
@@ -54,18 +55,18 @@ const recordPayment = async (req, res) => {
         [userId, paymentAmount, payment_method || 'cash', notes || 'Manual payment record']
       );
 
-      // 4. Create notification
+      // 4. Create notification (Tier 1 & Tier 2)
       const lang = profileRes.rows[0].preferred_language || 'en';
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'payment', $4, 'payment')`,
-        [
-          userId,
-          t(lang, 'payment_received_title'),
-          t(lang, 'payment_received_body', { amount: paymentAmount, currency: '₪', quantity: '', unit: '' }),
-          paymentRes.rows[0].id
-        ]
-      );
+      await notificationService.createNotification({
+        userId,
+        title: t(lang, 'payment_received_title'),
+        message: t(lang, 'payment_received_body', { amount: paymentAmount, currency: '₪', quantity: '', unit: '' }),
+        type: 'payment',
+        referenceId: paymentRes.rows[0].id,
+        referenceType: 'payment',
+        notificationKey: 'notification.payment.received',
+        params: { amount: paymentAmount }
+      });
 
       return { newDebt, paymentId: paymentRes.rows[0].id };
     });

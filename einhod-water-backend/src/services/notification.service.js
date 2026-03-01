@@ -18,6 +18,7 @@ const fcmService = require('./fcm.service');
  * @param {string} [params.notificationKey] - Optional key for frontend localization
  * @param {object} [params.params] - Optional parameters for localization
  * @param {boolean} [params.sendPush=true] - Whether to attempt a push notification
+ * @param {object} [params.dbClient] - Optional database client for transaction support
  * 
  * @returns {Promise<object>} - The created notification from the database
  */
@@ -30,11 +31,14 @@ exports.createNotification = async ({
   referenceType,
   notificationKey,
   params = {},
-  sendPush = true
+  sendPush = true,
+  dbClient // Optional client for transaction support
 }) => {
   try {
     // 1. Tier 1: Store in Database (Guaranteed)
-    const result = await query(
+    // Use the provided transaction client if available, otherwise use the pool
+    const executor = dbClient || { query };
+    const result = await executor.query(
       `INSERT INTO notifications (
         user_id, title, message, type, reference_id, reference_type, 
         notification_key, params
@@ -57,27 +61,7 @@ exports.createNotification = async ({
 
     // 2. Tier 2: Best-effort Push Notification
     if (sendPush) {
-      // Fire-and-forget push notification to avoid blocking the main flow
-      // This matches the "best-effort" guarantee in the docs
-      (async () => {
-        try {
-          // In a real implementation, we would fetch user's preferred language metadata
-          // and send localized push or include metadata for the app to localize
-          await fcmService.sendToUser(userId, {
-            title: notification.title,
-            body: notification.message,
-            data: {
-              id: notification.id.toString(),
-              type: notification.type,
-              reference_id: (notification.reference_id || '').toString(),
-              reference_type: notification.reference_type || '',
-              notification_key: notification.notification_key || ''
-            }
-          });
-        } catch (pushError) {
-          logger.warn('Best-effort push notification failed:', pushError);
-        }
-      })();
+      this.sendPush(userId, notification);
     }
 
     return notification;
@@ -85,6 +69,32 @@ exports.createNotification = async ({
     logger.error('Failed to create notification:', error);
     throw error; // Rethrow to allow caller to handle database failure
   }
+};
+
+/**
+ * Send a best-effort push notification for an existing database notification
+ * @param {number} userId 
+ * @param {object} notification 
+ */
+exports.sendPush = (userId, notification) => {
+  // Fire-and-forget push notification to avoid blocking the main flow
+  (async () => {
+    try {
+      await fcmService.sendToUser(userId, {
+        title: notification.title,
+        body: notification.message,
+        data: {
+          id: (notification.id || '').toString(),
+          type: notification.type,
+          reference_id: (notification.reference_id || '').toString(),
+          reference_type: notification.reference_type || '',
+          notification_key: notification.notification_key || ''
+        }
+      });
+    } catch (pushError) {
+      logger.warn('Best-effort push notification failed:', pushError);
+    }
+  })();
 };
 
 /**
