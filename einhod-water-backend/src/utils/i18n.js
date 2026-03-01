@@ -7,6 +7,14 @@ const warnedKeys = new Set();
 
 /**
  * Escape HTML special characters to prevent XSS
+ * 
+ * SECURITY NOTE: This only escapes parameters, not translation strings.
+ * Translation strings in messages.json are trusted (controlled by developers).
+ * User-provided data should NEVER be added to messages.json.
+ * 
+ * Safe: t('en', 'welcome_message', { name: userInput })  // name is escaped
+ * Unsafe: Adding userInput directly to messages.json     // DON'T DO THIS
+ * 
  * @param {string} str - String to escape
  * @returns {string} - Escaped string
  */
@@ -27,6 +35,19 @@ const escapeHtml = (str) => {
 
 /**
  * Arabic pluralization rules for numbers
+ * 
+ * NOTE: This is a simplified implementation suitable for this application.
+ * Full CLDR Arabic pluralization has 6 categories based on mod 100.
+ * This implementation covers the common cases for gallons/coupons/deliveries.
+ * 
+ * Simplified rules:
+ * - 0: zero form
+ * - 1: one/singular
+ * - 2: two/dual
+ * - 3-10: few
+ * - 11-99: many
+ * - 100+: other
+ * 
  * @param {number} count - The number
  * @param {object} forms - {zero, one, two, few, many, other}
  */
