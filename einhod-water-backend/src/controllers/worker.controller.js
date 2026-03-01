@@ -539,7 +539,7 @@ const completeDelivery = async (req, res) => {
 
     // Get worker profile and language
     const workerResult = await query(
-      'SELECT wp.id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.user_id = $1',
+      'SELECT wp.id, COALESCE(cp.preferred_language, 'en') as preferred_language FROM worker_profiles wp LEFT JOIN client_profiles cp ON wp.user_id = cp.user_id WHERE wp.user_id = $1',
       [userId]
     );
 
@@ -904,7 +904,7 @@ const completeRequest = async (req, res) => {
 
     // Get worker profile and language
     const workerResult = await query(
-      'SELECT wp.id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.user_id = $1',
+      'SELECT wp.id, COALESCE(cp.preferred_language, 'en') as preferred_language FROM worker_profiles wp LEFT JOIN client_profiles cp ON wp.user_id = cp.user_id WHERE wp.user_id = $1',
       [userId]
     );
 
