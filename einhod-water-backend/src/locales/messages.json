@@ -34,7 +34,7 @@
   },
   "ar": {
     "delivery_completed_title": "اكتمل التوصيل",
-    "delivery_completed_body": "تم اكتمال توصيل {amount} {unit} بنجاح.",
+    "delivery_completed_body": "تم توصيل {amount} {unit} بنجاح.",
     "request_accepted_title": "تم قبول الطلب",
     "request_accepted_body": "قام {worker} بقبول طلب التوصيل الخاص بك وهو في الطريق إليك.",
     "scheduled_accepted_title": "تم قبول التوصيل",
