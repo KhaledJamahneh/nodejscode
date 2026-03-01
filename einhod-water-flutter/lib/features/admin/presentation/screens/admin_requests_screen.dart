@@ -6,8 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/widgets/modern_card.dart';
 import '../providers/requests_provider.dart';
+import '../providers/users_provider.dart';
 import '../../data/models/request_model.dart';
+import '../../data/admin_service.dart';
 
 class AdminRequestsScreen extends ConsumerStatefulWidget {
   final int initialIndex;
@@ -149,19 +152,27 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
 
     return couponRequestsAsync.when(
       data: (requests) {
-        return requests.isEmpty
-            ? _buildEmptyState(context)
-            : RefreshIndicator(
-                onRefresh: () => ref.refresh(adminCouponBookRequestsProvider.future),
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                  itemCount: requests.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    return _buildCouponBookRequestCard(context, ref, requests[index]);
-                  },
-                ),
-              );
+        if (requests.isEmpty) return _buildEmptyState(context);
+        
+        // Group requests by client_id
+        final grouped = <int, List<Map<String, dynamic>>>{};
+        for (var req in requests) {
+          final clientId = req['client_id'] as int;
+          grouped.putIfAbsent(clientId, () => []).add(req);
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => ref.refresh(adminCouponBookRequestsProvider.future),
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            itemCount: grouped.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final clientRequests = grouped.values.elementAt(index);
+              return _buildGroupedCouponRequests(context, ref, clientRequests);
+            },
+          ),
+        );
       },
       loading: () => const Center(child: CircularProgressIndicator.adaptive()),
       error: (error, _) => Center(
@@ -178,6 +189,197 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGroupedCouponRequests(BuildContext context, WidgetRef ref, List<Map<String, dynamic>> requests) {
+    final l10n = AppLocalizations.of(context)!;
+    final firstReq = requests.first;
+    
+    return ModernCard(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.person_rounded, color: AppTheme.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${firstReq['client_name']}',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded, size: 14, color: AppTheme.iosGray),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${firstReq['client_address']}',
+                            style: const TextStyle(color: AppTheme.iosGray, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (firstReq['client_phone'] != null)
+                IconButton(
+                  icon: const Icon(Icons.phone_rounded, color: AppTheme.primary),
+                  onPressed: () {},
+                ),
+            ],
+          ),
+          const Divider(height: 24),
+          ...requests.map((req) => _buildCouponRequestItem(context, ref, req)),
+          const SizedBox(height: 12),
+          if (firstReq['assigned_worker_id'] == null)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => _showAssignWorkerDialog(context, ref, requests.map((r) => r['id'] as int).toList()),
+                icon: const Icon(Icons.person_add_rounded),
+                label: Text(l10n.assignWorker),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.successGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${l10n.assignedTo}: ${firstReq['worker_name']}',
+                    style: const TextStyle(color: AppTheme.successGreen, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCouponRequestItem(BuildContext context, WidgetRef ref, Map<String, dynamic> request) {
+    final l10n = AppLocalizations.of(context)!;
+    final status = request['status'] ?? 'pending';
+    final statusColor = status == 'pending' ? AppTheme.midUrgentOrange :
+                       status == 'approved' || status == 'assigned' ? AppTheme.successGreen :
+                       status == 'completed' ? AppTheme.primaryBlue : AppTheme.iosGray;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.iosLightGray.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            request['book_type'] == 'physical' ? Icons.menu_book_rounded : Icons.qr_code_2_rounded,
+            color: AppTheme.primary,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${request['book_size']} ${l10n.pages}',
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                Text(
+                  '${request['book_type']} • ${_getStatusText(status, l10n)}',
+                  style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '₪${request['total_price']}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getStatusText(String status, AppLocalizations l10n) {
+    switch (status) {
+      case 'pending': return l10n.pending;
+      case 'approved': return l10n.approved;
+      case 'assigned': return 'Assigned';
+      case 'completed': return l10n.delivered;
+      case 'cancelled': return l10n.cancelled;
+      default: return status;
+    }
+  }
+
+  void _showAssignWorkerDialog(BuildContext context, WidgetRef ref, List<int> requestIds) {
+    final l10n = AppLocalizations.of(context)!;
+    final workersAsync = ref.watch(availableWorkersProvider);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.assignWorker),
+        content: workersAsync.when(
+          data: (workers) => SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: workers.length,
+              itemBuilder: (context, index) {
+                final worker = workers[index];
+                return ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
+                  title: Text(worker['full_name'] ?? ''),
+                  subtitle: Text(worker['worker_type'] ?? ''),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    for (final id in requestIds) {
+                      await ref.read(adminServiceProvider).assignCouponBookWorker(id, worker['id']);
+                    }
+                    ref.invalidate(adminCouponBookRequestsProvider);
+                  },
+                );
+              },
+            ),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+          error: (e, _) => Text('Error: $e'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+        ],
       ),
     );
   }

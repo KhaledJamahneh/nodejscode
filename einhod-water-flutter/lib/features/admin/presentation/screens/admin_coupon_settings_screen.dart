@@ -67,7 +67,6 @@ class AdminCouponSettingsScreen extends ConsumerWidget {
     final sizeController = TextEditingController();
     final priceController = TextEditingController();
     final bonusController = TextEditingController(text: '0');
-    final expiryDaysController = TextEditingController(text: '365');
 
     showDialog(
       context: context,
@@ -103,15 +102,6 @@ class AdminCouponSettingsScreen extends ConsumerWidget {
                   hintText: '0',
                 ),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: expiryDaysController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Expiry Days',
-                  hintText: '365',
-                ),
-              ),
             ],
           ),
         ),
@@ -125,7 +115,6 @@ class AdminCouponSettingsScreen extends ConsumerWidget {
               final size = int.tryParse(sizeController.text);
               final pricePerPage = double.tryParse(priceController.text);
               final bonus = int.tryParse(bonusController.text) ?? 0;
-              final expiryDays = int.tryParse(expiryDaysController.text) ?? 365;
 
               if (size == null || pricePerPage == null) {
                 return;
@@ -136,7 +125,6 @@ class AdminCouponSettingsScreen extends ConsumerWidget {
                   size: size,
                   pricePerPage: pricePerPage,
                   bonusGallons: bonus,
-                  expiryDays: expiryDays,
                 );
                 ref.invalidate(adminCouponSizesProvider);
                 if (context.mounted) {

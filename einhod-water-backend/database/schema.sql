@@ -50,7 +50,6 @@ CREATE TABLE coupon_sizes (
     size INTEGER NOT NULL UNIQUE, -- Number of pages/coupons
     price_per_page DECIMAL(10, 2) DEFAULT 0.50,
     bonus_gallons INTEGER DEFAULT 0,
-    expiry_days INTEGER DEFAULT 365,
     available_stock INTEGER DEFAULT 100,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -77,7 +76,6 @@ CREATE TABLE client_profiles (
     subscription_type subscription_type NOT NULL,
     subscription_start_date DATE,
     subscription_end_date DATE,
-    subscription_expiry_date DATE,
     remaining_coupons INTEGER DEFAULT 0,
     bonus_gallons INTEGER DEFAULT 0,
     monthly_usage_gallons DECIMAL(10, 2) DEFAULT 0,
@@ -175,14 +173,16 @@ CREATE TABLE coupon_book_requests (
     book_type VARCHAR(20) NOT NULL, -- 'physical', 'electronic'
     coupon_size_id INTEGER REFERENCES coupon_sizes(id),
     total_price DECIMAL(10, 2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'completed', 'cancelled'
+    status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'assigned', 'completed', 'cancelled'
     payment_method payment_method DEFAULT 'cash',
+    assigned_worker_id INTEGER REFERENCES worker_profiles(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_coupon_requests_client ON coupon_book_requests(client_id);
 CREATE INDEX idx_coupon_requests_status ON coupon_book_requests(status);
+CREATE INDEX idx_coupon_requests_worker ON coupon_book_requests(assigned_worker_id);
 
 CREATE TRIGGER update_coupon_requests_updated_at BEFORE UPDATE ON coupon_book_requests
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

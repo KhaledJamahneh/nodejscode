@@ -288,6 +288,20 @@ router.delete(
 router.get('/coupon-book-requests', adminController.getAllCouponBookRequests);
 
 /**
+ * PATCH /api/v1/admin/coupon-book-requests/:id/assign
+ * Assign worker to coupon book request
+ */
+router.patch(
+  '/coupon-book-requests/:id/assign',
+  [
+    param('id').isInt().withMessage('Request ID must be a number'),
+    body('worker_id').isInt().withMessage('Worker ID must be a number')
+  ],
+  validate,
+  adminController.assignCouponBookWorker
+);
+
+/**
  * PATCH /api/v1/admin/coupon-book-requests/:id/status
  * Update status of a coupon book request
  */
@@ -327,8 +341,7 @@ router.patch(
   [
     param('id').isInt().withMessage('Size ID must be a number'),
     body('price_per_page').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number'),
-    body('bonus_gallons').optional().isInt({ min: 0 }).withMessage('Bonus must be a non-negative integer'),
-    body('expiry_days').optional().isInt({ min: 1 }).withMessage('Expiry days must be a positive integer')
+    body('bonus_gallons').optional().isInt({ min: 0 }).withMessage('Bonus must be a non-negative integer')
   ],
   validate,
   adminController.updateCouponSize

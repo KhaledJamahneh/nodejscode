@@ -38,7 +38,7 @@ const createDeliveryRequest = async (req, res) => {
     const request = await transaction(async (client) => {
       // 1. Get client profile and system config (LOCK ROW)
       const clientResult = await client.query(
-        `SELECT cp.id, cp.remaining_coupons, cp.subscription_type, cp.subscription_expiry_date, 
+        `SELECT cp.id, cp.remaining_coupons, cp.subscription_type, 
                 cp.current_debt, u.is_active, u.preferred_language
          FROM client_profiles cp
          JOIN users u ON cp.user_id = u.id
@@ -80,34 +80,14 @@ const createDeliveryRequest = async (req, res) => {
         throw error;
       }
 
-      // 4. Check debt limit for cash subscriptions FIRST
+      // 4. Check debt limit for cash subscriptions
       if (clientData.subscription_type === 'cash' && parseFloat(clientData.current_debt) >= debtLimit) {
         const error = new Error(`Credit limit reached. Please pay your outstanding balance of ₪${clientData.current_debt} to continue.`);
         error.status = 403;
         throw error;
       }
 
-      // 5. Check subscription expiry with grace period (ONLY for cash subscriptions)
-      if (clientData.subscription_expiry_date) {
-        const expiryDate = new Date(clientData.subscription_expiry_date);
-        const today = new Date();
-        
-        if (clientData.subscription_type === 'cash') {
-          // Apply grace period for cash subscriptions
-          const graceDays = clientData.grace_period_days || 10;
-          const gracePeriodDate = new Date(expiryDate);
-          gracePeriodDate.setDate(gracePeriodDate.getDate() + graceDays);
-          
-          if (today > gracePeriodDate) {
-            const error = new Error('Your subscription has expired. Please renew to continue.');
-            error.status = 403;
-            throw error;
-          }
-        } else {
-          // No grace period for coupon subscriptions (prepaid)
-          if (today > expiryDate) {
-            const error = new Error('Your subscription has expired. Please renew to continue.');
-            error.status = 403;
+      // 5. Check coupon balance for coupon subscriptions
             throw error;
           }
         }

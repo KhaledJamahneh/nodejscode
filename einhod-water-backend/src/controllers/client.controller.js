@@ -27,7 +27,6 @@ const getProfile = async (req, res) => {
         cp.subscription_type,
         cp.subscription_start_date,
         cp.subscription_end_date,
-        cp.subscription_expiry_date,
         cp.remaining_coupons,
         cp.monthly_usage_gallons,
         cp.current_debt,
@@ -51,20 +50,6 @@ const getProfile = async (req, res) => {
     }
 
     const profile = result.rows[0];
-
-    // Check subscription status
-    let subscriptionStatus = 'active';
-    if (profile.subscription_expiry_date) {
-      const expiryDate = new Date(profile.subscription_expiry_date);
-      const today = new Date();
-      const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-
-      if (expiryDate < today) {
-        subscriptionStatus = 'expired';
-      } else if (daysUntilExpiry <= 7) {
-        subscriptionStatus = 'expiring_soon';
-      }
-    }
 
     res.json({
       success: true,
@@ -222,20 +207,10 @@ const getSubscription = async (req, res) => {
         cp.subscription_type,
         cp.subscription_start_date,
         cp.subscription_end_date,
-        cp.subscription_expiry_date,
         cp.remaining_coupons,
         cp.monthly_usage_gallons,
         cp.current_debt,
-        CASE 
-          WHEN cp.subscription_expiry_date < CURRENT_DATE THEN 'expired'
-          WHEN cp.subscription_expiry_date < CURRENT_DATE + INTERVAL '7 days' THEN 'expiring_soon'
-          ELSE 'active'
-        END as status,
-        CASE 
-          WHEN cp.subscription_expiry_date >= CURRENT_DATE 
-          THEN cp.subscription_expiry_date - CURRENT_DATE 
-          ELSE 0 
-        END as days_remaining
+        'active' as status
       FROM client_profiles cp
       WHERE cp.user_id = $1`,
       [userId]
@@ -705,7 +680,7 @@ const createCouponBookRequest = async (req, res) => {
 
         const requestResult = await client.query(
           `INSERT INTO coupon_book_requests (client_id, book_type, coupon_size_id, total_price, status, payment_method)
-           VALUES ($1, $2, $3, $4, 'pending', $5) RETURNING *`,
+           VALUES ($1, $2, $3, $4, 'approved', $5) RETURNING *`,
           [clientProfileId, book_type, coupon_size_id, calculated_total, payment_method]
         );
 

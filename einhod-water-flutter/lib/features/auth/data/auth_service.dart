@@ -9,7 +9,11 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String username, String password) async {
     try {
-      final response = await _dio.post(
+      // Reset Dio to ensure no stale tokens
+      DioClient.reset();
+      final dio = DioClient.instance;
+      
+      final response = await dio.post(
         ApiEndpoints.login,
         data: {
           'username': username,
@@ -50,9 +54,6 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    // Clear storage first to prevent redirect issues
-    await StorageService.clearAll();
-    
     try {
       final refreshToken = await StorageService.getRefreshToken();
 
@@ -61,8 +62,12 @@ class AuthService {
         data: {'refreshToken': refreshToken},
       );
     } catch (e) {
-      // Ignore logout errors as storage is already cleared
+      // Ignore logout errors
     }
+    
+    // Clear storage and reset Dio instance
+    await StorageService.clearAll();
+    DioClient.reset();
   }
 
   Future<Map<String, dynamic>> getCurrentUser() async {

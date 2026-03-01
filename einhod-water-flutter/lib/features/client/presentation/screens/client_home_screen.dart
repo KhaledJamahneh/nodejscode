@@ -620,11 +620,6 @@ class _ClientDashboardTabState extends ConsumerState<ClientDashboardTab> {
                           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
                         ),
                       ),
-                      if (profile.subscriptionExpiryDate != null)
-                        Text(
-                          l10n.expiresIn(7),
-                          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
                     ],
                   ),
                   const SizedBox(height: 32),
@@ -1124,6 +1119,19 @@ class ClientRequestsTab extends ConsumerWidget {
     );
   }
 
+  String _getStatusText(String status, AppLocalizations l10n) {
+    switch (status) {
+      case 'pending': return l10n.pending;
+      case 'approved': return l10n.approved;
+      case 'assigned': return 'Assigned';
+      case 'delivered': return l10n.delivered;
+      case 'completed': return l10n.completed;
+      case 'cancelled': return l10n.cancelled;
+      case 'in_progress': return l10n.inProgress;
+      default: return status;
+    }
+  }
+
   Widget _buildCouponBookRequestCard(BuildContext context, Map<String, dynamic> request) {
     final l10n = AppLocalizations.of(context)!;
     final status = request['status'] ?? 'pending';
@@ -1137,7 +1145,7 @@ class ClientRequestsTab extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatusBadge(status.toUpperCase(), statusColor),
+              _buildStatusBadge(_getStatusText(status, l10n).toUpperCase(), statusColor),
               Text(_formatDateShort(request['created_at']), style: const TextStyle(fontSize: 13, color: AppTheme.iosGray, fontWeight: FontWeight.w600)),
             ],
           ),
@@ -1220,7 +1228,7 @@ class ClientRequestsTab extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatusBadge(request.statusDisplay.toUpperCase(), statusColor, icon: statusIcon),
+              _buildStatusBadge(request.statusDisplay(l10n).toUpperCase(), statusColor, icon: statusIcon),
               Text(_formatDateShort(request.requestDate), style: const TextStyle(fontSize: 13, color: AppTheme.iosGray, fontWeight: FontWeight.w600)),
             ],
           ),
@@ -1467,10 +1475,7 @@ class ClientProfileTab extends ConsumerWidget {
             padding: const EdgeInsets.all(8),
             child: Column(
               children: [
-                _buildModernInfoRow(Icons.card_membership_rounded, l10n.type, _getSubscriptionTypeDisplay(context, profile.subscriptionType), color: AppTheme.primaryBlue),
-                _buildModernInfoRow(Icons.info_outline_rounded, l10n.status, _getSubscriptionStatusDisplay(context, profile.subscriptionStatus), color: profile.subscriptionStatus == 'active' ? AppTheme.successGreen : AppTheme.criticalRed),
-                if (profile.subscriptionExpiryDate != null)
-                  _buildModernInfoRow(Icons.event_available_rounded, l10n.expires, DateFormat('MMM d, yyyy').format(DateTime.parse(profile.subscriptionExpiryDate!)), isLast: true),
+                _buildModernInfoRow(Icons.card_membership_rounded, l10n.type, _getSubscriptionTypeDisplay(context, profile.subscriptionType), color: AppTheme.primaryBlue, isLast: true),
               ],
             ),
           ),

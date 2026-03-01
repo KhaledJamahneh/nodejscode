@@ -1,4 +1,6 @@
 // lib/features/admin/data/models/delivery_model.dart
+import 'package:einhod_water/l10n/app_localizations.dart';
+
 class Delivery {
   final int id;
   final String deliveryDate;
@@ -45,16 +47,16 @@ class Delivery {
     );
   }
 
-  String get statusDisplay {
+  String statusDisplay(AppLocalizations l10n) {
     switch (status) {
       case 'pending':
-        return 'Pending';
+        return l10n.pending;
       case 'in_progress':
-        return 'In Progress';
+        return l10n.inProgress;
       case 'completed':
-        return 'Completed';
+        return l10n.completed;
       case 'cancelled':
-        return 'Cancelled';
+        return l10n.cancelled;
       default:
         return status;
     }

@@ -68,6 +68,13 @@ final usersProvider = FutureProvider<List<User>>((ref) async {
   );
 
   return usersData.map((data) => User.fromJson(data)).toList();
+
+// Available workers provider (for assignment)
+final availableWorkersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final service = ref.read(adminServiceProvider);
+  final usersData = await service.getUsers(role: 'delivery_worker', isActive: true, limit: 100);
+  return usersData;
+});
 });
 
 // Coupon sizes provider

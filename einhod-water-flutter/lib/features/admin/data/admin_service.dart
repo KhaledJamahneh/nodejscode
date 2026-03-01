@@ -148,13 +148,11 @@ class AdminService {
     required int size,
     required double pricePerPage,
     int bonusGallons = 0,
-    int expiryDays = 365,
   }) async {
     await _dio.post(ApiEndpoints.adminCouponSizes, data: {
       'size': size,
       'price_per_page': pricePerPage,
       'bonus_gallons': bonusGallons,
-      'expiry_days': expiryDays,
     });
   }
 
@@ -419,6 +417,13 @@ class AdminService {
       },
     );
     return List<Map<String, dynamic>>.from(response.data['data']['requests']);
+  }
+
+  Future<void> assignCouponBookWorker(int requestId, int workerId) async {
+    await _dio.patch(
+      '${ApiEndpoints.adminCouponBookRequests}/$requestId/assign',
+      data: {'worker_id': workerId},
+    );
   }
 
   Future<void> updateCouponBookRequestStatus(int requestId, String status) async {

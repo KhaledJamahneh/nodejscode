@@ -1258,164 +1258,285 @@ class _AdminDeliveriesScreenState extends ConsumerState<AdminDeliveriesScreen> {
 
   void _showQuickDeliveryDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final gallonsController = TextEditingController(text: '50');
-    final emptyGallonsController = TextEditingController(text: '0');
+    int gallons = 50;
+    int emptyGallons = 0;
+    int paidCoupons = 0;
+    double paidAmount = 0;
+    final priceController = TextEditingController();
     final notesController = TextEditingController();
-    final specialPriceController = TextEditingController();
     int? selectedClientId;
     int? selectedWorkerId;
     String? selectedClientSubscription;
-    bool isPaid = false;
-    bool useSpecialPrice = false;
+    int? remainingCoupons;
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(l10n.quickDelivery),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FutureBuilder(
-                  future: ref.read(adminServiceProvider).getUsers(role: 'client', limit: 1000),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) return const CircularProgressIndicator();
-                    final clients = snapshot.data!.where((c) => c['profile'] != null).toList();
-                    return DropdownButtonFormField<int>(
-                      value: selectedClientId,
-                      decoration: InputDecoration(labelText: '${l10n.client} *'),
-                      items: clients.map<DropdownMenuItem<int>>((c) => DropdownMenuItem<int>(
-                        value: c['profile']['id'],
-                        child: Text(c['username']),
-                      )).toList(),
-                      onChanged: (v) {
-                        setState(() {
-                          selectedClientId = v;
-                          final client = clients.firstWhere((c) => c['profile']['id'] == v);
-                          selectedClientSubscription = client['profile']['subscription_type'];
-                        });
-                      },
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                FutureBuilder(
-                  future: ref.read(adminServiceProvider).getUsers(role: 'delivery_worker', limit: 1000),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) return const CircularProgressIndicator();
-                    final workers = snapshot.data!;
-                    return DropdownButtonFormField<int>(
-                      value: selectedWorkerId,
-                      decoration: InputDecoration(labelText: '${l10n.worker} *'),
-                      items: workers.map<DropdownMenuItem<int>>((w) => DropdownMenuItem<int>(
-                        value: w['profile']?['id'],
-                        child: Text(w['username']),
-                      )).toList(),
-                      onChanged: (v) => setState(() => selectedWorkerId = v),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: gallonsController,
-                  decoration: InputDecoration(labelText: '${l10n.gallonsDelivered} *'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) => setState(() {}),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: emptyGallonsController,
-                  decoration: InputDecoration(labelText: l10n.emptyGallonsReturned),
-                  keyboardType: TextInputType.number,
-                ),
-                if (selectedClientSubscription == 'pay_as_you_go' || selectedClientSubscription == 'cash') ...[
+        builder: (context, setState) {
+          final isCouponBook = selectedClientSubscription == 'coupon_book';
+          final isCash = selectedClientSubscription == 'cash' || selectedClientSubscription == 'pay_as_you_go';
+          
+          return AlertDialog(
+            title: Text(l10n.quickDelivery),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FutureBuilder(
+                    future: ref.read(adminServiceProvider).getUsers(role: 'client', limit: 1000),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const CircularProgressIndicator();
+                      final clients = snapshot.data!.where((c) => c['profile'] != null).toList();
+                      return DropdownButtonFormField<int>(
+                        value: selectedClientId,
+                        decoration: InputDecoration(labelText: '${l10n.client} *'),
+                        items: clients.map<DropdownMenuItem<int>>((c) => DropdownMenuItem<int>(
+                          value: c['profile']['id'],
+                          child: Text('${c['profile']['full_name']} (${c['username']})'),
+                        )).toList(),
+                        onChanged: (v) {
+                          setState(() {
+                            selectedClientId = v;
+                            final client = clients.firstWhere((c) => c['profile']['id'] == v);
+                            selectedClientSubscription = client['profile']['subscription_type'];
+                            remainingCoupons = client['profile']['remaining_coupons'] ?? 0;
+                            paidCoupons = 0;
+                            if (!isCouponBook) {
+                              paidAmount = gallons * 10.0;
+                              priceController.text = paidAmount.toStringAsFixed(2);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
                   const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: Text(l10n.paid),
-                    value: isPaid,
-                    onChanged: (v) => setState(() => isPaid = v),
+                  FutureBuilder(
+                    future: ref.read(adminServiceProvider).getUsers(role: 'delivery_worker', limit: 1000),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const CircularProgressIndicator();
+                      final workers = snapshot.data!;
+                      return DropdownButtonFormField<int>(
+                        value: selectedWorkerId,
+                        decoration: InputDecoration(labelText: '${l10n.worker} *'),
+                        items: workers.map<DropdownMenuItem<int>>((w) => DropdownMenuItem<int>(
+                          value: w['profile']?['id'],
+                          child: Text('${w['profile']?['full_name'] ?? w['username']}'),
+                        )).toList(),
+                        onChanged: (v) => setState(() => selectedWorkerId = v),
+                      );
+                    },
                   ),
+                  const SizedBox(height: 24),
+                  
+                  // Gallons Delivered
+                  Text(l10n.gallons, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   const SizedBox(height: 8),
-                  SwitchListTile(
-                    title: Text(l10n.specialPrice),
-                    value: useSpecialPrice,
-                    onChanged: (v) => setState(() => useSpecialPrice = v),
-                  ),
-                  const SizedBox(height: 8),
-                  if (useSpecialPrice)
-                    TextField(
-                      controller: specialPriceController,
-                      decoration: InputDecoration(
-                        labelText: '${l10n.customAmount} (₪)',
-                        prefixIcon: const Icon(Icons.attach_money_rounded),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton.filled(
+                        onPressed: () => setState(() {
+                          if (gallons > 0) {
+                            gallons--;
+                            if (isCash) {
+                              paidAmount = gallons * 10.0;
+                              priceController.text = paidAmount.toStringAsFixed(2);
+                            }
+                          }
+                        }),
+                        icon: const Icon(Icons.remove),
+                        style: IconButton.styleFrom(backgroundColor: AppTheme.iosGray4),
                       ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (v) => setState(() {}),
-                    )
-                  else
-                    Text(
-                      '${l10n.amount}: ₪${int.tryParse(gallonsController.text) != null ? int.parse(gallonsController.text) * 10 : 0}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text('$gallons', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
+                      ),
+                      IconButton.filled(
+                        onPressed: () => setState(() {
+                          gallons++;
+                          if (isCash) {
+                            paidAmount = gallons * 10.0;
+                            priceController.text = paidAmount.toStringAsFixed(2);
+                          }
+                        }),
+                        icon: const Icon(Icons.add),
+                        style: IconButton.styleFrom(backgroundColor: AppTheme.primary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Empty Gallons
+                  Text(l10n.emptyGallons, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton.filled(
+                        onPressed: () => setState(() { if (emptyGallons > 0) emptyGallons--; }),
+                        icon: const Icon(Icons.remove),
+                        style: IconButton.styleFrom(backgroundColor: AppTheme.iosGray4),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text('$emptyGallons', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
+                      ),
+                      IconButton.filled(
+                        onPressed: () => setState(() => emptyGallons++),
+                        icon: const Icon(Icons.add),
+                        style: IconButton.styleFrom(backgroundColor: AppTheme.primary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Coupon Book specific
+                  if (isCouponBook) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Paid Coupons', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${remainingCoupons ?? 0} remaining',
+                            style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton.filled(
+                          onPressed: () => setState(() { if (paidCoupons > 0) paidCoupons--; }),
+                          icon: const Icon(Icons.remove),
+                          style: IconButton.styleFrom(backgroundColor: AppTheme.iosGray4),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text('$paidCoupons', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
+                        ),
+                        IconButton.filled(
+                          onPressed: () => setState(() { if (paidCoupons < (remainingCoupons ?? 0)) paidCoupons++; }),
+                          icon: const Icon(Icons.add),
+                          style: IconButton.styleFrom(backgroundColor: AppTheme.primary),
+                        ),
+                      ],
+                    ),
+                  ],
+                  
+                  // Cash specific
+                  if (isCash) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Total Price', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: priceController,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: const InputDecoration(
+                                  prefixText: '₪ ',
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Amount Paid', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              const SizedBox(height: 8),
+                              TextField(
+                                onChanged: (v) => setState(() => paidAmount = double.tryParse(v) ?? 0),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: InputDecoration(
+                                  hintText: paidAmount.toStringAsFixed(2),
+                                  prefixText: '₪ ',
+                                  border: const OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: notesController,
+                    decoration: InputDecoration(labelText: '${l10n.notes} (${l10n.optional})'),
+                    maxLines: 2,
+                  ),
                 ],
-                const SizedBox(height: 16),
-                TextField(
-                  controller: notesController,
-                  decoration: InputDecoration(labelText: '${l10n.notes} (${l10n.optional})'),
-                  maxLines: 2,
-                ),
-              ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (selectedClientId == null || selectedWorkerId == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.pleaseSelectClientAndWorker)),
-                  );
-                  return;
-                }
-                try {
-                  final data = {
-                    'client_id': selectedClientId,
-                    'worker_id': selectedWorkerId,
-                    'gallons_delivered': int.parse(gallonsController.text),
-                    'empty_gallons_returned': int.parse(emptyGallonsController.text),
-                    'notes': notesController.text.isEmpty ? null : notesController.text,
-                  };
-                  if (selectedClientSubscription == 'pay_as_you_go' || selectedClientSubscription == 'cash') {
-                    data['is_paid'] = isPaid;
-                    if (useSpecialPrice && specialPriceController.text.isNotEmpty) {
-                      data['custom_amount'] = double.parse(specialPriceController.text);
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  if (selectedClientId == null || selectedWorkerId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.pleaseSelectClientAndWorker)),
+                    );
+                    return;
+                  }
+                  try {
+                    final data = {
+                      'client_id': selectedClientId,
+                      'worker_id': selectedWorkerId,
+                      'gallons_delivered': gallons,
+                      'empty_gallons_returned': emptyGallons,
+                      'notes': notesController.text.isEmpty ? null : notesController.text,
+                    };
+                    if (isCouponBook) {
+                      data['paid_coupons'] = paidCoupons;
+                    } else if (isCash) {
+                      data['custom_amount'] = double.tryParse(priceController.text) ?? (gallons * 10.0);
+                      data['is_paid'] = paidAmount > 0;
+                    }
+                    await ref.read(adminServiceProvider).createQuickDelivery(data);
+                    ref.invalidate(deliveriesListProvider);
+                    ref.invalidate(usersProvider);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.deliveryCreatedSuccessfully)),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${l10n.error}: $e'), backgroundColor: AppTheme.iosRed),
+                      );
                     }
                   }
-                  await ref.read(adminServiceProvider).createQuickDelivery(data);
-                  ref.invalidate(deliveriesListProvider);
-                  ref.invalidate(usersProvider);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.deliveryCreatedSuccessfully)),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${l10n.error}: $e'), backgroundColor: AppTheme.iosRed),
-                    );
-                  }
-                }
-              },
-              child: Text(l10n.save),
-            ),
-          ],
-        ),
+                },
+                child: Text(l10n.save),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

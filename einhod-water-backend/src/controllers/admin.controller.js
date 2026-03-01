@@ -23,12 +23,20 @@ const getAllCouponBookRequests = async (req, res) => {
         cbr.total_price,
         cbr.status,
         cbr.created_at,
+        cbr.assigned_worker_id,
         cs.size as book_size,
+        cp.id as client_id,
         cp.full_name as client_name,
-        cp.address as client_address
+        cp.address as client_address,
+        cp.home_latitude,
+        cp.home_longitude,
+        u.phone_number as client_phone,
+        w.full_name as worker_name
       FROM coupon_book_requests cbr
       JOIN coupon_sizes cs ON cbr.coupon_size_id = cs.id
       JOIN client_profiles cp ON cbr.client_id = cp.id
+      JOIN users u ON cp.user_id = u.id
+      LEFT JOIN worker_profiles w ON cbr.assigned_worker_id = w.id
       WHERE 1=1
     `;
 
@@ -59,6 +67,44 @@ const getAllCouponBookRequests = async (req, res) => {
     res.status(getStatusCode(error)).json({
       success: false,
       message: 'Failed to get coupon book requests'
+    });
+  }
+};
+
+/**
+ * PATCH /api/v1/admin/coupon-book-requests/:id/assign
+ * Assign worker to coupon book request
+ */
+const assignCouponBookWorker = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { worker_id } = req.body;
+
+    const result = await query(
+      `UPDATE coupon_book_requests 
+       SET assigned_worker_id = $1, status = 'assigned'
+       WHERE id = $2
+       RETURNING *`,
+      [worker_id, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coupon book request not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Worker assigned successfully',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    logger.error('Assign coupon book worker error:', error);
+    res.status(getStatusCode(error)).json({
+      success: false,
+      message: 'Failed to assign worker'
     });
   }
 };
@@ -184,7 +230,6 @@ const getCouponSizes = async (req, res) => {
         size,
         price_per_page,
         bonus_gallons,
-        expiry_days,
         (size * price_per_page) as total_price,
         (size + COALESCE(bonus_gallons, 0)) as total_gallons
       FROM coupon_sizes
@@ -211,16 +256,15 @@ const getCouponSizes = async (req, res) => {
 const updateCouponSize = async (req, res) => {
   try {
     const { id } = req.params;
-    const { price_per_page, bonus_gallons, expiry_days } = req.body;
+    const { price_per_page, bonus_gallons } = req.body;
 
     const result = await query(
       `UPDATE coupon_sizes 
        SET price_per_page = COALESCE($1, price_per_page),
-           bonus_gallons = COALESCE($2, bonus_gallons),
-           expiry_days = COALESCE($3, expiry_days)
-       WHERE id = $4
+           bonus_gallons = COALESCE($2, bonus_gallons)
+       WHERE id = $3
        RETURNING *`,
-      [price_per_page, bonus_gallons, expiry_days, id]
+      [price_per_page, bonus_gallons, id]
     );
 
     if (result.rows.length === 0) {
@@ -539,10 +583,17 @@ const assignWorkerToRequest = async (req, res) => {
       });
     }
 
+    if (requestCheck.rows[0].status === 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot assign worker to completed request'
+      });
+    }
+
     if (requestCheck.rows[0].status !== 'pending') {
       return res.status(400).json({
         success: false,
-        message: 'Can only assign pending requests'
+        message: 'Can only assign workers to pending requests'
       });
     }
 
@@ -1200,7 +1251,6 @@ const getAllUsers = async (req, res) => {
               'subscription_type', cp.subscription_type,
               'remaining_coupons', cp.remaining_coupons,
               'current_debt', cp.current_debt,
-              'subscription_expiry_date', cp.subscription_expiry_date,
               'monthly_usage_gallons', cp.monthly_usage_gallons,
               'home_latitude', cp.home_latitude,
               'home_longitude', cp.home_longitude,
@@ -1402,8 +1452,7 @@ const createUser = async (req, res) => {
       initial_coupons,
       payment_method,
       is_paid,
-      custom_amount,
-      subscription_expiry_date
+      custom_amount
     } = req.body;
 
     const roles = Array.isArray(role) ? role : [role];
@@ -1424,9 +1473,6 @@ const createUser = async (req, res) => {
 
       // Create profile based on roles
       if (roles.includes('client')) {
-        const expiryDate = subscription_expiry_date || 'CURRENT_DATE + INTERVAL \'1 year\'';
-        const expiryValue = subscription_expiry_date ? `'${subscription_expiry_date}'` : 'CURRENT_DATE + INTERVAL \'1 year\'';
-        
         // Get coupon size ID if initial_coupons provided
         let couponSizeId = null;
         if (initial_coupons) {
@@ -1444,10 +1490,8 @@ const createUser = async (req, res) => {
             user_id, full_name, address, latitude, longitude,
             home_latitude, home_longitude,
             subscription_type, subscription_start_date, subscription_end_date,
-            subscription_expiry_date, remaining_coupons, coupon_book_size_id
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE, 
-                    ${expiryValue},
-                    ${expiryValue}, $9, $10)`,
+            remaining_coupons, coupon_book_size_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', $9, $10)`,
           [userId, full_name || 'New Client', address || 'N/A', latitude, longitude, home_latitude, home_longitude, subscription_type || 'coupon_book', subscription_type === 'coupon_book' ? (initial_coupons || 0) : 0, couponSizeId]
         );
 
@@ -1708,8 +1752,8 @@ const getAnalyticsOverview = async (req, res) => {
       query(`
         SELECT 
           COUNT(DISTINCT c.id) as total_clients,
-          COUNT(DISTINCT CASE WHEN cp.subscription_expiry_date > CURRENT_DATE THEN c.id END) as active_subscriptions,
-          COUNT(DISTINCT CASE WHEN cp.subscription_expiry_date <= CURRENT_DATE THEN c.id END) as expired_subscriptions,
+          COUNT(DISTINCT c.id) as active_subscriptions,
+          0 as expired_subscriptions,
           SUM(cp.current_debt) as total_debt
         FROM client_profiles cp
         JOIN users c ON cp.user_id = c.id
@@ -3045,6 +3089,7 @@ module.exports = {
   createClientAsset,
   updateClientAsset,
   getAllCouponBookRequests,
+  assignCouponBookWorker,
   updateCouponBookRequestStatus,
   deleteCouponBookRequest,
   deleteClientAsset,
