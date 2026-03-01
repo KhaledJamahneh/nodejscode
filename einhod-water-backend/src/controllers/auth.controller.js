@@ -108,7 +108,8 @@ const login = async (req, res) => {
           roles: user.roles,
           phone_number: user.phone_number,
           email: user.email,
-          full_name: user.full_name
+          full_name: user.full_name,
+          preferred_language: user.preferred_language || 'en'
         },
         accessToken,
         refreshToken

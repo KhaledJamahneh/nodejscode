@@ -1,7 +1,9 @@
 // lib/features/auth/presentation/providers/auth_provider.dart
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_service.dart';
 import '../../../worker/presentation/providers/worker_provider.dart';
+import '../../../../core/providers/locale_provider.dart';
 
 // Auth Service Provider
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -31,7 +33,12 @@ class LoginNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
-      await _authService.login(username, password);
+      final data = await _authService.login(username, password);
+      
+      // Sync language from backend (single source of truth)
+      final preferredLanguage = data['user']['preferred_language'] ?? 'en';
+      _ref.read(localeProvider.notifier).setLocale(Locale(preferredLanguage));
+      
       // Invalidate worker data after login to ensure fresh data for the new user
       _ref.read(workerOpsProvider.notifier).invalidateAll();
     });
