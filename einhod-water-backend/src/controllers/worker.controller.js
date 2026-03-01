@@ -7,6 +7,39 @@ const logger = require('../utils/logger');
 const { ValidationError, NotFoundError, AuthorizationError } = require('../utils/errors');
 
 /**
+ * Helper function to determine error status code
+ */
+const getErrorStatus = (error) => {
+  if (error.statusCode) return error.statusCode;
+  
+  const msg = error.message || '';
+  
+  if (
+    msg.includes('Insufficient inventory') ||
+    msg.includes('Insufficient coupons') ||
+    msg.includes('already completed') ||
+    msg.includes('already assigned') ||
+    msg.includes('exceeds request') ||
+    msg.includes('cannot be negative') ||
+    msg.includes('cannot exceed') ||
+    msg.includes('must be') ||
+    msg.includes('no longer in pending')
+  ) return 400;
+  
+  if (
+    msg.includes('not found') ||
+    msg.includes('not assigned')
+  ) return 404;
+  
+  if (
+    msg.includes('inactive') ||
+    msg.includes('cannot deliver to themselves')
+  ) return 403;
+  
+  return 500;
+};
+
+/**
  * GET /api/v1/workers/profile
  * Get worker profile information
  */
@@ -52,7 +85,7 @@ const getWorkerProfile = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get worker profile error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to get worker profile'
     });
@@ -152,7 +185,7 @@ const getMainSchedule = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get main schedule error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to get main schedule'
     });
@@ -258,7 +291,7 @@ const getSecondaryList = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get secondary list error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to get secondary list'
     });
@@ -325,7 +358,7 @@ const startDelivery = async (req, res) => {
     });
   } catch (error) {
     logger.error('Start delivery error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to start delivery'
     });
@@ -421,7 +454,7 @@ const acceptScheduledDelivery = async (req, res) => {
     });
   } catch (error) {
     logger.error('Accept scheduled delivery error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to accept delivery'
     });
@@ -739,39 +772,7 @@ const completeDelivery = async (req, res) => {
     });
   } catch (error) {
     logger.error('Complete delivery error:', error);
-    
-    // Determine status code based on error type or message
-    let statusCode = 500;
-    
-    if (error.statusCode) {
-      // Custom error with statusCode property
-      statusCode = error.statusCode;
-    } else if (
-      error.message.includes('Insufficient inventory') ||
-      error.message.includes('Insufficient coupons') ||
-      error.message.includes('already completed') ||
-      error.message.includes('exceeds request') ||
-      error.message.includes('cannot be negative') ||
-      error.message.includes('cannot exceed') ||
-      error.message.includes('must be')
-    ) {
-      // Business validation errors
-      statusCode = 400;
-    } else if (
-      error.message.includes('not found') ||
-      error.message.includes('not assigned')
-    ) {
-      // Resource not found
-      statusCode = 404;
-    } else if (
-      error.message.includes('inactive') ||
-      error.message.includes('cannot deliver to themselves')
-    ) {
-      // Authorization errors
-      statusCode = 403;
-    }
-    
-    res.status(statusCode).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: error.message || 'Failed to complete delivery'
     });
@@ -873,7 +874,7 @@ const acceptRequest = async (req, res) => {
     });
   } catch (error) {
     logger.error('Accept request error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to accept request'
     });
@@ -1110,7 +1111,7 @@ const completeRequest = async (req, res) => {
     });
   } catch (error) {
     logger.error('Complete request error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: error.message || 'Failed to complete request'
     });
@@ -1142,7 +1143,7 @@ const updateVehicleInventory = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update vehicle inventory error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to update vehicle inventory'
     });
@@ -1174,7 +1175,7 @@ const toggleGPSSharing = async (req, res) => {
     });
   } catch (error) {
     logger.error('Toggle GPS sharing error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to toggle GPS sharing'
     });
@@ -1197,7 +1198,7 @@ const getFillingStations = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get filling stations error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to get filling stations'
     });
@@ -1235,7 +1236,7 @@ const startFillingSession = async (req, res) => {
     });
   } catch (error) {
     logger.error('Start filling session error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to start filling session'
     });
@@ -1274,7 +1275,7 @@ const completeFillingSession = async (req, res) => {
     });
   } catch (error) {
     logger.error('Complete filling session error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to complete filling session'
     });
@@ -1312,7 +1313,7 @@ const getRecentFillingSessions = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get recent filling sessions error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to get filling history'
     });
@@ -1355,7 +1356,7 @@ const updateFillingSession = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update filling session error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to update filling session'
     });
@@ -1393,7 +1394,7 @@ const deleteFillingSession = async (req, res) => {
     });
   } catch (error) {
     logger.error('Delete filling session error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to delete filling session'
     });
@@ -1448,7 +1449,7 @@ const updateFillingStationStatus = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update filling station status error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to update filling station status'
     });
@@ -1489,7 +1490,7 @@ const updateLiveLocation = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update live location error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to update location'
     });
@@ -1519,7 +1520,7 @@ const getExpenses = async (req, res) => {
     });
   } catch (error) {
     logger.error('Get expenses error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to get expenses'
     });
@@ -1549,7 +1550,7 @@ const submitExpense = async (req, res) => {
     });
   } catch (error) {
     logger.error('Submit expense error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to submit expense'
     });
@@ -1588,7 +1589,7 @@ const updateExpense = async (req, res) => {
     });
   } catch (error) {
     logger.error('Update expense error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to update expense'
     });
@@ -1624,7 +1625,7 @@ const deleteExpense = async (req, res) => {
     });
   } catch (error) {
     logger.error('Delete expense error:', error);
-    res.status(500).json({
+    res.status(getErrorStatus(error)).json({
       success: false,
       message: 'Failed to delete expense'
     });
