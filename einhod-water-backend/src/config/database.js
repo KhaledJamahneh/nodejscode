@@ -60,6 +60,12 @@ const pool = new Pool(poolConfig);
     client.release();
   } catch (error) {
     logger.error('Failed to setup custom type parser:', error.message);
+  } finally {
+    // Always mark parsers as ready to prevent startup deadlock
+    if (global.__resolveTypeParsers) {
+      global.__resolveTypeParsers();
+      typeParsersReady = true;
+    }
   }
 })();
 
