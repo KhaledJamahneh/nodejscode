@@ -1,11 +1,16 @@
 // lib/core/services/storage_service.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/worker/data/models/worker_models.dart';
 
-class StorageService {
+class StorageService extends ChangeNotifier {
   static late SharedPreferences _prefs;
   static const _secureStorage = FlutterSecureStorage();
+  
+  // Singleton instance for ChangeNotifier
+  static final StorageService instance = StorageService._internal();
+  StorageService._internal();
 
   // Keys
   static const String _accessTokenKey = 'access_token';
@@ -85,6 +90,9 @@ class StorageService {
 
     await _prefs.setString(_roleKey, roleToSave);
     await _prefs.setBool(_isLoggedInKey, true);
+    
+    // Notify listeners of login
+    instance.notifyListeners();
   }
 
   static int? getUserId() => _prefs.getInt(_userIdKey);
@@ -131,6 +139,9 @@ class StorageService {
   static Future<void> clearAll() async {
     await _secureStorage.deleteAll();
     await _prefs.clear();
+    
+    // Notify listeners of logout
+    instance.notifyListeners();
   }
 
   // ─── Reliable Worker View Helpers (fixes Gemini issue) ─────────────────

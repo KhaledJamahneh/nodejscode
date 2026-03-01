@@ -2,7 +2,7 @@
 // Worker schedule and delivery management
 
 const { query, transaction } = require('../config/database');
-const { t } = require('../utils/i18n');
+const { t, getUnit } = require('../utils/i18n');
 const logger = require('../utils/logger');
 const notificationService = require('../services/notification.service');
 const { ValidationError, NotFoundError, AuthorizationError } = require('../utils/errors');
@@ -731,7 +731,10 @@ const completeDelivery = async (req, res) => {
       const notification = await notificationService.createNotification({
         userId: clientUser.rows[0].user_id,
         title: t(delivery.preferred_language, 'delivery_completed_title'),
-        message: t(delivery.preferred_language, 'delivery_completed_body', gallons_delivered),
+        message: t(delivery.preferred_language, 'delivery_completed_body', {
+          amount: gallons_delivered,
+          unit: getUnit(delivery.preferred_language, 'gallon', gallons_delivered)
+        }),
         type: 'delivery_status',
         referenceId: deliveryId,
         referenceType: 'delivery',
@@ -1092,7 +1095,10 @@ const completeRequest = async (req, res) => {
         [
           clientUser.rows[0].user_id,
           t(request.preferred_language, 'delivery_completed_title'),
-          t(request.preferred_language, 'delivery_completed_body', gallons_delivered),
+          t(request.preferred_language, 'delivery_completed_body', {
+            amount: gallons_delivered,
+            unit: getUnit(request.preferred_language, 'gallon', gallons_delivered)
+          }),
           requestId
         ]
       );

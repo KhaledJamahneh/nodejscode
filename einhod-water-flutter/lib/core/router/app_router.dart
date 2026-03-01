@@ -26,6 +26,7 @@ import '../services/storage_service.dart';
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/login',
+    refreshListenable: StorageService.instance,
     routes: [
       // Auth Routes - Fade Transition
       GoRoute(
