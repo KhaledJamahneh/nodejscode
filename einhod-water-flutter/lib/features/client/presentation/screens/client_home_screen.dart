@@ -900,22 +900,20 @@ class _ClientDashboardTabState extends ConsumerState<ClientDashboardTab> {
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.credit_card),
-              title: const Text('Electronic Payment'),
-              subtitle: const Text('Pay online with credit card'),
+              title: const Text('Credit Card'),
+              subtitle: const Text('Pay with credit or debit card'),
               onTap: () {
                 Navigator.pop(context);
-                _processElectronicPayment(context, debt);
+                _processElectronicPayment(context, debt, 'credit_card');
               },
             ),
             ListTile(
-              leading: const Icon(Icons.payments),
-              title: const Text('Cash Payment'),
-              subtitle: const Text('Pay in person'),
+              leading: const Icon(Icons.account_balance),
+              title: const Text('Bank Transfer'),
+              subtitle: const Text('Transfer directly from bank'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please pay in person to our representative')),
-                );
+                _processElectronicPayment(context, debt, 'bank_transfer');
               },
             ),
           ],
@@ -930,16 +928,21 @@ class _ClientDashboardTabState extends ConsumerState<ClientDashboardTab> {
     );
   }
 
-  void _processElectronicPayment(BuildContext context, double amount) {
+  void _processElectronicPayment(BuildContext context, double amount, String method) {
     // TODO: Integrate with payment gateway (Stripe, PayPal, etc.)
+    final methodName = method == 'credit_card' ? 'Credit Card' : 'Bank Transfer';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Electronic Payment'),
+        title: Text(methodName),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.credit_card, size: 64, color: AppTheme.primary),
+            Icon(
+              method == 'credit_card' ? Icons.credit_card : Icons.account_balance,
+              size: 64,
+              color: AppTheme.primary,
+            ),
             const SizedBox(height: 16),
             Text('Amount: ₪$amount', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
