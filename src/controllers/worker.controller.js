@@ -149,7 +149,7 @@ const getMainSchedule = async (req, res) => {
 
       SELECT 
         dr.id,
-        $2 as delivery_date,
+        $2::text as delivery_date,
         'ASAP' as scheduled_time,
         dr.requested_gallons as scheduled_gallons,
         dr.status::text,
@@ -174,7 +174,7 @@ const getMainSchedule = async (req, res) => {
 
       SELECT 
         cbr.id,
-        $2 as delivery_date,
+        $2::text as delivery_date,
         'COUPON' as scheduled_time,
         0 as scheduled_gallons,
         cbr.status::text,
