@@ -79,6 +79,23 @@ const deliveryIdValidation = [
   param('id').isInt().withMessage('Delivery ID must be a number')
 ];
 
+const completeCouponRequestValidation = [
+  param('id').isInt().withMessage('Request ID must be a number'),
+  body('delivery_latitude')
+  .optional({ nullable: true })
+  .isFloat({ min: -90, max: 90 })
+  .withMessage('Latitude must be between -90 and 90'),
+  body('delivery_longitude')
+  .optional({ nullable: true })
+  .isFloat({ min: -180, max: 180 })
+  .withMessage('Longitude must be between -180 and 180'),
+  body('notes')
+  .optional({ nullable: true })
+  .trim()
+  .isLength({ max: 500 })
+  .withMessage('Notes must be less than 500 characters')
+];
+
 const sessionIdValidation = [
   param('id').isInt().withMessage('Session ID must be a number')
 ];
@@ -199,7 +216,7 @@ router.post(
 router.post(
   '/coupon-requests/:id/complete',
   workerAuth,
-  completeDeliveryValidation,
+  completeCouponRequestValidation,
   validate,
   workerController.completeCouponBookRequest
 );
