@@ -300,4 +300,22 @@ router.delete(
   workerController.deleteExpense
 );
 
+/**
+ * GET /api/v1/workers/coupon-requests
+ * Get assigned coupon book requests
+ */
+router.get('/coupon-requests', workerAuth, workerController.getAssignedCouponRequests);
+
+/**
+ * PATCH /api/v1/workers/coupon-requests/:id/complete
+ * Mark coupon book request as delivered
+ */
+router.patch(
+  '/coupon-requests/:id/complete',
+  workerAuth,
+  [param('id').isInt().withMessage('Request ID must be a number')],
+  validate,
+  workerController.completeCouponRequest
+);
+
 module.exports = router;

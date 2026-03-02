@@ -139,6 +139,80 @@ const updateCouponBookRequestStatus = async (req, res) => {
 };
 
 /**
+ * PATCH /api/v1/admin/coupon-book-requests/:id/assign
+ * Assign worker to coupon book request
+ */
+const assignWorkerToCouponRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { worker_id } = req.body;
+
+    const result = await transaction(async (client) => {
+      // Check if request exists and is in valid status
+      const requestRes = await client.query(
+        'SELECT id, status, book_type FROM coupon_book_requests WHERE id = $1 FOR UPDATE',
+        [id]
+      );
+
+      if (requestRes.rows.length === 0) {
+        throw new Error('Coupon book request not found');
+      }
+
+      const request = requestRes.rows[0];
+
+      if (request.status !== 'approved') {
+        throw new Error('Only approved requests can be assigned to workers');
+      }
+
+      // Verify worker exists and is active
+      const workerRes = await client.query(
+        `SELECT wp.id, wp.full_name, u.is_active 
+         FROM worker_profiles wp
+         JOIN users u ON wp.user_id = u.id
+         WHERE wp.id = $1 AND 'delivery_worker' = ANY(u.role)`,
+        [worker_id]
+      );
+
+      if (workerRes.rows.length === 0) {
+        throw new Error('Worker not found or not a delivery worker');
+      }
+
+      if (!workerRes.rows[0].is_active) {
+        throw new Error('Worker is not active');
+      }
+
+      // Assign worker and update status
+      const updateRes = await client.query(
+        `UPDATE coupon_book_requests 
+         SET assigned_worker_id = $1, 
+             status = 'in_progress',
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $2
+         RETURNING *`,
+        [worker_id, id]
+      );
+
+      return {
+        request: updateRes.rows[0],
+        worker: workerRes.rows[0]
+      };
+    });
+
+    res.json({
+      success: true,
+      message: 'Worker assigned successfully',
+      data: result
+    });
+  } catch (error) {
+    logger.error('Assign worker to coupon request error:', error);
+    res.status(error.message.includes('not found') ? 404 : 400).json({
+      success: false,
+      message: error.message || 'Failed to assign worker'
+    });
+  }
+};
+
+/**
  * DELETE /api/v1/admin/coupon-book-requests/:id
  * Delete a coupon book request
  */
@@ -2886,6 +2960,7 @@ module.exports = {
   updateClientAsset,
   getAllCouponBookRequests,
   updateCouponBookRequestStatus,
+  assignWorkerToCouponRequest,
   deleteCouponBookRequest,
   deleteClientAsset,
   getCouponSizes,

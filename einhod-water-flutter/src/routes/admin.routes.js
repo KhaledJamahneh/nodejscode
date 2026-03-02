@@ -295,10 +295,24 @@ router.patch(
   '/coupon-book-requests/:id/status',
   [
     param('id').isInt().withMessage('Request ID must be a number'),
-    body('status').isIn(['pending', 'approved', 'delivered', 'cancelled']).withMessage('Invalid status')
+    body('status').isIn(['pending', 'approved', 'in_progress', 'delivered', 'completed', 'cancelled']).withMessage('Invalid status')
   ],
   validate,
   adminController.updateCouponBookRequestStatus
+);
+
+/**
+ * PATCH /api/v1/admin/coupon-book-requests/:id/assign
+ * Assign worker to coupon book request
+ */
+router.patch(
+  '/coupon-book-requests/:id/assign',
+  [
+    param('id').isInt().withMessage('Request ID must be a number'),
+    body('worker_id').isInt().withMessage('Worker ID must be a number')
+  ],
+  validate,
+  adminController.assignWorkerToCouponRequest
 );
 
 /**

@@ -1506,6 +1506,148 @@ const deleteExpense = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/v1/workers/coupon-requests
+ * Get assigned coupon book requests for worker
+ */
+const getAssignedCouponRequests = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { status } = req.query;
+
+    // Get worker profile ID
+    const workerRes = await query(
+      'SELECT id FROM worker_profiles WHERE user_id = $1',
+      [userId]
+    );
+
+    if (workerRes.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker profile not found'
+      });
+    }
+
+    const workerId = workerRes.rows[0].id;
+
+    let queryText = `
+      SELECT 
+        cbr.id,
+        cbr.book_type,
+        cbr.total_price,
+        cbr.status,
+        cbr.created_at,
+        cbr.updated_at,
+        cs.size as book_size,
+        cs.bonus_gallons,
+        cp.id as client_id,
+        cp.full_name as client_name,
+        cp.address as client_address,
+        cp.home_latitude,
+        cp.home_longitude,
+        u.phone_number as client_phone
+      FROM coupon_book_requests cbr
+      JOIN coupon_sizes cs ON cbr.coupon_size_id = cs.id
+      JOIN client_profiles cp ON cbr.client_id = cp.id
+      JOIN users u ON cp.user_id = u.id
+      WHERE cbr.assigned_worker_id = $1
+    `;
+
+    const queryParams = [workerId];
+
+    if (status) {
+      queryText += ` AND cbr.status = $2`;
+      queryParams.push(status);
+    }
+
+    queryText += ` ORDER BY cbr.created_at DESC`;
+
+    const result = await query(queryText, queryParams);
+
+    res.json({
+      success: true,
+      data: {
+        requests: result.rows
+      }
+    });
+  } catch (error) {
+    logger.error('Get assigned coupon requests error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get coupon requests'
+    });
+  }
+};
+
+/**
+ * PATCH /api/v1/workers/coupon-requests/:id/complete
+ * Mark coupon book request as delivered
+ */
+const completeCouponRequest = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const result = await transaction(async (client) => {
+      // Get worker profile ID
+      const workerRes = await client.query(
+        'SELECT id FROM worker_profiles WHERE user_id = $1',
+        [userId]
+      );
+
+      if (workerRes.rows.length === 0) {
+        throw new Error('Worker profile not found');
+      }
+
+      const workerId = workerRes.rows[0].id;
+
+      // Get request and verify assignment
+      const requestRes = await client.query(
+        'SELECT * FROM coupon_book_requests WHERE id = $1 FOR UPDATE',
+        [id]
+      );
+
+      if (requestRes.rows.length === 0) {
+        throw new Error('Coupon book request not found');
+      }
+
+      const request = requestRes.rows[0];
+
+      if (request.assigned_worker_id !== workerId) {
+        throw new Error('This request is not assigned to you');
+      }
+
+      if (request.status !== 'in_progress') {
+        throw new Error('Only in-progress requests can be completed');
+      }
+
+      // Update status to delivered
+      const updateRes = await client.query(
+        `UPDATE coupon_book_requests 
+         SET status = 'delivered', 
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $1
+         RETURNING *`,
+        [id]
+      );
+
+      return updateRes.rows[0];
+    });
+
+    res.json({
+      success: true,
+      message: 'Coupon book request marked as delivered',
+      data: result
+    });
+  } catch (error) {
+    logger.error('Complete coupon request error:', error);
+    res.status(error.message.includes('not found') || error.message.includes('not assigned') ? 404 : 400).json({
+      success: false,
+      message: error.message || 'Failed to complete request'
+    });
+  }
+};
+
 module.exports = {
   getWorkerProfile,
   getMainSchedule,
@@ -1529,5 +1671,7 @@ module.exports = {
   getExpenses,
   submitExpense,
   updateExpense,
-  deleteExpense
+  deleteExpense,
+  getAssignedCouponRequests,
+  completeCouponRequest
 };
