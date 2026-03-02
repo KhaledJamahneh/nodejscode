@@ -5,7 +5,7 @@ import '../../../core/config/api_config.dart';
 import 'models/dashboard_model.dart';
 
 class AdminService {
-  final Dio _dio = DioClient.instance;
+  Dio get _dio => DioClient.instance;
 
   Future<DashboardData> getDashboard() async {
     final response = await _dio.get(ApiEndpoints.adminDashboard);

@@ -5,10 +5,13 @@ import '../../../core/config/api_config.dart';
 import '../../../core/services/storage_service.dart';
 
 class AuthService {
-  final Dio _dio = DioClient.instance;
+  Dio get _dio => DioClient.instance;
 
   Future<Map<String, dynamic>> login(String username, String password) async {
     try {
+      // RESET DIO before login to clear any stale state from previous sessions
+      DioClient.reset();
+
       final response = await _dio.post(
         ApiEndpoints.login,
         data: {
@@ -24,11 +27,12 @@ class AuthService {
         await StorageService.saveAccessToken(data['accessToken']);
         await StorageService.saveRefreshToken(data['refreshToken']);
 
-        // Save user data
+        // Save user data - SUPPORT BOTH roles AND role fields
+        // Backend returns 'roles' (plural, array) but old code expected 'role' (singular, string)
         await StorageService.saveUserData(
           userId: data['user']['id'],
           username: data['user']['username'],
-          role: data['user']['role'],
+          role: data['user']['roles'] ?? data['user']['role'],
           fullName: data['user']['full_name'],
         );
 
@@ -61,6 +65,8 @@ class AuthService {
       // Ignore logout errors as we clear local storage anyway
     } finally {
       await StorageService.clearAll();
+      // RESET DIO after logout to ensure next login starts fresh
+      DioClient.reset();
     }
   }
 

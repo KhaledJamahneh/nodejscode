@@ -322,13 +322,13 @@ const getDashboard = async (req, res) => {
       query(`SELECT COUNT(*) as count FROM worker_profiles wp
              JOIN users u ON wp.user_id = u.id
              WHERE u.is_active = true 
-             AND u.role && $1::user_role[]
+             AND u.roles && $1::user_role[]
              AND is_worker_active_now(u.id) = true`, [['delivery_worker', 'onsite_worker']]),
       query(`SELECT COUNT(*) as count FROM deliveries WHERE status = 'pending'`),
       query(`SELECT COUNT(*) as count FROM deliveries WHERE delivery_date = CURRENT_DATE`),
       query(`SELECT COUNT(*) as count FROM delivery_requests WHERE status = 'pending'`),
       query(`SELECT COUNT(*) as count FROM delivery_requests WHERE status = 'pending' AND priority = 'urgent'`),
-      query(`SELECT COUNT(*) as count FROM users WHERE is_active = true AND role && $1::user_role[]`, [['client']]),
+      query(`SELECT COUNT(*) as count FROM users WHERE is_active = true AND roles && $1::user_role[]`, [['client']]),
       query(`SELECT COUNT(*) as count FROM worker_profiles WHERE vehicle_current_gallons < 10`),
       query(`SELECT COUNT(*) as count FROM client_profiles WHERE current_debt > 0`),
       query(`SELECT COALESCE(SUM(amount), 0) as total FROM payments 
@@ -344,7 +344,7 @@ const getDashboard = async (req, res) => {
              JOIN users u ON wp.user_id = u.id
              LEFT JOIN work_shifts ws ON wp.shift_id = ws.id
              WHERE u.is_active = true 
-             AND u.role && $1::user_role[]
+             AND u.roles && $1::user_role[]
              AND is_worker_active_now(u.id) = true
              ORDER BY wp.full_name ASC`, [['delivery_worker', 'onsite_worker']]),
       
@@ -373,7 +373,7 @@ const getDashboard = async (req, res) => {
       query(`SELECT cp.id, cp.full_name, cp.subscription_type, cp.remaining_coupons 
              FROM client_profiles cp 
              JOIN users u ON cp.user_id = u.id 
-             WHERE u.is_active = true AND u.role && $1::user_role[]
+             WHERE u.is_active = true AND u.roles && $1::user_role[]
              ORDER BY cp.full_name ASC`, [['client']]),
       
       // Low inventory workers details
@@ -1238,12 +1238,12 @@ const getAllUsers = async (req, res) => {
         u.username,
         u.email,
         u.phone_number,
-        u.role,
+        u.roles,
         u.is_active,
         u.created_at,
         u.last_login,
         CASE 
-          WHEN 'client' = ANY(u.role) THEN 
+          WHEN 'client' = ANY(u.roles) THEN 
             json_build_object(
               'id', cp.id,
               'full_name', cp.full_name,
@@ -1260,7 +1260,7 @@ const getAllUsers = async (req, res) => {
               'dispensers_count', (SELECT COUNT(*) FROM dispensers d WHERE d.current_client_id = cp.id),
               'coupon_book_size', cs.size
             )
-          WHEN u.role && ARRAY['delivery_worker', 'onsite_worker']::user_role[] THEN
+          WHEN u.roles && ARRAY['delivery_worker', 'onsite_worker']::user_role[] THEN
             json_build_object(
               'id', wp.id,
               'full_name', wp.full_name,
@@ -1318,7 +1318,7 @@ const getAllUsers = async (req, res) => {
 
     if (role) {
       paramCount++;
-      queryText += ` AND u.role && $${paramCount}::user_role[]`;
+      queryText += ` AND u.roles && $${paramCount}::user_role[]`;
       queryParams.push(Array.isArray(role) ? role : [role]);
     }
 
@@ -1371,7 +1371,7 @@ const getAllUsers = async (req, res) => {
 
     if (role) {
       countParamNum++;
-      countQuery += ` AND role && $${countParamNum}::user_role[]`;
+      countQuery += ` AND roles && $${countParamNum}::user_role[]`;
       countParams.push(Array.isArray(role) ? role : [role]);
     }
 
@@ -1463,7 +1463,7 @@ const createUser = async (req, res) => {
 
       // Create user with multiple roles
       const userResult = await client.query(
-        `INSERT INTO users (username, email, phone_number, password_hash, role)
+        `INSERT INTO users (username, email, phone_number, password_hash, roles)
          VALUES ($1, $2, $3, $4, $5::user_role[])
          RETURNING id`,
         [username, email, phone_number, passwordHash, roles]
@@ -2050,9 +2050,9 @@ const getUserById = async (req, res) => {
 
     const result = await query(
       `SELECT 
-        u.id, u.username, u.email, u.phone_number, u.role, u.is_active, u.created_at, u.last_login,
+        u.id, u.username, u.email, u.phone_number, u.roles, u.is_active, u.created_at, u.last_login,
         CASE 
-          WHEN 'client' = ANY(u.role) THEN 
+          WHEN 'client' = ANY(u.roles) THEN 
             json_build_object(
               'id', cp.id,
               'full_name', cp.full_name,
@@ -2070,7 +2070,7 @@ const getUserById = async (req, res) => {
               'dispensers_count', (SELECT COUNT(*) FROM dispensers d WHERE d.current_client_id = cp.id),
               'coupon_book_size', cs.size
             )
-          WHEN u.role && ARRAY['delivery_worker', 'onsite_worker']::user_role[] THEN
+          WHEN u.roles && ARRAY['delivery_worker', 'onsite_worker']::user_role[] THEN
             json_build_object(
               'id', wp.id,
               'full_name', wp.full_name,
@@ -2150,12 +2150,12 @@ const updateUser = async (req, res) => {
     } = req.body;
 
     // Check if user exists
-    const userCheck = await query('SELECT role FROM users WHERE id = $1', [userId]);
+    const userCheck = await query('SELECT roles FROM users WHERE id = $1', [userId]);
     if (userCheck.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const currentRoles = Array.isArray(userCheck.rows[0].role) ? userCheck.rows[0].role : [userCheck.rows[0].role];
+    const currentRoles = Array.isArray(userCheck.rows[0].roles) ? userCheck.rows[0].roles : (userCheck.rows[0].role ? [userCheck.rows[0].role] : []);
     const newRoles = role ? (Array.isArray(role) ? role : [role]) : currentRoles;
 
     // Ensure at least one role remains
@@ -2192,7 +2192,7 @@ const updateUser = async (req, res) => {
         userValues.push(phone_number);
       }
       if (role !== undefined) {
-        userFields.push(`role = $${paramIdx++}::user_role[]`);
+        userFields.push(`roles = $${paramIdx++}::user_role[]`);
         userValues.push(newRoles);
       }
 

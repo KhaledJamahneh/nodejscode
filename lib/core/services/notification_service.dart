@@ -4,7 +4,7 @@ import '../network/dio_client.dart';
 import '../config/api_config.dart';
 
 class NotificationService {
-  final Dio _dio = DioClient.instance;
+  Dio get _dio => DioClient.instance;
 
   Future<Map<String, dynamic>> getNotifications({
     int limit = 50,

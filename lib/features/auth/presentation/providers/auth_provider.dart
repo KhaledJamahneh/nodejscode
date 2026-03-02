@@ -32,8 +32,13 @@ class LoginNotifier extends StateNotifier<AsyncValue<void>> {
 
     state = await AsyncValue.guard(() async {
       await _authService.login(username, password);
-      // Invalidate worker data after login to ensure fresh data for the new user
+
+      // Invalidate ALL data providers to ensure fresh state for the new user
+      _ref.invalidate(currentUserProvider);
       _ref.read(workerOpsProvider.notifier).invalidateAll();
+
+      // Also invalidate admin/client specific providers if they exist
+      // These will be refetched next time they are watched
     });
   }
 
@@ -42,10 +47,13 @@ class LoginNotifier extends StateNotifier<AsyncValue<void>> {
 
     state = await AsyncValue.guard(() async {
       await _authService.logout();
-      // Clear worker data on logout
+
+      // Invalidate ALL data providers on logout
+      _ref.invalidate(currentUserProvider);
       _ref.read(workerOpsProvider.notifier).invalidateAll();
     });
   }
+
 }
 
 // Change Password Notifier

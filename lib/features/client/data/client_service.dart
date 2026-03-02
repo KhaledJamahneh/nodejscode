@@ -4,7 +4,7 @@ import '../../../core/network/dio_client.dart';
 import '../../../core/config/api_config.dart';
 
 class ClientService {
-  final Dio _dio = DioClient.instance;
+  Dio get _dio => DioClient.instance;
 
   Future<List<Map<String, dynamic>>> getRequests({
     String? status,

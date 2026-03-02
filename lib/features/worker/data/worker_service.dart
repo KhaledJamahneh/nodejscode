@@ -4,7 +4,7 @@ import '../../../core/network/dio_client.dart';
 import '../../../core/config/api_config.dart';
 
 class WorkerService {
-  final Dio _dio = DioClient.instance;
+  Dio get _dio => DioClient.instance;
 
   Future<Map<String, dynamic>> getProfile() async {
     final response = await _dio.get(ApiEndpoints.workerProfile);

@@ -82,8 +82,9 @@ const login = async (req, res) => {
       [user.id]
     );
 
-    // Map singular role to roles array for frontend and middleware compatibility
-    user.roles = Array.isArray(user.role) ? user.role : [user.role];
+    // FIX: Column was renamed to 'roles' in migration but code still looks for 'role'
+    // Map to roles array for frontend and middleware compatibility
+    user.roles = user.roles || (Array.isArray(user.role) ? user.role : [user.role]);
 
     // Generate tokens
     const accessToken = generateAccessToken(user);
@@ -442,7 +443,8 @@ const getCurrentUser = async (req, res) => {
     }
 
     const userData = result.rows[0];
-    userData.roles = Array.isArray(userData.role) ? userData.role : [userData.role];
+    // FIX: Handle both 'roles' and 'role' column names
+    userData.roles = userData.roles || (Array.isArray(userData.role) ? userData.role : [userData.role]);
     delete userData.role; // Remove singular role to avoid confusion
 
     res.json({

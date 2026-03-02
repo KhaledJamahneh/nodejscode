@@ -5,7 +5,7 @@ import '../../../core/config/api_config.dart';
 
 /// All location-related HTTP calls.
 class LocationApiService {
-  final Dio _dio = DioClient.instance;
+  Dio get _dio => DioClient.instance;
 
   // ─── Worker ───────────────────────────────────────────────────────────────
 
