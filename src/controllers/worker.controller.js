@@ -54,7 +54,7 @@ const getWorkerProfile = async (req, res) => {
         u.username,
         u.email,
         u.phone_number,
-        u.roles,
+        u.role,
         u.last_login,
         wp.id as profile_id,
         wp.full_name,
@@ -69,7 +69,7 @@ const getWorkerProfile = async (req, res) => {
         wp.updated_at
       FROM users u
       JOIN worker_profiles wp ON u.id = wp.user_id
-      WHERE u.id = $1 AND u.roles && ARRAY['delivery_worker', 'onsite_worker']::user_role[]`,
+      WHERE u.id = $1 AND u.role && ARRAY['delivery_worker', 'onsite_worker']::user_role[]`,
       [userId]
     );
 
