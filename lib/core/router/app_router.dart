@@ -19,6 +19,7 @@ import '../../features/admin/presentation/screens/admin_expenses_screen.dart';
 import '../../features/admin/presentation/screens/admin_coupon_settings_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/client/presentation/screens/client_home_screen.dart';
+import '../../features/client/presentation/screens/track_delivery_screen.dart';
 import '../../features/worker/presentation/screens/worker_home_screen.dart';
 import '../services/storage_service.dart';
 
@@ -46,6 +47,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => const CupertinoPage(
           child: ClientHomeScreen(),
         ),
+      ),
+
+      GoRoute(
+        path: '/client/track/:orderId',
+        name: 'track-delivery',
+        pageBuilder: (context, state) {
+          final orderId = state.pathParameters['orderId']!;
+          return CupertinoPage(
+            child: TrackDeliveryScreen(orderId: orderId),
+          );
+        },
       ),
 
       // Worker Routes
