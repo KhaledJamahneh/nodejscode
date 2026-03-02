@@ -1839,13 +1839,13 @@ const completeCouponBookRequest = async (req, res) => {
       }
 
       // 2. Credit coupons to client (Physical book delivered)
+      const totalCoupons = request.size + (request.bonus_gallons || 0);
       await client.query(
         `UPDATE client_profiles 
          SET remaining_coupons = remaining_coupons + $1,
-             bonus_gallons = bonus_gallons + $2,
              updated_at = CURRENT_TIMESTAMP
-         WHERE id = $3`,
-        [request.size, request.bonus_gallons || 0, request.client_id]
+         WHERE id = $2`,
+        [totalCoupons, request.client_id]
       );
 
       // 3. Update request status
