@@ -40,9 +40,8 @@ exports.createNotification = async ({
     const executor = dbClient || { query };
     const result = await executor.query(
       `INSERT INTO notifications (
-        user_id, title, message, type, reference_id, reference_type, 
-        notification_key, params
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        user_id, title, message, type, reference_id, reference_type, category
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *`,
       [
         userId,
@@ -51,8 +50,7 @@ exports.createNotification = async ({
         type,
         referenceId,
         referenceType,
-        notificationKey,
-        JSON.stringify(params)
+        'normal' // category
       ]
     );
 
