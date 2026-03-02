@@ -16,9 +16,27 @@ class AdminRequestsScreen extends ConsumerStatefulWidget {
   ConsumerState<AdminRequestsScreen> createState() => _AdminRequestsScreenState();
 }
 
-class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
+class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final Set<int> _selectedIds = {};
   bool get _isSelecting => _selectedIds.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialIndex);
+    _tabController.addListener(() {
+      if (_selectedIds.isNotEmpty) {
+        setState(() => _selectedIds.clear());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   void _toggleSelection(int id) {
     setState(() {
@@ -38,61 +56,68 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
   Widget build(BuildContext context) {
     final requestsAsync = ref.watch(requestsListProvider);
     final filter = ref.watch(requestsFilterProvider);
+    final couponFilter = ref.watch(couponRequestsFilterProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    return DefaultTabController(
-      length: 3,
-      initialIndex: widget.initialIndex,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          title: _isSelecting
-              ? Text('${_selectedIds.length} selected')
-              : Text(l10n.requests),
-          backgroundColor:
-              Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
-          flexibleSpace: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(color: Colors.transparent),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: _isSelecting
+            ? Text('${_selectedIds.length} selected')
+            : Text(l10n.requests),
+        backgroundColor:
+            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppTheme.primary,
+          unselectedLabelColor: AppTheme.iosGray,
+          indicatorColor: AppTheme.primary,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+          tabs: [
+            Tab(text: l10n.active),
+            Tab(text: l10n.cancelled),
+            Tab(text: l10n.coupons),
+          ],
+        ),
+        actions: [
+          if (_isSelecting) ...[
+            IconButton(
+              icon: const Icon(Icons.close_rounded),
+              onPressed: _clearSelection,
+              tooltip: 'Cancel',
             ),
-          ),
-          bottom: TabBar(
-            labelColor: AppTheme.primary,
-            unselectedLabelColor: AppTheme.iosGray,
-            indicatorColor: AppTheme.primary,
-            indicatorWeight: 3,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w700),
-            tabs: [
-              Tab(text: l10n.active),
-              Tab(text: l10n.cancelled),
-              Tab(text: l10n.coupons),
-            ],
-          ),
-          actions: [
-            if (_isSelecting) ...[
-              IconButton(
-                icon: const Icon(Icons.close_rounded),
-                onPressed: _clearSelection,
-                tooltip: 'Cancel',
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline_rounded),
-                onPressed: () => _showBulkDeleteDialog(context),
-                tooltip: 'Delete Selected',
-              ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert_rounded),
-                onSelected: (value) => _handleBulkAction(context, value),
-                itemBuilder: (context) => [
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded),
+              onPressed: () => _showBulkDeleteDialog(context),
+              tooltip: 'Delete Selected',
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (value) => _handleBulkAction(context, value),
+              itemBuilder: (context) {
+                final isCouponTab = _tabController.index == 2;
+                return [
                   const PopupMenuItem(
                     value: 'pending',
                     child: Text('Mark as Pending'),
                   ),
-                  const PopupMenuItem(
-                    value: 'in_progress',
-                    child: Text('Mark as In Progress'),
-                  ),
+                  if (isCouponTab)
+                    const PopupMenuItem(
+                      value: 'approved',
+                      child: Text('Mark as Approved'),
+                    ),
+                  if (!isCouponTab)
+                    const PopupMenuItem(
+                      value: 'in_progress',
+                      child: Text('Mark as In Progress'),
+                    ),
                   const PopupMenuItem(
                     value: 'completed',
                     child: Text('Mark as Completed'),
@@ -101,43 +126,41 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
                     value: 'cancelled',
                     child: Text('Mark as Cancelled'),
                   ),
-                ],
-              ),
-            ] else ...[
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded),
-                onPressed: () {
-                  ref.invalidate(requestsListProvider);
-                  ref.invalidate(adminCouponBookRequestsProvider);
-                },
-              ),
-            ],
-            const SizedBox(width: 8),
+                ];
+              },
+            ),
+          ] else ...[
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: () {
+                ref.invalidate(requestsListProvider);
+                ref.invalidate(adminCouponBookRequestsProvider);
+              },
+            ),
           ],
-        ),
-        body: Builder(builder: (context) {
-          return Column(
-            children: [
-              // Filters - Hide for Coupon Books tab
-              if (DefaultTabController.of(context).index != 2)
-                _buildFilters(context, ref, filter),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Filters
+          _buildFilters(context, ref, filter, couponFilter),
 
-              // Requests List
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    // Active Tab
-                    _buildRequestView(context, ref, requestsAsync, false),
-                    // Cancelled Tab
-                    _buildRequestView(context, ref, requestsAsync, true),
-                    // Coupon Books Tab
-                    _buildCouponRequestsView(context, ref),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }),
+          // Requests List
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Active Tab
+                _buildRequestView(context, ref, requestsAsync, false),
+                // Cancelled Tab
+                _buildRequestView(context, ref, requestsAsync, true),
+                // Coupon Books Tab
+                _buildCouponRequestsView(context, ref),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -157,7 +180,8 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
                   itemCount: requests.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
-                    return _buildCouponBookRequestCard(context, ref, requests[index]);
+                    final request = requests[index];
+                    return _buildCouponBookRequestCard(context, ref, request);
                   },
                 ),
               );
@@ -185,28 +209,33 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final status = request['status'] ?? 'pending';
     final statusColor = status == 'pending' ? AppTheme.midUrgentOrange :
-                       status == 'approved' ? AppTheme.successGreen :
-                       status == 'delivered' ? AppTheme.primaryBlue : AppTheme.iosGray;
+                       status == 'approved' ? AppTheme.iosBlue :
+                       status == 'assigned' ? AppTheme.iosIndigo :
+                       status == 'completed' ? AppTheme.successGreen : AppTheme.iosGray;
     
-    String getStatusText(String status) {
-      switch (status) {
-        case 'pending': return l10n.pending;
-        case 'approved': return l10n.approved;
-        case 'delivered': return l10n.delivered;
-        case 'cancelled': return l10n.cancelled;
-        default: return status;
-      }
-    }
+    final isSelected = _selectedIds.contains(request['id']);
 
     return ModernCard(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(20),
+      borderRadius: 20,
+      color: isSelected ? AppTheme.primary.withOpacity(0.1) : null,
+      onTap: () => _isSelecting
+          ? _toggleSelection(request['id'])
+          : _showCouponRequestDetails(context, ref, request),
+      onLongPress: () => _toggleSelection(request['id']),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              if (_isSelecting) ...[
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => _toggleSelection(request['id']),
+                ),
+                const SizedBox(width: 8),
+              ],
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -214,7 +243,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  getStatusText(status).toUpperCase(),
+                  _getStatusDisplay(context, status).toUpperCase(),
                   style: TextStyle(
                     color: statusColor,
                     fontSize: 11,
@@ -223,27 +252,43 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
                   ),
                 ),
               ),
+              const Spacer(),
+              Text(
+                '₪${request['total_price']}',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(width: 4),
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_horiz_rounded, color: AppTheme.iosGray),
+                icon: const Icon(Icons.more_vert_rounded, color: AppTheme.iosGray, size: 20),
                 onSelected: (value) {
                   if (value == 'delete') {
-                    _confirmDeleteCouponRequest(context, ref, request['id']);
-                  } else {
-                    _updateCouponRequestStatus(context, ref, request['id'], value);
+                    _confirmDeleteCouponRequest(context, ref, request['id'], request['client_name']);
+                  } else if (value == 'status') {
+                    _showCouponStatusDialog(context, ref, request);
                   }
                 },
                 itemBuilder: (context) => [
-                  PopupMenuItem(value: 'pending', child: Text(l10n.pending)),
-                  PopupMenuItem(value: 'approved', child: Text(l10n.approved)),
-                  PopupMenuItem(value: 'delivered', child: Text(l10n.delivered)),
-                  PopupMenuItem(value: 'cancelled', child: Text(l10n.cancelled)),
-                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'status',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.edit_notifications_outlined, color: AppTheme.primary, size: 20),
+                        const SizedBox(width: 12),
+                        Text(l10n.changeStatus),
+                      ],
+                    ),
+                  ),
                   PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
                         const Icon(Icons.delete_outline, color: AppTheme.iosRed, size: 20),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Text(l10n.delete, style: const TextStyle(color: AppTheme.iosRed)),
                       ],
                     ),
@@ -264,6 +309,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
                 child: Icon(
                   request['book_type'] == 'physical' ? Icons.menu_book_rounded : Icons.qr_code_2_rounded,
                   color: AppTheme.primary,
+                  size: 20,
                 ),
               ),
               const SizedBox(width: 16),
@@ -282,10 +328,6 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
                   ],
                 ),
               ),
-              Text(
-                '₪${request['total_price']}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primary),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -303,6 +345,159 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.iosGray),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatDate(request['created_at']),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.iosGray),
+                    ),
+                  ],
+                ),
+              ),
+              if (request['worker_name'] != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.iosGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.person_rounded, size: 14, color: AppTheme.iosGreen),
+                      const SizedBox(width: 6),
+                      Text(
+                        request['worker_name'],
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.iosGreen),
+                      ),
+                    ],
+                  ),
+                )
+              else if (request['book_type'] == 'physical' && request['status'] != 'cancelled' && request['status'] != 'completed')
+                ElevatedButton.icon(
+                  onPressed: () => _showAssignWorkerDialogForCoupon(context, ref, request),
+                  icon: const Icon(Icons.assignment_ind_rounded, size: 16),
+                  label: Text(l10n.assignWorker),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCouponRequestDetails(BuildContext context, WidgetRef ref, Map<String, dynamic> request) {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => GlassCard(
+          margin: EdgeInsets.zero,
+          padding: const EdgeInsets.all(24),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                      color: AppTheme.iosGray4,
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${l10n.coupons} #${request['id']}',
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 28),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                    style: IconButton.styleFrom(backgroundColor: AppTheme.iosGray6),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              _buildDetailRow(l10n.client, request['client_name'], Icons.person_rounded),
+              _buildDetailRow(l10n.phone, request['client_phone'] ?? 'N/A', Icons.phone_rounded),
+              _buildDetailRow(l10n.address, request['client_address'], Icons.location_on_rounded),
+              const Divider(height: 32),
+              _buildDetailRow(l10n.type, request['book_type'].toString().toUpperCase(), Icons.category_rounded),
+              _buildDetailRow(l10n.coupons, '${request['book_size']} ${l10n.pages}', Icons.menu_book_rounded),
+              _buildDetailRow(l10n.price, '₪${request['total_price']}', Icons.payments_rounded),
+              _buildDetailRow(l10n.status, _getStatusDisplay(context, request['status']), Icons.info_outline_rounded),
+              _buildDetailRow(l10n.date, _formatDate(request['created_at']), Icons.calendar_today_rounded),
+              if (request['worker_name'] != null)
+                _buildDetailRow(l10n.worker, request['worker_name'], Icons.person_pin_circle_rounded),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCouponStatusDialog(BuildContext context, WidgetRef ref, Map<String, dynamic> request) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(l10n.changeStatus),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: ['pending', 'approved', 'assigned', 'completed', 'cancelled'].map((status) {
+              final isSelected = request['status'] == status;
+              return ListTile(
+                leading: Icon(
+                  StatusColors.getIcon(status),
+                  color: status == 'approved' ? AppTheme.iosBlue :
+                         status == 'assigned' ? AppTheme.iosIndigo :
+                         StatusColors.getColor(status),
+                ),
+                title: Text(
+                  _getStatusDisplay(context, status),
+                  style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                ),
+                trailing: isSelected ? const Icon(Icons.check_rounded, color: AppTheme.iosGreen) : null,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _updateCouponRequestStatus(context, ref, request['id'], status);
+                },
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
         ],
       ),
     );
@@ -312,18 +507,18 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
     await ref.read(updateCouponBookRequestStatusProvider.notifier).updateStatus(requestId, status);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Status updated successfully')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.statusUpdated)),
       );
     }
   }
 
-  Future<void> _confirmDeleteCouponRequest(BuildContext context, WidgetRef ref, int requestId) async {
+  Future<void> _confirmDeleteCouponRequest(BuildContext context, WidgetRef ref, int requestId, String clientName) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.confirmDelete),
-        content: Text('Are you sure you want to delete this coupon request?'),
+        content: Text(l10n.deleteRequestConfirm(clientName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -342,9 +537,101 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
       await ref.read(deleteCouponRequestProvider.notifier).deleteRequest(requestId);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Request deleted successfully')),
+          SnackBar(content: Text(l10n.requestDeleted)),
         );
       }
+    }
+  }
+
+  void _showAssignWorkerDialogForCoupon(BuildContext context, WidgetRef ref, Map<String, dynamic> request) {
+    final workersAsync = ref.read(workersListProvider);
+    final l10n = AppLocalizations.of(context)!;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(l10n.assignWorker),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: workersAsync.when(
+            data: (workers) => workers.isEmpty
+                ? Text(l10n.noActivity)
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: workers.length,
+                    itemBuilder: (context, index) {
+                      final worker = workers[index];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: AppTheme.primary.withOpacity(0.1),
+                          child: const Icon(Icons.person_rounded, color: AppTheme.primary),
+                        ),
+                        title: Text(worker['username']),
+                        subtitle: Text(worker['phone_number']),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${worker['profile']['active_tasks_count']} Active',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: (worker['profile']['active_tasks_count'] ?? 0) > 3 
+                                  ? AppTheme.iosOrange 
+                                  : AppTheme.iosGreen,
+                              ),
+                            ),
+                            Text(
+                              '${worker['profile']['vehicle_current_gallons']}L left',
+                              style: const TextStyle(fontSize: 10, color: AppTheme.iosGray),
+                            ),
+                          ],
+                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await _assignWorkerForCoupon(context, ref, request['id'], worker['profile']['id']);
+                        },
+                      );
+                    },
+                  ),
+            loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+            error: (error, _) => Text('Error: $error'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _assignWorkerForCoupon(BuildContext context, WidgetRef ref, int requestId, int workerId) async {
+    await ref.read(assignCouponBookWorkerProvider.notifier).assignWorker(requestId, workerId);
+
+    final state = ref.read(assignCouponBookWorkerProvider);
+    final l10n = AppLocalizations.of(context)!;
+    if (context.mounted) {
+      state.when(
+        data: (_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.workerAssigned)),
+          );
+        },
+        loading: () {},
+        error: (error, _) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${error.toString().replaceAll('Exception: ', '')}'),
+              backgroundColor: AppTheme.iosRed,
+            ),
+          );
+        },
+      );
     }
   }
 
@@ -386,9 +673,8 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
     );
   }
 
-  Widget _buildFilters(
-      BuildContext context, WidgetRef ref, RequestsFilter filter) {
-    final tabIndex = DefaultTabController.of(context).index;
+  Widget _buildFilters(BuildContext context, WidgetRef ref, RequestsFilter filter, String? couponFilter) {
+    final tabIndex = _tabController.index;
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
@@ -416,46 +702,69 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
                 )),
             const SizedBox(width: 8),
 
-            // Priority Filter
-            _buildFilterChip(
-              context: context,
-              label: filter.priority == null
-                  ? l10n.allPriorities
-                  : _getPriorityDisplay(context, filter.priority!),
-              selected: filter.priority != null,
-              color: filter.priority != null
-                  ? PriorityColors.getColor(filter.priority!)
-                  : null,
-              onTap: () => _showPriorityFilter(context, ref, filter),
-            ),
-            const SizedBox(width: 8),
-
-            // Status Filter - Only show for Active tab
-            if (tabIndex == 0) ...[
+            if (tabIndex != 2) ...[
+              // Priority Filter
               _buildFilterChip(
                 context: context,
-                label: filter.status == null
-                    ? l10n.allStatus
-                    : _getStatusDisplay(context, filter.status!),
-                selected: filter.status != null,
-                color: filter.status != null
-                    ? StatusColors.getColor(filter.status!)
+                label: filter.priority == null
+                    ? l10n.allPriorities
+                    : _getPriorityDisplay(context, filter.priority!),
+                selected: filter.priority != null,
+                color: filter.priority != null
+                    ? PriorityColors.getColor(filter.priority!)
                     : null,
-                onTap: () => _showStatusFilter(context, ref, filter),
+                onTap: () => _showPriorityFilter(context, ref, filter),
               ),
               const SizedBox(width: 8),
-            ],
 
-            // Clear All
-            if (filter.hasFilters)
-              TextButton.icon(
-                onPressed: () {
-                  ref.read(requestsFilterProvider.notifier).state =
-                      RequestsFilter();
-                },
-                icon: const Icon(Icons.clear_all_rounded, size: 16),
-                label: Text(l10n.clearAll),
+              // Status Filter - Only show for Active tab
+              if (tabIndex == 0) ...[
+                _buildFilterChip(
+                  context: context,
+                  label: filter.status == null
+                      ? l10n.allStatus
+                      : _getStatusDisplay(context, filter.status!),
+                  selected: filter.status != null,
+                  color: filter.status != null
+                      ? StatusColors.getColor(filter.status!)
+                      : null,
+                  onTap: () => _showStatusFilter(context, ref, filter),
+                ),
+                const SizedBox(width: 8),
+              ],
+
+              // Clear All
+              if (filter.hasFilters)
+                TextButton.icon(
+                  onPressed: () {
+                    ref.read(requestsFilterProvider.notifier).state =
+                        RequestsFilter();
+                  },
+                  icon: const Icon(Icons.clear_all_rounded, size: 16),
+                  label: Text(l10n.clearAll),
+                ),
+            ] else ...[
+              // Coupon status filter
+              _buildFilterChip(
+                context: context,
+                label: couponFilter == null
+                    ? l10n.allStatus
+                    : _getStatusDisplay(context, couponFilter),
+                selected: couponFilter != null,
+                color: couponFilter != null ? AppTheme.primary : null,
+                onTap: () => _showCouponStatusFilter(context, ref, couponFilter),
               ),
+              const SizedBox(width: 8),
+              
+              if (couponFilter != null)
+                TextButton.icon(
+                  onPressed: () {
+                    ref.read(couponRequestsFilterProvider.notifier).state = null;
+                  },
+                  icon: const Icon(Icons.clear_all_rounded, size: 16),
+                  label: Text(l10n.clearAll),
+                ),
+            ],
           ],
         ),
       ),
@@ -990,6 +1299,57 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
     ));
   }
 
+  void _showCouponStatusFilter(BuildContext context, WidgetRef ref, String? currentStatus) {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => GlassCard(
+        margin: EdgeInsets.zero,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: AppTheme.iosGray4, borderRadius: BorderRadius.circular(2)),
+              ),
+              ListTile(
+                title: Text(l10n.allStatus, style: const TextStyle(fontWeight: FontWeight.bold)),
+                trailing: currentStatus == null ? const Icon(Icons.check_rounded, color: AppTheme.primary) : null,
+                onTap: () {
+                  ref.read(couponRequestsFilterProvider.notifier).state = null;
+                  Navigator.pop(context);
+                },
+              ),
+              const Divider(),
+              ...['pending', 'approved', 'assigned', 'completed', 'cancelled'].map(
+                (status) => ListTile(
+                  leading: Icon(
+                    StatusColors.getIcon(status),
+                    color: status == 'approved' ? AppTheme.iosBlue :
+                           status == 'assigned' ? AppTheme.iosIndigo :
+                           StatusColors.getColor(status),
+                  ),
+                  title: Text(_getStatusDisplay(context, status)),
+                  trailing: currentStatus == status ? const Icon(Icons.check_rounded, color: AppTheme.primary) : null,
+                  onTap: () {
+                    ref.read(couponRequestsFilterProvider.notifier).state = status;
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showRequestDetails(
       BuildContext context, WidgetRef ref, DeliveryRequest request) {
     final l10n = AppLocalizations.of(context)!;
@@ -1390,6 +1750,10 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
     switch (status) {
       case 'pending':
         return l10n.pending;
+      case 'approved':
+        return l10n.approved;
+      case 'assigned':
+        return l10n.assigned;
       case 'in_progress':
         return l10n.inProgress;
       case 'completed':
@@ -1426,18 +1790,36 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
   }
 
   Future<void> _performBulkDelete() async {
+    final isCouponTab = _tabController.index == 2;
     for (final id in _selectedIds) {
-      await ref.read(deleteRequestProvider.notifier).deleteRequest(id);
+      if (isCouponTab) {
+        await ref.read(deleteCouponRequestProvider.notifier).deleteRequest(id);
+      } else {
+        await ref.read(deleteRequestProvider.notifier).deleteRequest(id);
+      }
     }
     _clearSelection();
-    ref.invalidate(requestsListProvider);
+    if (isCouponTab) {
+      ref.invalidate(adminCouponBookRequestsProvider);
+    } else {
+      ref.invalidate(requestsListProvider);
+    }
   }
 
   Future<void> _handleBulkAction(BuildContext context, String status) async {
+    final isCouponTab = _tabController.index == 2;
     for (final id in _selectedIds) {
-      await ref.read(updateRequestStatusProvider.notifier).updateStatus(id, status);
+      if (isCouponTab) {
+        await ref.read(updateCouponBookRequestStatusProvider.notifier).updateStatus(id, status);
+      } else {
+        await ref.read(updateRequestStatusProvider.notifier).updateStatus(id, status);
+      }
     }
     _clearSelection();
-    ref.invalidate(requestsListProvider);
+    if (isCouponTab) {
+      ref.invalidate(adminCouponBookRequestsProvider);
+    } else {
+      ref.invalidate(requestsListProvider);
+    }
   }
 }

@@ -183,7 +183,7 @@ class AppTheme {
           letterSpacing: isArabic ? 0 : -0.4,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         shape: RoundedRectangleBorder(
@@ -467,6 +467,10 @@ class StatusColors {
     switch (status) {
       case 'pending':
         return AppTheme.midUrgentOrange;
+      case 'approved':
+        return AppTheme.primary;
+      case 'assigned':
+        return AppTheme.iosIndigo;
       case 'in_progress':
         return AppTheme.primaryBlue;
       case 'completed':
@@ -482,6 +486,10 @@ class StatusColors {
     switch (status) {
       case 'pending':
         return Icons.schedule_rounded;
+      case 'approved':
+        return Icons.verified_rounded;
+      case 'assigned':
+        return Icons.person_add_alt_1_rounded;
       case 'in_progress':
         return Icons.local_shipping_rounded;
       case 'completed':

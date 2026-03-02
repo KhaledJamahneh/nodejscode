@@ -414,4 +414,11 @@ class AdminService {
   Future<void> deleteCouponBookRequest(int requestId) async {
     await _dio.delete('${ApiEndpoints.adminCouponBookRequests}/$requestId');
   }
+
+  Future<void> assignCouponBookWorker(int requestId, int workerId) async {
+    await _dio.patch(
+      '${ApiEndpoints.adminCouponBookRequests}/$requestId/assign',
+      data: {'worker_id': workerId},
+    );
+  }
 }

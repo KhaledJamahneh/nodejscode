@@ -112,10 +112,35 @@ final workersListProvider =
 });
 
 // Coupon Book Requests Provider
+final couponRequestsFilterProvider = StateProvider<String?>((ref) => null);
+
 final adminCouponBookRequestsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final service = ref.read(adminServiceProvider);
-  return await service.getCouponBookRequests();
+  final status = ref.watch(couponRequestsFilterProvider);
+  return await service.getCouponBookRequests(status: status);
 });
+
+// Assign Worker to Coupon Book Request Provider
+final assignCouponBookWorkerProvider =
+    StateNotifierProvider<AssignCouponBookWorkerNotifier, AsyncValue<void>>((ref) {
+  return AssignCouponBookWorkerNotifier(ref.read(adminServiceProvider), ref);
+});
+
+class AssignCouponBookWorkerNotifier extends StateNotifier<AsyncValue<void>> {
+  final AdminService _service;
+  final Ref _ref;
+
+  AssignCouponBookWorkerNotifier(this._service, this._ref)
+      : super(const AsyncValue.data(null));
+
+  Future<void> assignWorker(int requestId, int workerId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await _service.assignCouponBookWorker(requestId, workerId);
+      _ref.invalidate(adminCouponBookRequestsProvider);
+    });
+  }
+}
 
 // Update Coupon Book Request Status Provider
 final updateCouponBookRequestStatusProvider =
