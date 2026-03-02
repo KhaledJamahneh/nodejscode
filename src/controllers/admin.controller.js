@@ -162,8 +162,8 @@ const updateCouponBookRequestStatus = async (req, res) => {
         throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
       }
 
-      // 3. Handle special transitions (e.g., approval credits coupons)
-      if (currentStatus === 'pending' && nextStatus === 'approved') {
+      // 3. Handle special transitions (e.g., completion credits coupons)
+      if (nextStatus === 'completed' && currentStatus !== 'completed') {
         const requestData = await client.query(
           `SELECT cbr.client_id, cs.size, cs.bonus_gallons 
            FROM coupon_book_requests cbr
@@ -361,7 +361,7 @@ const getDashboard = async (req, res) => {
              WHERE payment_status = 'completed' AND DATE(payment_date) = CURRENT_DATE`),
       query(`SELECT COALESCE(SUM(amount), 0) as total FROM payments 
              WHERE payment_status = 'completed' AND DATE_TRUNC('month', payment_date) = DATE_TRUNC('month', CURRENT_DATE)`),
-      query(`SELECT COUNT(*) as count FROM coupon_book_requests WHERE status = 'pending'`),
+      query(`SELECT COUNT(*) as count FROM coupon_book_requests WHERE status IN ('pending', 'approved')`),
       
       // Active workers details - currently on shift
       query(`SELECT wp.id, wp.full_name, wp.worker_type, wp.vehicle_current_gallons,

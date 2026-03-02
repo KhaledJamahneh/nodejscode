@@ -309,7 +309,7 @@ router.patch(
   '/coupon-book-requests/:id/status',
   [
     param('id').isInt().withMessage('Request ID must be a number'),
-    body('status').isIn(['pending', 'approved', 'delivered', 'cancelled']).withMessage('Invalid status')
+    body('status').isIn(['pending', 'approved', 'assigned', 'in_progress', 'completed', 'cancelled']).withMessage('Invalid status')
   ],
   validate,
   adminController.updateCouponBookRequestStatus

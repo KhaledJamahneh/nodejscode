@@ -17,9 +17,11 @@ const REQUEST_TRANSITIONS = {
 };
 
 const COUPON_BOOK_REQUEST_TRANSITIONS = {
-  'pending': ['approved', 'cancelled'],
-  'approved': ['delivered', 'cancelled'],
-  'delivered': [], // Terminal state
+  'pending': ['approved', 'assigned', 'cancelled'],
+  'approved': ['assigned', 'in_progress', 'cancelled'],
+  'assigned': ['in_progress', 'completed', 'cancelled'],
+  'in_progress': ['completed', 'cancelled'],
+  'completed': [], // Terminal state
   'cancelled': []  // Terminal state
 };
 

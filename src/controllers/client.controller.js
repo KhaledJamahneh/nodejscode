@@ -718,7 +718,7 @@ const createCouponBookRequest = async (req, res) => {
 
         const requestResult = await client.query(
           `INSERT INTO coupon_book_requests (client_id, book_type, coupon_size_id, total_price, status, payment_method)
-           VALUES ($1, $2, $3, $4, 'approved', $5) RETURNING *`,
+           VALUES ($1, $2, $3, $4, 'pending', $5) RETURNING *`,
           [clientProfileId, book_type, coupon_size_id, calculated_total, payment_method]
         );
 
