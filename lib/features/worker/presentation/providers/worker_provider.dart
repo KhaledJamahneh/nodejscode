@@ -178,6 +178,15 @@ class WorkerOpsNotifier extends StateNotifier<AsyncValue<void>> {
     });
   }
 
+  Future<void> acceptCouponRequest(int requestId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await _service.acceptCouponRequest(requestId);
+      _ref.invalidate(workerRequestsProvider);
+      _ref.invalidate(workerScheduleProvider);
+    });
+  }
+
   /// FIX: now accepts paid_coupons_count and empty_gallons_returned
   Future<void> completeRequest(Map<String, dynamic> data) async {
     state = const AsyncValue.loading();
@@ -193,6 +202,21 @@ class WorkerOpsNotifier extends StateNotifier<AsyncValue<void>> {
         paidCouponsCount: data['paid_coupons_count'],
         paidAmount: data['paid_amount'],
         totalPrice: data['total_price'],
+      );
+      _ref.invalidate(workerRequestsProvider);
+      _ref.invalidate(workerScheduleProvider);
+      _ref.invalidate(workerProfileProvider);
+    });
+  }
+
+  Future<void> completeCouponRequest(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await _service.completeCouponRequest(
+        requestId: data['request_id'],
+        latitude: data['latitude'],
+        longitude: data['longitude'],
+        notes: data['notes'],
       );
       _ref.invalidate(workerRequestsProvider);
       _ref.invalidate(workerScheduleProvider);

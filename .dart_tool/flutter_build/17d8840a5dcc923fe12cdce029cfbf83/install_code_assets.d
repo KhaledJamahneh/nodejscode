@@ -1,0 +1,1 @@
+ /home/eito_new/Downloads/einhod-longterm/.dart_tool/flutter_build/17d8840a5dcc923fe12cdce029cfbf83/native_assets.json: 

@@ -62,6 +62,10 @@ class WorkerService {
     await _dio.post('${ApiEndpoints.acceptRequest}/$requestId/accept');
   }
 
+  Future<void> acceptCouponRequest(int requestId) async {
+    await _dio.post('/workers/coupon-requests/$requestId/accept');
+  }
+
   Future<void> completeRequest({
     required int requestId,
     required int gallonsDelivered,
@@ -88,6 +92,22 @@ class WorkerService {
         if (paidCouponsCount != null) 'paid_coupons_count': paidCouponsCount,
         if (paidAmount != null) 'paid_amount': paidAmount,
         if (totalPrice != null) 'total_price': totalPrice,
+      },
+    );
+  }
+
+  Future<void> completeCouponRequest({
+    required int requestId,
+    double? latitude,
+    double? longitude,
+    String? notes,
+  }) async {
+    await _dio.post(
+      '/workers/coupon-requests/$requestId/complete',
+      data: {
+        'delivery_latitude': latitude,
+        'delivery_longitude': longitude,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
       },
     );
   }

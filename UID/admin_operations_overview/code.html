@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Operations Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "1.5rem",
+                        "xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-primary/20">
+<!-- Header -->
+<header class="flex items-center justify-between px-6 py-5 sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center size-10 rounded-full bg-primary text-white">
+<span class="material-symbols-outlined">water_drop</span>
+</div>
+<div>
+<h1 class="text-xl font-bold leading-tight">Einhod Pure Water</h1>
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400">Admin Operations</p>
+</div>
+</div>
+<button class="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-200">notifications</span>
+<span class="absolute top-2 right-2 size-2.5 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-1 px-4 pb-24 overflow-y-auto">
+<!-- Welcome/Date -->
+<div class="mb-6 mt-2">
+<h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Overview</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Here is what's happening today.</p>
+</div>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-2 gap-4 mb-8">
+<!-- Metric 1: Orders -->
+<div class="col-span-2 sm:col-span-1 bg-white dark:bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 size-24 bg-blue-50 dark:bg-slate-800 rounded-full opacity-50 transition-transform group-hover:scale-110"></div>
+<div class="relative z-10 flex justify-between items-start">
+<div class="size-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">shopping_cart</span>
+</div>
+<span class="flex items-center text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-sm mr-0.5">trending_up</span>
+                        +12%
+                    </span>
+</div>
+<div class="relative z-10 mt-auto">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Orders Today</p>
+<p class="text-3xl font-bold text-slate-900 dark:text-white">142</p>
+</div>
+</div>
+<!-- Metric 2: Drivers -->
+<div class="bg-white dark:bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 size-24 bg-orange-50 dark:bg-slate-800 rounded-full opacity-50 transition-transform group-hover:scale-110"></div>
+<div class="relative z-10 flex justify-between items-start">
+<div class="size-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
+<span class="material-symbols-outlined">local_shipping</span>
+</div>
+<span class="flex items-center text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg">
+                        +2%
+                    </span>
+</div>
+<div class="relative z-10 mt-auto">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Active Drivers</p>
+<p class="text-3xl font-bold text-slate-900 dark:text-white">18</p>
+</div>
+</div>
+<!-- Metric 3: Inventory -->
+<div class="bg-white dark:bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 size-24 bg-purple-50 dark:bg-slate-800 rounded-full opacity-50 transition-transform group-hover:scale-110"></div>
+<div class="relative z-10 flex justify-between items-start">
+<div class="size-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<span class="flex items-center text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-sm mr-0.5">trending_down</span>
+                        -5%
+                    </span>
+</div>
+<div class="relative z-10 mt-auto">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Inventory Level</p>
+<p class="text-3xl font-bold text-slate-900 dark:text-white">85%</p>
+</div>
+</div>
+</div>
+<!-- Recent Alerts Section -->
+<div class="flex items-center justify-between mb-4 px-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Recent Alerts</h3>
+<button class="text-sm font-semibold text-primary hover:text-blue-600">View All</button>
+</div>
+<div class="space-y-3">
+<!-- Alert Item 1: Critical -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border-l-4 border-l-red-500 shadow-sm">
+<div class="size-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-600 shrink-0">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">Stock Shortage Alert</h4>
+<span class="text-xs text-slate-400 font-medium whitespace-nowrap ml-2">2m ago</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">5-Gallon Bottles running critically low in Warehouse B. Reorder immediately.</p>
+</div>
+</div>
+<!-- Alert Item 2: Warning -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 shadow-sm">
+<div class="size-10 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 shrink-0">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">Delivery Delayed</h4>
+<span class="text-xs text-slate-400 font-medium whitespace-nowrap ml-2">15m ago</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Driver Michael is stuck in traffic on Route 4. Expected delay: 20 mins.</p>
+</div>
+</div>
+<!-- Alert Item 3: Info -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 shadow-sm">
+<div class="size-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">person_add</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">New Driver Onboarded</h4>
+<span class="text-xs text-slate-400 font-medium whitespace-nowrap ml-2">1h ago</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Sarah Jenkins has completed verification and is ready for assignment.</p>
+</div>
+</div>
+<!-- Alert Item 4: Success -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border-l-4 border-l-green-500 shadow-sm">
+<div class="size-10 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 shrink-0">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">Bulk Order Completed</h4>
+<span class="text-xs text-slate-400 font-medium whitespace-nowrap ml-2">2h ago</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Corporate delivery for TechHub Inc. successfully delivered.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed right-5 bottom-24 z-30 flex items-center gap-2 bg-primary hover:bg-blue-600 text-white px-5 py-4 rounded-full shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105 active:scale-95">
+<span class="material-symbols-outlined">add_task</span>
+<span class="font-bold text-sm">Assign Task</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-6 pb-6 z-40 shadow-[0_-5px_10px_-5px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-end">
+<a class="flex flex-col items-center gap-1 min-w-[64px] group" href="#">
+<div class="flex items-center justify-center p-1 rounded-full bg-primary/10 text-primary transition-colors">
+<span class="material-symbols-outlined filled">dashboard</span>
+</div>
+<span class="text-[10px] font-bold text-primary">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 min-w-[64px] group" href="#">
+<div class="flex items-center justify-center p-1 rounded-full text-slate-400 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 group-hover:text-primary transition-colors">Orders</span>
+</a>
+<a class="flex flex-col items-center gap-1 min-w-[64px] group" href="#">
+<div class="flex items-center justify-center p-1 rounded-full text-slate-400 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">local_shipping</span>
+</div>
+<span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 group-hover:text-primary transition-colors">Drivers</span>
+</a>
+<a class="flex flex-col items-center gap-1 min-w-[64px] group" href="#">
+<div class="flex items-center justify-center p-1 rounded-full text-slate-400 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 group-hover:text-primary transition-colors">Inventory</span>
+</a>
+</div>
+</nav>
+</body></html>

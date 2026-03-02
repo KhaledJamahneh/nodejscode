@@ -128,6 +128,7 @@ class WorkerDelivery {
   // FIX: New field — number of coupon-book coupons used (paid) for this delivery
   final int paidCouponsCount;
   final bool isRequest;
+  final String taskType;
 
   WorkerDelivery({
     required this.id,
@@ -146,6 +147,7 @@ class WorkerDelivery {
     required this.subscriptionType,
     this.paidCouponsCount = 0,
     this.isRequest = false,
+    this.taskType = 'delivery',
   });
 
   factory WorkerDelivery.fromJson(Map<String, dynamic> json) {
@@ -167,12 +169,14 @@ class WorkerDelivery {
       // FIX: parse paid_coupons_count from API, defaulting to 0
       paidCouponsCount: json['paid_coupons_count'] ?? 0,
       isRequest: json['is_request'] ?? false,
+      taskType: json['task_type'] ?? 'delivery',
     );
   }
 
-  bool get isInProgress => status == 'in_progress';
+  bool get isInProgress => status == 'in_progress' || status == 'assigned';
   bool get isCompleted => status == 'completed';
-  bool get isPending => status == 'pending';
+  bool get isPending => status == 'pending' || status == 'approved';
+  bool get isCouponRequest => taskType == 'coupon_request';
 
   /// Whether the client pays by coupon book.
   bool get isCouponBook => subscriptionType == 'coupon_book';
@@ -193,6 +197,7 @@ class WorkerRequest {
   final String clientPhone;
   final bool assignedToMe;
   final bool isRequest;
+  final String taskType;
 
   WorkerRequest({
     required this.id,
@@ -209,6 +214,7 @@ class WorkerRequest {
     required this.clientPhone,
     required this.assignedToMe,
     this.isRequest = true,
+    this.taskType = 'delivery_request',
   });
 
   factory WorkerRequest.fromJson(Map<String, dynamic> json) {
@@ -227,6 +233,7 @@ class WorkerRequest {
       clientPhone: json['client_phone'] ?? '',
       assignedToMe: json['assigned_to_me'] ?? false,
       isRequest: json['is_request'] ?? true,
+      taskType: json['task_type'] ?? 'delivery_request',
     );
   }
 
@@ -234,7 +241,7 @@ class WorkerRequest {
     return WorkerDelivery(
       id: id,
       deliveryDate: requestDate,
-      scheduledTime: 'ASAP',
+      scheduledTime: taskType == 'coupon_request' ? 'COUPON' : 'ASAP',
       scheduledGallons: requestedGallons,
       status: status,
       notes: notes,
@@ -244,8 +251,9 @@ class WorkerRequest {
       longitude: longitude,
       clientPhone: clientPhone,
       remainingCoupons: 0, // Will be updated by API if needed
-      subscriptionType: 'cash', // Will be updated by API if needed
+      subscriptionType: taskType == 'coupon_request' ? 'coupon_book' : 'cash', 
       isRequest: true,
+      taskType: taskType,
     );
   }
 }

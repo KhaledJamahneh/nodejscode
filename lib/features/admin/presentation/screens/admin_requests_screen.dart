@@ -211,6 +211,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> with 
     final statusColor = status == 'pending' ? AppTheme.midUrgentOrange :
                        status == 'approved' ? AppTheme.iosBlue :
                        status == 'assigned' ? AppTheme.iosIndigo :
+                       status == 'in_progress' ? AppTheme.midUrgentOrange :
                        status == 'completed' ? AppTheme.successGreen : AppTheme.iosGray;
     
     final isSelected = _selectedIds.contains(request['id']);
@@ -448,7 +449,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> with 
               const Divider(height: 32),
               _buildDetailRow(l10n.type, request['book_type'].toString().toUpperCase(), Icons.category_rounded),
               _buildDetailRow(l10n.coupons, '${request['book_size']} ${l10n.pages}', Icons.menu_book_rounded),
-              _buildDetailRow(l10n.price, '₪${request['total_price']}', Icons.payments_rounded),
+              _buildDetailRow(l10n.totalPrice, '₪${request['total_price']}', Icons.payments_rounded),
               _buildDetailRow(l10n.status, _getStatusDisplay(context, request['status']), Icons.info_outline_rounded),
               _buildDetailRow(l10n.date, _formatDate(request['created_at']), Icons.calendar_today_rounded),
               if (request['worker_name'] != null)
@@ -470,13 +471,14 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> with 
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: ['pending', 'approved', 'assigned', 'completed', 'cancelled'].map((status) {
+            children: ['pending', 'approved', 'assigned', 'in_progress', 'completed', 'cancelled'].map((status) {
               final isSelected = request['status'] == status;
               return ListTile(
                 leading: Icon(
                   StatusColors.getIcon(status),
                   color: status == 'approved' ? AppTheme.iosBlue :
                          status == 'assigned' ? AppTheme.iosIndigo :
+                         status == 'in_progress' ? AppTheme.midUrgentOrange :
                          StatusColors.getColor(status),
                 ),
                 title: Text(
@@ -1326,12 +1328,13 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> with 
                 },
               ),
               const Divider(),
-              ...['pending', 'approved', 'assigned', 'completed', 'cancelled'].map(
+              ...['pending', 'approved', 'assigned', 'in_progress', 'completed', 'cancelled'].map(
                 (status) => ListTile(
                   leading: Icon(
                     StatusColors.getIcon(status),
                     color: status == 'approved' ? AppTheme.iosBlue :
                            status == 'assigned' ? AppTheme.iosIndigo :
+                           status == 'in_progress' ? AppTheme.midUrgentOrange :
                            StatusColors.getColor(status),
                   ),
                   title: Text(_getStatusDisplay(context, status)),
