@@ -125,17 +125,18 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
             },
           ),
           IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _refreshCurrentTab,
+            tooltip: 'Refresh',
+          ),
+          const SizedBox(width: 8),
+          IconButton(
             icon: const Icon(Icons.logout_rounded),
             onPressed: () async {
               await ref.read(loginProvider.notifier).logout();
               if (context.mounted) context.go('/login');
             },
             tooltip: 'Logout',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: _refreshCurrentTab,
-            tooltip: 'Refresh',
           ),
           const SizedBox(width: 8),
         ],
