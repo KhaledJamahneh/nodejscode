@@ -188,6 +188,22 @@ router.post(
   workerController.completeRequest
 );
 
+router.post(
+  '/coupon-requests/:id/accept',
+  workerAuth,
+  deliveryIdValidation,
+  validate,
+  workerController.acceptCouponBookRequest
+);
+
+router.post(
+  '/coupon-requests/:id/complete',
+  workerAuth,
+  completeDeliveryValidation,
+  validate,
+  workerController.completeCouponBookRequest
+);
+
 router.put(
   '/vehicle/inventory',
   workerAuth,

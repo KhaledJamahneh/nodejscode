@@ -129,14 +129,13 @@ const getMainSchedule = async (req, res) => {
         d.notes,
         c.full_name as client_name,
         c.address as client_address,
-        c.latitude,
-        c.longitude,
-        c.home_latitude,
-        c.home_longitude,
+        c.home_latitude as latitude,
+        c.home_longitude as longitude,
         u.phone_number as client_phone,
         cp.remaining_coupons,
         cp.subscription_type::text,
-        false as is_request
+        false as is_request,
+        'delivery' as task_type
       FROM deliveries d
       JOIN client_profiles c ON d.client_id = c.id
       JOIN users u ON c.user_id = u.id
@@ -145,37 +144,60 @@ const getMainSchedule = async (req, res) => {
         AND d.delivery_date = $2
         AND d.is_main_list = true
         AND d.status::text = ANY($3::text[])
-      
+
       UNION ALL
-      
+
       SELECT 
         dr.id,
-        dr.request_date::date::text as delivery_date,
+        $2 as delivery_date,
         'ASAP' as scheduled_time,
         dr.requested_gallons as scheduled_gallons,
         dr.status::text,
         dr.notes,
         c.full_name as client_name,
         c.address as client_address,
-        c.latitude,
-        c.longitude,
-        c.home_latitude,
-        c.home_longitude,
+        c.home_latitude as latitude,
+        c.home_longitude as longitude,
         u.phone_number as client_phone,
         cp.remaining_coupons,
         cp.subscription_type::text,
-        true as is_request
+        true as is_request,
+        'delivery_request' as task_type
       FROM delivery_requests dr
       JOIN client_profiles c ON dr.client_id = c.id
       JOIN users u ON c.user_id = u.id
       JOIN client_profiles cp ON c.id = cp.id
       WHERE dr.assigned_worker_id = $1
         AND dr.status = 'in_progress'
-      
+
+      UNION ALL
+
+      SELECT 
+        cbr.id,
+        $2 as delivery_date,
+        'COUPON' as scheduled_time,
+        0 as scheduled_gallons,
+        cbr.status::text,
+        cbr.book_type as notes,
+        c.full_name as client_name,
+        c.address as client_address,
+        c.home_latitude as latitude,
+        c.home_longitude as longitude,
+        u.phone_number as client_phone,
+        cp.remaining_coupons,
+        cp.subscription_type::text,
+        true as is_request,
+        'coupon_request' as task_type
+      FROM coupon_book_requests cbr
+      JOIN client_profiles c ON cbr.client_id = c.id
+      JOIN users u ON c.user_id = u.id
+      JOIN client_profiles cp ON c.id = cp.id
+      WHERE cbr.assigned_worker_id = $1
+        AND cbr.status IN ('assigned', 'in_progress')
+
       ORDER BY is_request ASC, scheduled_time ASC NULLS LAST`,
       [workerId, targetDate, ['pending', 'in_progress']]
     );
-
     res.json({
       success: true,
       data: {
@@ -228,8 +250,8 @@ const getSecondaryList = async (req, res) => {
           dr.notes,
           c.full_name as client_name,
           c.address as client_address,
-          c.latitude,
-          c.longitude,
+          c.home_latitude as latitude,
+          c.home_longitude as longitude,
           u.phone_number as client_phone,
           cp.remaining_coupons,
           cp.subscription_type::text,
@@ -237,7 +259,8 @@ const getSecondaryList = async (req, res) => {
             WHEN dr.assigned_worker_id = $1 THEN true 
             ELSE false 
           END as assigned_to_me,
-          true as is_request
+          true as is_request,
+          'delivery_request' as task_type
         FROM delivery_requests dr
         JOIN client_profiles c ON dr.client_id = c.id
         JOIN users u ON c.user_id = u.id
@@ -256,13 +279,14 @@ const getSecondaryList = async (req, res) => {
           d.notes,
           c.full_name as client_name,
           c.address as client_address,
-          c.latitude,
-          c.longitude,
+          c.home_latitude as latitude,
+          c.home_longitude as longitude,
           u.phone_number as client_phone,
           cp.remaining_coupons,
           cp.subscription_type::text,
           false as assigned_to_me,
-          false as is_request
+          false as is_request,
+          'delivery' as task_type
         FROM deliveries d
         JOIN client_profiles c ON d.client_id = c.id
         JOIN users u ON c.user_id = u.id
@@ -270,6 +294,35 @@ const getSecondaryList = async (req, res) => {
         WHERE d.status = 'pending'
           AND d.worker_id IS NULL
           AND d.is_main_list = true
+
+        UNION ALL
+
+        SELECT 
+          cbr.id,
+          'non_urgent' as priority,
+          0 as requested_gallons,
+          cbr.created_at::date::text as request_date,
+          cbr.status::text,
+          cbr.book_type as notes,
+          c.full_name as client_name,
+          c.address as client_address,
+          c.home_latitude as latitude,
+          c.home_longitude as longitude,
+          u.phone_number as client_phone,
+          cp.remaining_coupons,
+          cp.subscription_type::text,
+          CASE 
+            WHEN cbr.assigned_worker_id = $1 THEN true 
+            ELSE false 
+          END as assigned_to_me,
+          true as is_request,
+          'coupon_request' as task_type
+        FROM coupon_book_requests cbr
+        JOIN client_profiles c ON cbr.client_id = c.id
+        JOIN users u ON c.user_id = u.id
+        JOIN client_profiles cp ON c.id = cp.id
+        WHERE cbr.status = 'approved'
+          AND (cbr.assigned_worker_id IS NULL OR cbr.assigned_worker_id = $1)
       ) AS combined_tasks
       ORDER BY 
         CASE priority 
@@ -436,17 +489,25 @@ const acceptScheduledDelivery = async (req, res) => {
         [workerId, deliveryId]
       );
       
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery')`,
-        [
-          clientDelivery.rows[0].user_id, 
-          t(clientDelivery.rows[0].preferred_language, 'scheduled_accepted_title'),
-          t(clientDelivery.rows[0].preferred_language, 'scheduled_accepted_body', clientDelivery.rows[0].worker_name),
-          deliveryId
-        ]
-      );
+      const notification = await notificationService.createNotification({
+        userId: clientDelivery.rows[0].user_id,
+        title: t(clientDelivery.rows[0].preferred_language, 'scheduled_accepted_title'),
+        message: t(clientDelivery.rows[0].preferred_language, 'scheduled_accepted_body', clientDelivery.rows[0].worker_name),
+        type: 'delivery_status',
+        referenceId: deliveryId,
+        referenceType: 'delivery',
+        dbClient: client,
+        sendPush: false
+      });
+
+      return {
+        userId: clientDelivery.rows[0].user_id,
+        notification
+      };
     });
+
+    // Send push notification after transaction commits
+    notificationService.sendPush(result.userId, result.notification);
 
     logger.info('Scheduled delivery accepted by worker and client notified:', { userId, deliveryId });
 
@@ -846,17 +907,25 @@ const acceptRequest = async (req, res) => {
         [workerId, requestId]
       );
       
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery_request')`,
-        [
-          clientRequest.rows[0].user_id, 
-          t(clientRequest.rows[0].preferred_language, 'request_accepted_title'),
-          t(clientRequest.rows[0].preferred_language, 'request_accepted_body', clientRequest.rows[0].worker_name),
-          requestId
-        ]
-      );
+      const notification = await notificationService.createNotification({
+        userId: clientRequest.rows[0].user_id,
+        title: t(clientRequest.rows[0].preferred_language, 'request_accepted_title'),
+        message: t(clientRequest.rows[0].preferred_language, 'request_accepted_body', clientRequest.rows[0].worker_name),
+        type: 'delivery_status',
+        referenceId: requestId,
+        referenceType: 'delivery_request',
+        dbClient: client,
+        sendPush: false
+      });
+
+      return {
+        userId: clientRequest.rows[0].user_id,
+        notification
+      };
     });
+
+    // Send push notification after transaction commits
+    notificationService.sendPush(result.userId, result.notification);
 
     logger.info('Request accepted and client notified:', { userId, requestId });
 
@@ -1089,20 +1158,28 @@ const completeRequest = async (req, res) => {
         [request.client_id]
       );
 
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery_request')`,
-        [
-          clientUser.rows[0].user_id,
-          t(request.preferred_language, 'delivery_completed_title'),
-          t(request.preferred_language, 'delivery_completed_body', {
-            amount: gallons_delivered,
-            unit: getUnit(request.preferred_language, 'gallon', gallons_delivered)
-          }),
-          requestId
-        ]
-      );
+      const notification = await notificationService.createNotification({
+        userId: clientUser.rows[0].user_id,
+        title: t(request.preferred_language, 'delivery_completed_title'),
+        message: t(request.preferred_language, 'delivery_completed_body', {
+          amount: gallons_delivered,
+          unit: getUnit(request.preferred_language, 'gallon', gallons_delivered)
+        }),
+        type: 'delivery_status',
+        referenceId: requestId,
+        referenceType: 'delivery_request',
+        dbClient: client,
+        sendPush: false
+      });
+
+      return {
+        userId: clientUser.rows[0].user_id,
+        notification
+      };
     });
+
+    // Send push notification after transaction commits
+    notificationService.sendPush(result.userId, result.notification);
 
     logger.info('Request completed:', { userId, requestId, gallons_delivered });
 
@@ -1633,6 +1710,180 @@ const deleteExpense = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/v1/workers/coupon-requests/:id/accept
+ * Accept a coupon book request
+ */
+const acceptCouponBookRequest = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const requestId = req.params.id;
+
+    // Get worker profile ID
+    const workerResult = await query(
+      'SELECT id FROM worker_profiles WHERE user_id = $1',
+      [userId]
+    );
+
+    if (workerResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker profile not found'
+      });
+    }
+
+    const workerId = workerResult.rows[0].id;
+
+    await transaction(async (client) => {
+      // 1. Lock request row
+      const requestRes = await client.query(
+        'SELECT * FROM coupon_book_requests WHERE id = $1 FOR UPDATE',
+        [requestId]
+      );
+
+      if (requestRes.rows.length === 0) {
+        throw new Error('Coupon book request not found');
+      }
+
+      const request = requestRes.rows[0];
+
+      // 2. Status/Assignment check
+      if (request.status !== 'approved') {
+        throw new Error('Request is not in approved status');
+      }
+
+      if (request.assigned_worker_id && request.assigned_worker_id !== workerId) {
+        throw new Error('Request is already assigned to another worker');
+      }
+
+      // 3. Update assignment
+      await client.query(
+        `UPDATE coupon_book_requests 
+         SET assigned_worker_id = $1, 
+             status = 'assigned',
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $2`,
+        [workerId, requestId]
+      );
+    });
+
+    logger.info('Coupon book request accepted:', { userId, requestId });
+
+    res.json({
+      success: true,
+      message: 'Coupon book request accepted'
+    });
+  } catch (error) {
+    logger.error('Accept coupon book request error:', error);
+    res.status(getErrorStatus(error)).json({
+      success: false,
+      message: error.message || 'Failed to accept coupon book request'
+    });
+  }
+};
+
+/**
+ * POST /api/v1/workers/coupon-requests/:id/complete
+ * Complete a coupon book request (deliver physical book)
+ */
+const completeCouponBookRequest = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const requestId = req.params.id;
+    const {
+      delivery_latitude,
+      delivery_longitude,
+      notes
+    } = req.body;
+
+    // Get worker profile
+    const workerResult = await query(
+      'SELECT id FROM worker_profiles WHERE user_id = $1',
+      [userId]
+    );
+
+    if (workerResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker profile not found'
+      });
+    }
+
+    const workerId = workerResult.rows[0].id;
+
+    await transaction(async (client) => {
+      // 1. Lock request and get details
+      const requestResult = await client.query(
+        `SELECT cbr.*, cs.size, cs.bonus_gallons, cp.user_id as client_user_id, u.preferred_language
+         FROM coupon_book_requests cbr
+         JOIN coupon_sizes cs ON cbr.coupon_size_id = cs.id
+         JOIN client_profiles cp ON cbr.client_id = cp.id
+         JOIN users u ON cp.user_id = u.id
+         WHERE cbr.id = $1
+         FOR UPDATE OF cbr, cp`,
+        [requestId]
+      );
+
+      if (requestResult.rows.length === 0) {
+        throw new Error('Coupon book request not found');
+      }
+
+      const request = requestResult.rows[0];
+
+      if (request.assigned_worker_id !== workerId) {
+        throw new Error('Request is not assigned to you');
+      }
+
+      if (request.status === 'completed') {
+        throw new Error('Request is already completed');
+      }
+
+      // 2. Credit coupons to client (Physical book delivered)
+      await client.query(
+        `UPDATE client_profiles 
+         SET remaining_coupons = remaining_coupons + $1,
+             bonus_gallons = bonus_gallons + $2,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $3`,
+        [request.size, request.bonus_gallons || 0, request.client_id]
+      );
+
+      // 3. Update request status
+      await client.query(
+        `UPDATE coupon_book_requests 
+         SET status = 'completed', 
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $1`,
+        [requestId]
+      );
+
+      // 4. Create notification for client
+      await notificationService.createNotification({
+        userId: request.client_user_id,
+        title: t(request.preferred_language, 'coupon_delivered_title'),
+        message: t(request.preferred_language, 'coupon_delivered_body', request.size),
+        type: 'coupon_status',
+        referenceId: requestId,
+        referenceType: 'coupon_book_request',
+        dbClient: client
+      });
+    });
+
+    logger.info('Coupon book request completed and coupons credited:', { userId, requestId });
+
+    res.json({
+      success: true,
+      message: 'Coupon book delivered and coupons credited successfully'
+    });
+  } catch (error) {
+    logger.error('Complete coupon book request error:', error);
+    res.status(getErrorStatus(error)).json({
+      success: false,
+      message: error.message || 'Failed to complete coupon book request'
+    });
+  }
+};
+
 module.exports = {
   getWorkerProfile,
   getMainSchedule,
@@ -1642,6 +1893,8 @@ module.exports = {
   completeDelivery,
   acceptRequest,
   completeRequest,
+  acceptCouponBookRequest,
+  completeCouponBookRequest,
   createQuickDelivery: require('./admin.controller').createQuickDelivery,
   updateVehicleInventory,
   toggleGPSSharing,

@@ -4,6 +4,7 @@
 const { query, transaction } = require('../config/database');
 const { t } = require('../utils/i18n');
 const logger = require('../utils/logger');
+const notificationService = require('../services/notification.service');
 const bcrypt = require('bcrypt');
 const { isValidTransition } = require('../utils/state-machine');
 const { getStatusCode } = require('../middleware/error-handler.middleware');
@@ -93,6 +94,31 @@ const assignCouponBookWorker = async (req, res) => {
         success: false,
         message: 'Coupon book request not found'
       });
+    }
+
+    // Notify worker
+    try {
+      const workerRes = await query(
+        'SELECT user_id, preferred_language FROM users JOIN worker_profiles ON users.id = worker_profiles.user_id WHERE worker_profiles.id = $1',
+        [worker_id]
+      );
+      
+      if (workerRes.rows.length > 0) {
+        const worker = workerRes.rows[0];
+        const lang = worker.preferred_language || 'en';
+        
+        await notificationService.createNotification({
+          userId: worker.user_id,
+          title: t(lang, 'coupon_assignment_title'),
+          message: t(lang, 'coupon_assignment_body', id),
+          type: 'assignment',
+          referenceId: id,
+          referenceType: 'coupon_book_request'
+        });
+      }
+    } catch (notifyError) {
+      logger.error('Failed to notify worker of coupon assignment:', notifyError);
+      // Don't fail the request if notification fails
     }
 
     res.json({
@@ -622,11 +648,16 @@ const assignWorkerToRequest = async (req, res) => {
       // Notify Worker
       const workerUser = await client.query('SELECT u.id as user_id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.id = $1', [worker_id]);
       const workerLang = workerUser.rows[0].preferred_language || 'en';
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'worker_assignment', $4, 'delivery_request')`,
-        [workerUser.rows[0].user_id, t(workerLang, 'new_task_assigned_title'), t(workerLang, 'new_task_assigned_body'), requestId]
-      );
+      const workerNotification = await notificationService.createNotification({
+        userId: workerUser.rows[0].user_id,
+        title: t(workerLang, 'new_task_assigned_title'),
+        message: t(workerLang, 'new_task_assigned_body'),
+        type: 'worker_assignment',
+        referenceId: requestId,
+        referenceType: 'delivery_request',
+        dbClient: client,
+        sendPush: false
+      });
 
       // Notify Client
       const clientRequest = await client.query(
@@ -640,12 +671,28 @@ const assignWorkerToRequest = async (req, res) => {
       );
       
       const clientLang = clientRequest.rows[0].preferred_language || 'en';
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery_request')`,
-        [clientRequest.rows[0].user_id, t(clientLang, 'request_assigned_title'), t(clientLang, 'request_assigned_body'), requestId]
-      );
+      const clientNotification = await notificationService.createNotification({
+        userId: clientRequest.rows[0].user_id,
+        title: t(clientLang, 'request_assigned_title'),
+        message: t(clientLang, 'request_assigned_body'),
+        type: 'delivery_status',
+        referenceId: requestId,
+        referenceType: 'delivery_request',
+        dbClient: client,
+        sendPush: false
+      });
+
+      return {
+        workerId: workerUser.rows[0].user_id,
+        workerNotification,
+        clientId: clientRequest.rows[0].user_id,
+        clientNotification
+      };
     });
+
+    // Send push notifications after transaction commits
+    notificationService.sendPush(result.workerId, result.workerNotification);
+    notificationService.sendPush(result.clientId, result.clientNotification);
 
     logger.info('Worker assigned to request with notifications:', { requestId, worker_id, admin: req.user.id });
 
@@ -909,11 +956,16 @@ const assignWorkerToDelivery = async (req, res) => {
       // Notify Worker
       const workerUser = await client.query('SELECT u.id as user_id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.id = $1', [worker_id]);
       const workerLang = workerUser.rows[0].preferred_language || 'en';
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'worker_assignment', $4, 'delivery')`,
-        [workerUser.rows[0].user_id, t(workerLang, 'new_task_assigned_title'), t(workerLang, 'new_task_assigned_body'), deliveryId]
-      );
+      const workerNotification = await notificationService.createNotification({
+        userId: workerUser.rows[0].user_id,
+        title: t(workerLang, 'new_task_assigned_title'),
+        message: t(workerLang, 'new_task_assigned_body'),
+        type: 'worker_assignment',
+        referenceId: deliveryId,
+        referenceType: 'delivery',
+        dbClient: client,
+        sendPush: false
+      });
 
       // Notify Client (Optional but good for flow)
       const clientDelivery = await client.query(
@@ -928,13 +980,36 @@ const assignWorkerToDelivery = async (req, res) => {
 
       if (clientDelivery.rows.length > 0) {
         const clientLang = clientDelivery.rows[0].preferred_language || 'en';
-        await client.query(
-          `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-           VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery')`,
-          [clientDelivery.rows[0].user_id, t(clientLang, 'request_assigned_title'), t(clientLang, 'request_assigned_body'), deliveryId]
-        );
+        const clientNotification = await notificationService.createNotification({
+          userId: clientDelivery.rows[0].user_id,
+          title: t(clientLang, 'request_assigned_title'),
+          message: t(clientLang, 'request_assigned_body'),
+          type: 'delivery_status',
+          referenceId: deliveryId,
+          referenceType: 'delivery',
+          dbClient: client,
+          sendPush: false
+        });
+
+        return {
+          workerId: workerUser.rows[0].user_id,
+          workerNotification,
+          clientId: clientDelivery.rows[0].user_id,
+          clientNotification
+        };
       }
+      
+      return {
+        workerId: workerUser.rows[0].user_id,
+        workerNotification
+      };
     });
+
+    // Send push notifications after transaction commits
+    notificationService.sendPush(result.workerId, result.workerNotification);
+    if (result.clientId && result.clientNotification) {
+      notificationService.sendPush(result.clientId, result.clientNotification);
+    }
 
     res.json({
       success: true,
@@ -1094,19 +1169,27 @@ const createQuickDelivery = async (req, res) => {
       }
 
       // Notify client
-      await client.query(
-        `INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
-         VALUES ($1, $2, $3, 'delivery_status', $4, 'delivery')`,
-        [
-          clientData.user_id, 
-          t(clientData.preferred_language, 'water_delivered_title'),
-          t(clientData.preferred_language, 'water_delivered_body', gallons_delivered),
-          deliveryId
-        ]
-      );
+      const notification = await notificationService.createNotification({
+        userId: clientData.user_id,
+        title: t(clientData.preferred_language, 'water_delivered_title'),
+        message: t(clientData.preferred_language, 'water_delivered_body', gallons_delivered),
+        type: 'delivery_status',
+        referenceId: deliveryId,
+        referenceType: 'delivery',
+        dbClient: client,
+        sendPush: false
+      });
 
-      logger.info('Quick delivery created:', { deliveryId, client_id, worker_id, admin: req.user.id });
+      return {
+        userId: clientData.user_id,
+        notification
+      };
     });
+
+    // Send push notification after transaction commits
+    notificationService.sendPush(result.userId, result.notification);
+
+    logger.info('Quick delivery created:', { admin: req.user.id });
 
     res.status(201).json({
       success: true,
@@ -1487,12 +1570,12 @@ const createUser = async (req, res) => {
         
         await client.query(
           `INSERT INTO client_profiles (
-            user_id, full_name, address, latitude, longitude,
+            user_id, full_name, address,
             home_latitude, home_longitude,
             subscription_type, subscription_start_date, subscription_end_date,
             remaining_coupons, coupon_book_size_id
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', $9, $10)`,
-          [userId, full_name || 'New Client', address || 'N/A', latitude, longitude, home_latitude, home_longitude, subscription_type || 'coupon_book', subscription_type === 'coupon_book' ? (initial_coupons || 0) : 0, couponSizeId]
+          ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year', $7, $8)`,
+          [userId, full_name || 'New Client', address || 'N/A', home_latitude || latitude, home_longitude || longitude, subscription_type || 'coupon_book', subscription_type === 'coupon_book' ? (initial_coupons || 0) : 0, couponSizeId]
         );
 
         // Handle payment for initial coupons
@@ -2234,10 +2317,14 @@ const updateUser = async (req, res) => {
           let pIdx = 1;
           if (full_name !== undefined) { profileFields.push(`full_name = $${pIdx++}`); profileValues.push(full_name); }
           if (address !== undefined) { profileFields.push(`address = $${pIdx++}`); profileValues.push(address); }
-          if (latitude !== undefined) { profileFields.push(`latitude = $${pIdx++}`); profileValues.push(latitude); }
-          if (longitude !== undefined) { profileFields.push(`longitude = $${pIdx++}`); profileValues.push(longitude); }
-          if (home_latitude !== undefined) { profileFields.push(`home_latitude = $${pIdx++}`); profileValues.push(home_latitude); }
-          if (home_longitude !== undefined) { profileFields.push(`home_longitude = $${pIdx++}`); profileValues.push(home_longitude); }
+          if (home_latitude !== undefined || latitude !== undefined) { 
+            profileFields.push(`home_latitude = $${pIdx++}`); 
+            profileValues.push(home_latitude !== undefined ? home_latitude : latitude); 
+          }
+          if (home_longitude !== undefined || longitude !== undefined) { 
+            profileFields.push(`home_longitude = $${pIdx++}`); 
+            profileValues.push(home_longitude !== undefined ? home_longitude : longitude); 
+          }
           if (subscription_type !== undefined) { profileFields.push(`subscription_type = $${pIdx++}`); profileValues.push(subscription_type); }
           
           // Handle coupon_book_size (convert size value to ID)
