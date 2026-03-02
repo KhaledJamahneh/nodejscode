@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:einhod_water/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/widgets/modern_card.dart';
 import '../providers/requests_provider.dart';
 import '../providers/users_provider.dart';
 import '../../data/models/request_model.dart';
@@ -294,7 +293,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.iosLightGray.withOpacity(0.3),
+        color: Colors.grey.shade300.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -342,13 +341,15 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
 
   void _showAssignWorkerDialog(BuildContext context, WidgetRef ref, List<int> requestIds) {
     final l10n = AppLocalizations.of(context)!;
-    final workersAsync = ref.watch(availableWorkersProvider);
+    // TODO: Implement availableWorkersProvider
+    // final workersAsync = ref.watch(availableWorkersProvider);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.assignWorker),
-        content: workersAsync.when(
+        content: const Text('Worker assignment feature coming soon'),
+        /* workersAsync.when(
           data: (workers) => SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -373,7 +374,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
           ),
           loading: () => const Center(child: CircularProgressIndicator.adaptive()),
           error: (e, _) => Text('Error: $e'),
-        ),
+        ), */
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -1035,7 +1036,7 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
               else if (request.canAssignWorker)
                 ElevatedButton.icon(
                   onPressed: () =>
-                      _showAssignWorkerDialog(context, ref, request),
+                      _showAssignWorkerDialog(context, ref, [request.id]),
                   icon: const Icon(Icons.assignment_ind_rounded, size: 16),
                   label: Text(l10n.assignWorker),
                   style: ElevatedButton.styleFrom(
@@ -1316,108 +1317,6 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
         ],
       ),
     );
-  }
-
-  void _showAssignWorkerDialog(
-      BuildContext context, WidgetRef ref, DeliveryRequest request) {
-    final workersAsync = ref.read(workersListProvider);
-    final l10n = AppLocalizations.of(context)!;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(l10n.assignWorker),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: workersAsync.when(
-            data: (workers) => workers.isEmpty
-                ? Text(l10n.noActivity)
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: workers.length,
-                    itemBuilder: (context, index) {
-                      final worker = workers[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: AppTheme.primary.withOpacity(0.1),
-                          child: const Icon(Icons.person_rounded,
-                              color: AppTheme.primary),
-                        ),
-                        title: Text(worker['username']),
-                        subtitle: Text(worker['phone_number']),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${worker['profile']['active_tasks_count']} Active',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: (worker['profile']['active_tasks_count'] ?? 0) > 3 
-                                  ? AppTheme.iosOrange 
-                                  : AppTheme.iosGreen,
-                              ),
-                            ),
-                            Text(
-                              '${worker['profile']['vehicle_current_gallons']}L left',
-                              style: const TextStyle(fontSize: 10, color: AppTheme.iosGray),
-                            ),
-                          ],
-                        ),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        onTap: () async {
-                          Navigator.pop(context);
-                          await _assignWorker(context, ref, request.id,
-                              worker['profile']['id']);
-                        },
-                      );
-                    },
-                  ),
-            loading: () =>
-                const Center(child: CircularProgressIndicator.adaptive()),
-            error: (error, _) => Text('Error: $error'),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.cancel),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _assignWorker(
-      BuildContext context, WidgetRef ref, int requestId, int workerId) async {
-    await ref
-        .read(assignWorkerProvider.notifier)
-        .assignWorker(requestId, workerId);
-
-    final state = ref.read(assignWorkerProvider);
-    final l10n = AppLocalizations.of(context)!;
-    if (context.mounted) {
-      state.when(
-        data: (_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.workerAssigned)),
-          );
-          ref.invalidate(requestsListProvider);
-        },
-        loading: () {},
-        error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Error: ${ErrorHandler.getMessage(error).replaceAll('Exception: ', '')}'),
-              backgroundColor: AppTheme.iosRed,
-            ),
-          );
-        },
-      );
-    }
   }
 
   void _showStatusDialog(

@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -142,7 +144,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationDeliveryAssigned => 'مهمة جديدة';
 
   @override
-  String get notificationDeliveryAssignedMsg => 'قام المسؤول بتعيين طلب توصيل جديد لك';
+  String get notificationDeliveryAssignedMsg =>
+      'قام المسؤول بتعيين طلب توصيل جديد لك';
 
   @override
   String get notificationRequestAccepted => 'تم قبول الطلب';
@@ -156,7 +159,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationDeliveryCompleted => 'اكتمل التوصيل';
 
   @override
-  String get notificationDeliveryCompletedMsg => 'تم إكمال عملية التوصيل الخاصة بك';
+  String get notificationDeliveryCompletedMsg =>
+      'تم إكمال عملية التوصيل الخاصة بك';
 
   @override
   String get notificationPaymentReceived => 'تم استلام الدفع';
@@ -643,7 +647,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cannotBeUndone => 'هذا الإجراء دائم ولا يمكن التراجع عنه.';
 
   @override
-  String get keepCurrentPassword => 'اتركه فارغاً للاحتفاظ بكلمة المرور الحالية';
+  String get keepCurrentPassword =>
+      'اتركه فارغاً للاحتفاظ بكلمة المرور الحالية';
 
   @override
   String get min8Chars => '8 أحرف كحد أدنى';
@@ -667,7 +672,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quickActions => 'إجراءات سريعة';
 
   @override
-  String get operationsUpdate => 'إليك آخر التحديثات المتعلقة بالعمليات التشغيلية.';
+  String get operationsUpdate =>
+      'إليك آخر التحديثات المتعلقة بالعمليات التشغيلية.';
 
   @override
   String get address => 'العنوان';
@@ -767,7 +773,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get enableGpsPermission => 'يرجى تفعيل GPS ومنح إذن الموقع';
 
   @override
-  String get locationSharingDescription => 'عند التفعيل، سيتلقى العملاء إشعاراً عندما تكون على بعد 500 متر من عنوانهم. لن يتم مشاركة موقعك الدقيق مع العملاء.';
+  String get locationSharingDescription =>
+      'عند التفعيل، سيتلقى العملاء إشعاراً عندما تكون على بعد 500 متر من عنوانهم. لن يتم مشاركة موقعك الدقيق مع العملاء.';
 
   @override
   String get gallonsRemaining => 'الجالونات المتبقية';
@@ -917,46 +924,58 @@ class AppLocalizationsAr extends AppLocalizations {
   String get totalDeliveries => 'إجمالي التوصيلات';
 
   @override
-  String get totalDeliveriesDesc => 'إجمالي عدد عمليات توصيل المياه التي اكتملت بنجاح خلال فترة التحليل.';
+  String get totalDeliveriesDesc =>
+      'إجمالي عدد عمليات توصيل المياه التي اكتملت بنجاح خلال فترة التحليل.';
 
   @override
-  String get totalGallonsDesc => 'إجمالي حجم المياه الموصلة لجميع العملاء خلال هذه الفترة.';
+  String get totalGallonsDesc =>
+      'إجمالي حجم المياه الموصلة لجميع العملاء خلال هذه الفترة.';
 
   @override
   String get avgPerDelivery => 'متوسط التوصيل';
 
   @override
-  String get avgPerDeliveryDesc => 'المتوسط الحسابي لحجم المياه الموصلة في كل رحلة فردية.';
+  String get avgPerDeliveryDesc =>
+      'المتوسط الحسابي لحجم المياه الموصلة في كل رحلة فردية.';
 
   @override
   String get uniqueClients => 'العملاء المميزون';
 
   @override
-  String get uniqueClientsDesc => 'إجمالي عدد العملاء المختلفين الذين استلموا توصيلة واحدة على الأقل خلال هذه الفترة.';
+  String get uniqueClientsDesc =>
+      'إجمالي عدد العملاء المختلفين الذين استلموا توصيلة واحدة على الأقل خلال هذه الفترة.';
 
   @override
-  String get totalRevenueDesc => 'إجمالي الدخل الناتج من كافة المعاملات وعمليات التوصيل المكتملة.';
+  String get totalRevenueDesc =>
+      'إجمالي الدخل الناتج من كافة المعاملات وعمليات التوصيل المكتملة.';
 
   @override
-  String get avgTransactionDesc => 'متوسط القيمة المالية لكل دفعة مستلمة من العملاء.';
+  String get avgTransactionDesc =>
+      'متوسط القيمة المالية لكل دفعة مستلمة من العملاء.';
 
   @override
-  String get cashRevenueDesc => 'جزء من إجمالي الإيرادات المحصلة عبر الدفع النقدي الفيزيائي.';
+  String get cashRevenueDesc =>
+      'جزء من إجمالي الإيرادات المحصلة عبر الدفع النقدي الفيزيائي.';
 
   @override
-  String get cardRevenueDesc => 'جزء من إجمالي الإيرادات المحصلة عبر معاملات بطاقات الائتمان أو الخصم.';
+  String get cardRevenueDesc =>
+      'جزء من إجمالي الإيرادات المحصلة عبر معاملات بطاقات الائتمان أو الخصم.';
 
   @override
-  String get totalClientsDesc => 'إجمالي عدد حسابات العملاء المسجلين في النظام بالكامل.';
+  String get totalClientsDesc =>
+      'إجمالي عدد حسابات العملاء المسجلين في النظام بالكامل.';
 
   @override
-  String get activeSubsDesc => 'عدد العملاء الذين لديهم دفاتر قسائم أو حسابات نقدية صالحة حالياً وغير منتهية.';
+  String get activeSubsDesc =>
+      'عدد العملاء الذين لديهم دفاتر قسائم أو حسابات نقدية صالحة حالياً وغير منتهية.';
 
   @override
-  String get expiredSubsDesc => 'عدد العملاء الذين انتهت فترة خدمتهم ويحتاجون إلى تجديد.';
+  String get expiredSubsDesc =>
+      'عدد العملاء الذين انتهت فترة خدمتهم ويحتاجون إلى تجديد.';
 
   @override
-  String get totalDebtDesc => 'إجمالي الرصيد غير المدفوع والمستحق للشركة من قبل جميع العملاء.';
+  String get totalDebtDesc =>
+      'إجمالي الرصيد غير المدفوع والمستحق للشركة من قبل جميع العملاء.';
 
   @override
   String get noDeliveryWorkerData => 'لا توجد بيانات متاحة لموظفي التوصيل';
@@ -1471,10 +1490,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deliveryEveryDay => 'توصيل كل يوم';
 
   @override
-  String get deliveryOnSelectedDaysEachWeek => 'توصيل في الأيام المحددة كل أسبوع';
+  String get deliveryOnSelectedDaysEachWeek =>
+      'توصيل في الأيام المحددة كل أسبوع';
 
   @override
-  String get deliveryOnSelectedDaysEveryOtherWeek => 'توصيل في الأيام المحددة كل أسبوعين';
+  String get deliveryOnSelectedDaysEveryOtherWeek =>
+      'توصيل في الأيام المحددة كل أسبوعين';
 
   @override
   String get deliveryXTimesPerMonth => 'توصيل X مرات في الشهر';
@@ -1492,7 +1513,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nTimes => 'س مرات';
 
   @override
-  String get customScheduleExample => 'مثال: كل 3 أيام، مرتين = توصيلتان خلال 3 أيام';
+  String get customScheduleExample =>
+      'مثال: كل 3 أيام، مرتين = توصيلتان خلال 3 أيام';
 
   @override
   String get time => 'الوقت';
@@ -1589,10 +1611,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get coordinatesTip => 'نصيحة: يمكنك العثور على إحداثياتك في خرائط جوجل بالضغط المطول على منزلك.';
+  String get coordinatesTip =>
+      'نصيحة: يمكنك العثور على إحداثياتك في خرائط جوجل بالضغط المطول على منزلك.';
 
   @override
-  String get cannotDeleteUserWithRecords => 'لا يمكن حذف المستخدم الذي لديه سجلات موجودة. يرجى تعطيله بدلاً من ذلك.';
+  String get cannotDeleteUserWithRecords =>
+      'لا يمكن حذف المستخدم الذي لديه سجلات موجودة. يرجى تعطيله بدلاً من ذلك.';
 
   @override
   String get revenues => 'الإيرادات';

@@ -170,6 +170,7 @@ class CouponBookRequestsNotifier extends StateNotifier<AsyncValue<List<Map<Strin
     state = await AsyncValue.guard(() async {
       await _service.deleteCouponBookRequest(requestId);
       await loadRequests();
+      return state.value ?? [];
     });
   }
 }

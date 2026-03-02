@@ -200,7 +200,7 @@ ThemeData buildAppTheme({bool isArabic = false}) {
       titleTextStyle: AppTypography.headlineMedium,
       iconTheme: const IconThemeData(color: AppColors.textPrimary),
     ),
-    cardTheme: const CardTheme(
+    cardTheme: const CardThemeData(
       color: AppColors.cardBackground,
       elevation: 0,
       shape: RoundedRectangleBorder(

@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -142,7 +144,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationDeliveryAssigned => 'New Task Assigned';
 
   @override
-  String get notificationDeliveryAssignedMsg => 'Admin assigned you a new delivery request';
+  String get notificationDeliveryAssignedMsg =>
+      'Admin assigned you a new delivery request';
 
   @override
   String get notificationRequestAccepted => 'Request Accepted';
@@ -156,7 +159,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationDeliveryCompleted => 'Delivery Completed';
 
   @override
-  String get notificationDeliveryCompletedMsg => 'Your delivery has been completed';
+  String get notificationDeliveryCompletedMsg =>
+      'Your delivery has been completed';
 
   @override
   String get notificationPaymentReceived => 'Payment Received';
@@ -229,7 +233,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shiftDeleted => 'Shift deleted';
 
   @override
-  String get deleteShiftConfirm => 'Are you sure you want to delete this shift?';
+  String get deleteShiftConfirm =>
+      'Are you sure you want to delete this shift?';
 
   @override
   String get thisMonth => 'This Month';
@@ -667,7 +672,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickActions => 'Quick Actions';
 
   @override
-  String get operationsUpdate => 'Here\'s the latest update on your operations.';
+  String get operationsUpdate =>
+      'Here\'s the latest update on your operations.';
 
   @override
   String get address => 'Address';
@@ -764,10 +770,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activeAdminSeeYou => 'Active — Admin can see your location';
 
   @override
-  String get enableGpsPermission => 'Please enable GPS and grant location permission';
+  String get enableGpsPermission =>
+      'Please enable GPS and grant location permission';
 
   @override
-  String get locationSharingDescription => 'When enabled, clients will receive a notification when you\'re within 500 meters of their address. Your exact location is not shared with clients.';
+  String get locationSharingDescription =>
+      'When enabled, clients will receive a notification when you\'re within 500 meters of their address. Your exact location is not shared with clients.';
 
   @override
   String get gallonsRemaining => 'Gallons Remaining';
@@ -917,46 +925,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalDeliveries => 'Total Deliveries';
 
   @override
-  String get totalDeliveriesDesc => 'Total number of water deliveries successfully completed during the analysis period.';
+  String get totalDeliveriesDesc =>
+      'Total number of water deliveries successfully completed during the analysis period.';
 
   @override
-  String get totalGallonsDesc => 'Total volume of water delivered to all clients combined during this period.';
+  String get totalGallonsDesc =>
+      'Total volume of water delivered to all clients combined during this period.';
 
   @override
   String get avgPerDelivery => 'Avg. per Delivery';
 
   @override
-  String get avgPerDeliveryDesc => 'The mathematical average volume of water delivered per individual trip.';
+  String get avgPerDeliveryDesc =>
+      'The mathematical average volume of water delivered per individual trip.';
 
   @override
   String get uniqueClients => 'Unique Clients';
 
   @override
-  String get uniqueClientsDesc => 'The total number of distinct clients who received at least one delivery during this period.';
+  String get uniqueClientsDesc =>
+      'The total number of distinct clients who received at least one delivery during this period.';
 
   @override
-  String get totalRevenueDesc => 'Gross income generated from all completed transactions and deliveries.';
+  String get totalRevenueDesc =>
+      'Gross income generated from all completed transactions and deliveries.';
 
   @override
-  String get avgTransactionDesc => 'The average monetary value of each payment received from clients.';
+  String get avgTransactionDesc =>
+      'The average monetary value of each payment received from clients.';
 
   @override
-  String get cashRevenueDesc => 'Portion of total revenue collected through physical cash payments.';
+  String get cashRevenueDesc =>
+      'Portion of total revenue collected through physical cash payments.';
 
   @override
-  String get cardRevenueDesc => 'Portion of total revenue collected through credit or debit card transactions.';
+  String get cardRevenueDesc =>
+      'Portion of total revenue collected through credit or debit card transactions.';
 
   @override
-  String get totalClientsDesc => 'The total number of registered client accounts in the entire system.';
+  String get totalClientsDesc =>
+      'The total number of registered client accounts in the entire system.';
 
   @override
-  String get activeSubsDesc => 'Number of clients whose coupon books or cash accounts are currently valid and not expired.';
+  String get activeSubsDesc =>
+      'Number of clients whose coupon books or cash accounts are currently valid and not expired.';
 
   @override
-  String get expiredSubsDesc => 'Number of clients whose service period has ended and require renewal.';
+  String get expiredSubsDesc =>
+      'Number of clients whose service period has ended and require renewal.';
 
   @override
-  String get totalDebtDesc => 'The total outstanding unpaid balance owed to the company by all clients.';
+  String get totalDebtDesc =>
+      'The total outstanding unpaid balance owed to the company by all clients.';
 
   @override
   String get noDeliveryWorkerData => 'No delivery profile data available';
@@ -1060,7 +1080,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationPermissionRequired => 'Location Permission Required';
 
   @override
-  String get enableLocationToViewMap => 'Please enable location to view the map';
+  String get enableLocationToViewMap =>
+      'Please enable location to view the map';
 
   @override
   String get openLocationSettings => 'Open Location Settings';
@@ -1373,7 +1394,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noSchedules => 'No Schedules';
 
   @override
-  String get noSchedulesDesc => 'Create recurring delivery schedules for clients';
+  String get noSchedulesDesc =>
+      'Create recurring delivery schedules for clients';
 
   @override
   String get addDeliverySchedule => 'Add Delivery Schedule';
@@ -1471,10 +1493,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deliveryEveryDay => 'Delivery every day';
 
   @override
-  String get deliveryOnSelectedDaysEachWeek => 'Delivery on selected days each week';
+  String get deliveryOnSelectedDaysEachWeek =>
+      'Delivery on selected days each week';
 
   @override
-  String get deliveryOnSelectedDaysEveryOtherWeek => 'Delivery on selected days every other week';
+  String get deliveryOnSelectedDaysEveryOtherWeek =>
+      'Delivery on selected days every other week';
 
   @override
   String get deliveryXTimesPerMonth => 'Delivery X times per month';
@@ -1492,7 +1516,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nTimes => 'N times';
 
   @override
-  String get customScheduleExample => 'Example: Every 3 days, 2 times = 2 deliveries within 3 days';
+  String get customScheduleExample =>
+      'Example: Every 3 days, 2 times = 2 deliveries within 3 days';
 
   @override
   String get time => 'Time';
@@ -1569,7 +1594,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setHomeLocation => 'Set Home Location';
 
   @override
-  String get workersWillBeNotified => 'You will be notified when a worker is near your home';
+  String get workersWillBeNotified =>
+      'You will be notified when a worker is near your home';
 
   @override
   String get requiredToReceiveAlerts => 'Required to receive proximity alerts';
@@ -1589,10 +1615,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get coordinatesTip => 'Tip: You can find your coordinates in Google Maps by long-pressing your home.';
+  String get coordinatesTip =>
+      'Tip: You can find your coordinates in Google Maps by long-pressing your home.';
 
   @override
-  String get cannotDeleteUserWithRecords => 'Cannot delete user with existing records. Please deactivate instead.';
+  String get cannotDeleteUserWithRecords =>
+      'Cannot delete user with existing records. Please deactivate instead.';
 
   @override
   String get revenues => 'Revenues';

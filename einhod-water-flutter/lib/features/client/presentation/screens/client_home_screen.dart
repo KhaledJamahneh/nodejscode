@@ -1099,7 +1099,7 @@ class ClientRequestsTab extends ConsumerWidget {
                   _buildSectionHeader('Active Requests'),
                   const SizedBox(height: 12),
                   ...activeRequests.map((r) => _buildRequestCard(context, ref, r)),
-                  ...couponRequests.map((cr) => _buildCouponBookRequestCard(context, cr)),
+                  ...couponRequests.map((cr) => _buildCouponBookRequestCard(context, ref, cr)),
                   const SizedBox(height: 24),
                 ],
                 if (historyRequests.isNotEmpty) ...[
@@ -1132,7 +1132,7 @@ class ClientRequestsTab extends ConsumerWidget {
     }
   }
 
-  Widget _buildCouponBookRequestCard(BuildContext context, Map<String, dynamic> request) {
+  Widget _buildCouponBookRequestCard(BuildContext context, WidgetRef ref, Map<String, dynamic> request) {
     final l10n = AppLocalizations.of(context)!;
     final status = request['status'] ?? 'pending';
     final statusColor = status == 'pending' ? AppTheme.midUrgentOrange : status == 'approved' ? AppTheme.successGreen : status == 'delivered' ? AppTheme.primaryBlue : AppTheme.iosGray;
@@ -1172,7 +1172,7 @@ class ClientRequestsTab extends ConsumerWidget {
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 20),
                       color: AppTheme.criticalRed,
-                      onPressed: () => _confirmDeleteCouponRequest(context, request['id']),
+                      onPressed: () => _confirmDeleteCouponRequest(context, ref, request['id']),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -1186,7 +1186,7 @@ class ClientRequestsTab extends ConsumerWidget {
     );
   }
 
-  void _confirmDeleteCouponRequest(BuildContext context, int requestId) {
+  void _confirmDeleteCouponRequest(BuildContext context, WidgetRef ref, int requestId) {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
@@ -1208,7 +1208,7 @@ class ClientRequestsTab extends ConsumerWidget {
                 );
               }
             },
-            child: Text(l10n.yes, style: const TextStyle(color: AppTheme.criticalRed)),
+            child: const Text('Yes', style: TextStyle(color: AppTheme.criticalRed)),
           ),
         ],
       ),

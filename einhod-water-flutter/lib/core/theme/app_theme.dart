@@ -192,7 +192,7 @@ class AppTheme {
           letterSpacing: isArabic ? 0 : -0.4,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
         shape: RoundedRectangleBorder(
