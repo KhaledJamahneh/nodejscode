@@ -177,12 +177,14 @@ CREATE TABLE coupon_book_requests (
     total_price DECIMAL(10, 2) NOT NULL,
     status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'completed', 'cancelled'
     payment_method payment_method DEFAULT 'cash',
+    assigned_worker_id INTEGER REFERENCES worker_profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_coupon_requests_client ON coupon_book_requests(client_id);
 CREATE INDEX idx_coupon_requests_status ON coupon_book_requests(status);
+CREATE INDEX idx_coupon_requests_worker ON coupon_book_requests(assigned_worker_id);
 
 CREATE TRIGGER update_coupon_requests_updated_at BEFORE UPDATE ON coupon_book_requests
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
