@@ -1,3 +1,0 @@
--- Make email and phone_number optional
-ALTER TABLE users ALTER COLUMN email DROP NOT NULL;
-ALTER TABLE users ALTER COLUMN phone_number DROP NOT NULL;
