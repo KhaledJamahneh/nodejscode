@@ -148,6 +148,8 @@
   "clearAll": "مسح الكل",
   "changeStatus": "تغيير الحالة",
   "assignWorker": "تعيين موظف",
+  "noWorkersAvailable": "لا يوجد موظفون متاحون",
+  "workerAssignedSuccessfully": "تم تعيين الموظف بنجاح",
   "normalPriority": "أولوية عادية",
   "highPriority": "أولوية عالية",
   "total": "الإجمالي",

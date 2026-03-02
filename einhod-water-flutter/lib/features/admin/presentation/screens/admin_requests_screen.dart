@@ -341,40 +341,53 @@ class _AdminRequestsScreenState extends ConsumerState<AdminRequestsScreen> {
 
   void _showAssignWorkerDialog(BuildContext context, WidgetRef ref, List<int> requestIds) {
     final l10n = AppLocalizations.of(context)!;
-    // TODO: Implement availableWorkersProvider
-    // final workersAsync = ref.watch(availableWorkersProvider);
+    final workersAsync = ref.watch(availableWorkersProvider);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.assignWorker),
-        content: const Text('Worker assignment feature coming soon'),
-        /* workersAsync.when(
+        content: workersAsync.when(
           data: (workers) => SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: workers.length,
-              itemBuilder: (context, index) {
-                final worker = workers[index];
-                return ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
-                  title: Text(worker['full_name'] ?? ''),
-                  subtitle: Text(worker['worker_type'] ?? ''),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    for (final id in requestIds) {
-                      await ref.read(adminServiceProvider).assignCouponBookWorker(id, worker['id']);
-                    }
-                    ref.invalidate(adminCouponBookRequestsProvider);
-                  },
-                );
-              },
-            ),
+            child: workers.isEmpty
+                ? Text(l10n.noWorkersAvailable)
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: workers.length,
+                    itemBuilder: (context, index) {
+                      final worker = workers[index];
+                      return ListTile(
+                        leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
+                        title: Text(worker['full_name'] ?? ''),
+                        subtitle: Text(worker['worker_type'] ?? ''),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          try {
+                            for (final id in requestIds) {
+                              await ref.read(adminServiceProvider).assignCouponBookWorker(id, worker['id']);
+                            }
+                            ref.invalidate(adminCouponBookRequestsProvider);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(l10n.workerAssignedSuccessfully)),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        },
+                      );
+                    },
+                  ),
           ),
           loading: () => const Center(child: CircularProgressIndicator.adaptive()),
           error: (e, _) => Text('Error: $e'),
-        ), */
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
