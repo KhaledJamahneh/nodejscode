@@ -52,7 +52,7 @@ const getProfile = async (req, res) => {
 
     const profile = result.rows[0];
 
-    // Check subscription status
+    // Check subscription status and calculate expiry
     let subscriptionStatus = 'active';
     if (profile.subscription_expiry_date) {
       const expiryDate = new Date(profile.subscription_expiry_date);
