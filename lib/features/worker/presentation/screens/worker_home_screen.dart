@@ -219,96 +219,9 @@ class _DeliveryWorkerHome extends StatelessWidget {
   }
 
   void _showQuickDeliveryDialog(BuildContext context, WidgetRef ref) async {
-    final gallonsController = TextEditingController(text: '50');
-    final emptyGallonsController = TextEditingController(text: '0');
-    final notesController = TextEditingController();
-    int? selectedClientId;
-    final workerProfile = ref.read(workerProfileProvider).value;
-    final workerId = workerProfile?.profileId;
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Quick Delivery'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FutureBuilder(
-                  future: DioClient.instance.get('${ApiEndpoints.adminUsers}?role=client&limit=1000'),
-                  builder: (context, AsyncSnapshot snapshot) {
-                    if (!snapshot.hasData) return const CircularProgressIndicator();
-                    final allUsersData = snapshot.data.data['data'];
-                    final List<dynamic> users = allUsersData is List ? allUsersData : allUsersData['users'] ?? [];
-                    final clients = users.where((c) => c['profile'] != null).toList();
-                    return DropdownButtonFormField<int>(
-                      value: selectedClientId,
-                      decoration: const InputDecoration(labelText: 'Client *'),
-                      items: clients.map<DropdownMenuItem<int>>((c) => DropdownMenuItem<int>(
-                        value: c['profile']['id'],
-                        child: Text(c['username']),
-                      )).toList(),
-                      onChanged: (v) => setState(() => selectedClientId = v),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: gallonsController,
-                  decoration: const InputDecoration(labelText: 'Gallons Delivered *'),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: emptyGallonsController,
-                  decoration: const InputDecoration(labelText: 'Empty Gallons Returned'),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: notesController,
-                  decoration: const InputDecoration(labelText: 'Notes (optional)'),
-                  maxLines: 2,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (selectedClientId == null) {
-                  DialogUtils.showErrorDialog(context, 'Please select a client');
-                  return;
-                }
-                try {
-                  await DioClient.instance.post('workers/deliveries/quick', data: {
-                    'client_id': selectedClientId,
-                    'worker_id': workerId,
-                    'gallons_delivered': int.parse(gallonsController.text),
-                    'gallons_returned': int.parse(emptyGallonsController.text),
-                    'notes': notesController.text.isEmpty ? null : notesController.text,
-                  });
-                  ref.invalidate(workerProfileProvider);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    DialogUtils.showMessageDialog(context, 'Success', 'Delivery created successfully');
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    DialogUtils.showErrorDialog(context, e);
-                  }
-                }
-              },
-              child: const Text('Create'),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => _QuickDeliveryDialog(ref: ref),
     );
   }
 }
@@ -2190,4 +2103,272 @@ Widget _buildStepButton(IconData icon, VoidCallback onTap) {
       child: Icon(icon, color: AppTheme.primary),
     ),
   );
+}
+
+class _QuickDeliveryDialog extends StatefulWidget {
+  final WidgetRef ref;
+
+  const _QuickDeliveryDialog({required this.ref});
+
+  @override
+  State<_QuickDeliveryDialog> createState() => _QuickDeliveryDialogState();
+}
+
+class _QuickDeliveryDialogState extends State<_QuickDeliveryDialog> {
+  int? selectedClientId;
+  String? selectedClientSubscriptionType;
+  int? selectedClientRemainingCoupons;
+  
+  int gallons = 50;
+  int emptyGallons = 0;
+  int paidCoupons = 0;
+  double paidAmount = 0;
+  late TextEditingController priceController;
+  final notesController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    priceController = TextEditingController(text: '0.00');
+  }
+
+  @override
+  void dispose() {
+    priceController.dispose();
+    notesController.dispose();
+    super.dispose();
+  }
+
+  void _onClientSelected(Map<String, dynamic> clientProfile) {
+    setState(() {
+      selectedClientId = clientProfile['id'];
+      selectedClientSubscriptionType = clientProfile['subscription_type'];
+      selectedClientRemainingCoupons = clientProfile['remaining_coupons'] ?? 0;
+      
+      if (selectedClientSubscriptionType == 'cash') {
+        paidAmount = (gallons * 10).toDouble();
+        priceController.text = paidAmount.toStringAsFixed(2);
+      } else {
+        paidCoupons = gallons;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isCouponClient = selectedClientSubscriptionType == 'coupon_book';
+
+    return AlertDialog(
+      title: const Text('Quick Delivery'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Client Selection
+            FutureBuilder(
+              future: DioClient.instance.get('${ApiEndpoints.adminUsers}?role=client&limit=1000'),
+              builder: (context, AsyncSnapshot snapshot) {
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                final allUsersData = snapshot.data.data['data'];
+                final List<dynamic> users = allUsersData is List ? allUsersData : allUsersData['users'] ?? [];
+                final clients = users.where((c) => c['profile'] != null).toList();
+                
+                return DropdownButtonFormField<int>(
+                  value: selectedClientId,
+                  decoration: const InputDecoration(labelText: 'Client *'),
+                  items: clients.map<DropdownMenuItem<int>>((c) {
+                    final profile = c['profile'];
+                    final subType = profile['subscription_type'] ?? 'cash';
+                    return DropdownMenuItem<int>(
+                      value: profile['id'],
+                      child: Text('${c['username']} (${subType == 'coupon_book' ? 'Coupon' : 'Cash'})'),
+                    );
+                  }).toList(),
+                  onChanged: (v) {
+                    final client = clients.firstWhere((c) => c['profile']['id'] == v);
+                    _onClientSelected(client['profile']);
+                  },
+                );
+              },
+            ),
+            
+            if (selectedClientId != null) ...[
+              const SizedBox(height: 24),
+              
+              // Gallons Delivered
+              Text(l10n.gallons, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove),
+                    onPressed: () => setState(() {
+                      if (gallons > 0) {
+                        gallons--;
+                        if (!isCouponClient) {
+                          paidAmount = (gallons * 10).toDouble();
+                          priceController.text = paidAmount.toStringAsFixed(2);
+                        } else {
+                          paidCoupons = gallons;
+                        }
+                      }
+                    }),
+                  ),
+                  Text('$gallons', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () => setState(() {
+                      gallons++;
+                      if (!isCouponClient) {
+                        paidAmount = (gallons * 10).toDouble();
+                        priceController.text = paidAmount.toStringAsFixed(2);
+                      } else {
+                        paidCoupons = gallons;
+                      }
+                    }),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Empty Gallons
+              Text(l10n.emptyGallons, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove),
+                    onPressed: () => setState(() { if (emptyGallons > 0) emptyGallons--; }),
+                  ),
+                  Text('$emptyGallons', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () => setState(() => emptyGallons++),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Coupon or Cash fields
+              if (isCouponClient) ...[
+                Row(
+                  children: [
+                    const Text('Paid Coupons', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$selectedClientRemainingCoupons remaining',
+                        style: const TextStyle(fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () => setState(() { if (paidCoupons > 0) paidCoupons--; }),
+                    ),
+                    Text('$paidCoupons', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () => setState(() {
+                        if (paidCoupons < (selectedClientRemainingCoupons ?? 0)) paidCoupons++;
+                      }),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: priceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Total Price',
+                          prefixText: '₪ ',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        onChanged: (v) => paidAmount = double.tryParse(v) ?? 0,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Amount Paid',
+                          hintText: paidAmount.toStringAsFixed(2),
+                          prefixText: '₪ ',
+                          border: const OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              
+              // Notes
+              TextField(
+                controller: notesController,
+                decoration: InputDecoration(labelText: l10n.notes),
+                maxLines: 2,
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: selectedClientId == null ? null : () async {
+            try {
+              final workerProfile = widget.ref.read(workerProfileProvider).value;
+              final totalPriceValue = double.tryParse(priceController.text) ?? (gallons * 10);
+              
+              await DioClient.instance.post('workers/deliveries/quick', data: {
+                'client_id': selectedClientId,
+                'worker_id': workerProfile?.profileId,
+                'gallons_delivered': gallons,
+                'gallons_returned': emptyGallons,
+                'notes': notesController.text.isEmpty ? null : notesController.text,
+                if (isCouponClient)
+                  'paid_coupons_count': paidCoupons,
+                if (!isCouponClient) ...{
+                  'paid_amount': paidAmount,
+                  'total_price': totalPriceValue,
+                },
+              });
+              
+              widget.ref.invalidate(workerProfileProvider);
+              if (context.mounted) {
+                Navigator.pop(context);
+                DialogUtils.showMessageDialog(context, 'Success', 'Delivery created successfully');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                DialogUtils.showErrorDialog(context, e);
+              }
+            }
+          },
+          child: const Text('Create'),
+        ),
+      ],
+    );
+  }
 }
