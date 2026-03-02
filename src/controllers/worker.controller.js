@@ -1852,9 +1852,10 @@ const completeCouponBookRequest = async (req, res) => {
       await client.query(
         `UPDATE coupon_book_requests 
          SET status = 'completed', 
-             updated_at = CURRENT_TIMESTAMP 
+             processed_at = CURRENT_TIMESTAMP,
+             processed_by = $2
          WHERE id = $1`,
-        [requestId]
+        [requestId, userId]
       );
 
       // 4. Create notification for client
