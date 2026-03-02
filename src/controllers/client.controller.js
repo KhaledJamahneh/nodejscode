@@ -51,6 +51,24 @@ const getProfile = async (req, res) => {
 
     const profile = result.rows[0];
 
+    // Calculate subscription status
+    let subscriptionStatus = 'active';
+    const now = new Date();
+    
+    if (profile.subscription_end_date && new Date(profile.subscription_end_date) < now) {
+      subscriptionStatus = 'expired';
+    } else if (profile.subscription_type === 'coupon_book' && profile.remaining_coupons <= 0) {
+      subscriptionStatus = 'expired';
+    } else if (profile.subscription_end_date) {
+      const expiryDate = new Date(profile.subscription_end_date);
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      
+      if (expiryDate < sevenDaysFromNow) {
+        subscriptionStatus = 'expiring_soon';
+      }
+    }
+
     res.json({
       success: true,
       data: {
@@ -209,8 +227,7 @@ const getSubscription = async (req, res) => {
         cp.subscription_end_date,
         cp.remaining_coupons,
         cp.monthly_usage_gallons,
-        cp.current_debt,
-        'active' as status
+        cp.current_debt
       FROM client_profiles cp
       WHERE cp.user_id = $1`,
       [userId]
@@ -223,9 +240,30 @@ const getSubscription = async (req, res) => {
       });
     }
 
+    const subData = result.rows[0];
+    let subscriptionStatus = 'active';
+    const now = new Date();
+    
+    if (subData.subscription_end_date && new Date(subData.subscription_end_date) < now) {
+      subscriptionStatus = 'expired';
+    } else if (subData.subscription_type === 'coupon_book' && subData.remaining_coupons <= 0) {
+      subscriptionStatus = 'expired';
+    } else if (subData.subscription_end_date) {
+      const expiryDate = new Date(subData.subscription_end_date);
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      
+      if (expiryDate < sevenDaysFromNow) {
+        subscriptionStatus = 'expiring_soon';
+      }
+    }
+
     res.json({
       success: true,
-      data: result.rows[0]
+      data: {
+        ...subData,
+        status: subscriptionStatus
+      }
     });
   } catch (error) {
     logger.error('Get subscription error:', error);
