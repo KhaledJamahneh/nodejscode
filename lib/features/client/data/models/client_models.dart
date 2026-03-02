@@ -8,6 +8,8 @@ class ClientProfile {
   final String subscriptionType;
   final String? subscriptionExpiryDate;
   final int remainingCoupons;
+  final int bonusGallons;
+  final int gallonsOnHand;
   final double currentDebt;
   final String subscriptionStatus;
 
@@ -24,6 +26,8 @@ class ClientProfile {
     required this.subscriptionType,
     this.subscriptionExpiryDate,
     required this.remainingCoupons,
+    required this.bonusGallons,
+    required this.gallonsOnHand,
     required this.currentDebt,
     required this.subscriptionStatus,
     this.homeLatitude,
@@ -41,6 +45,8 @@ class ClientProfile {
       subscriptionType: json['subscription_type'],
       subscriptionExpiryDate: json['subscription_expiry_date'],
       remainingCoupons: json['remaining_coupons'] ?? 0,
+      bonusGallons: json['bonus_gallons'] ?? 0,
+      gallonsOnHand: json['gallons_on_hand'] ?? 0,
       currentDebt: DoubleUtils.toDouble(json['current_debt']),
       subscriptionStatus: json['subscription_status'] ?? 'active',
       homeLatitude: json['home_latitude'] != null
