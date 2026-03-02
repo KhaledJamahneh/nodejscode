@@ -11,6 +11,8 @@
   "forgotPassword": "Forgot Password?",
   "useDemoAccount": "Use Demo Account",
   "dashboard": "Dashboard",
+  "adminWorkerManagement": "Worker Management",
+  "addNew": "Add New",
   "dashboardDesc": "View and manage your business overview",
   "schedule": "Schedule",
   "requests": "Requests",

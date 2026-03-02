@@ -45,6 +45,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboard => 'Dashboard';
 
   @override
+  String get adminWorkerManagement => 'Worker Management';
+
+  @override
+  String get addNew => 'Add New';
+
+  @override
   String get dashboardDesc => 'View and manage your business overview';
 
   @override

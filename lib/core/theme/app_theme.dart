@@ -48,6 +48,10 @@ class AppTheme {
   static const Color textPrimary = textPrimaryLight;
   static const Color textSecondary = textSecondaryLight;
   static const Color urgent = iosRed;
+  static const Color surfaceColor = cardLight;
+  static const Color glassBg = Color(0xFFFFFFFF);
+  static const Color glassBorder = Color(0xFFE5E5EA);
+  static const Color secondaryBlue = accentSkyBlue;
 
   static const Color backgroundDark = Color(0xFF000000);
   static const Color cardDark = Color(0xFF1C1C1E);

@@ -167,6 +167,18 @@ abstract class AppLocalizations {
   /// **'Dashboard'**
   String get dashboard;
 
+  /// No description provided for @adminWorkerManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Worker Management'**
+  String get adminWorkerManagement;
+
+  /// No description provided for @addNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New'**
+  String get addNew;
+
   /// No description provided for @dashboardDesc.
   ///
   /// In en, this message translates to:

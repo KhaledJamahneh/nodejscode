@@ -89,7 +89,7 @@ class AdminUsersScreen extends ConsumerWidget {
           ),
         ),
         onChanged: (value) {
-          ref.read(usersFilterProvider.notifier).setSearch(value);
+          ref.read(usersFilterProvider.notifier).state = filter.copyWith(search: value);
         },
       ),
     );
@@ -103,33 +103,33 @@ class AdminUsersScreen extends ConsumerWidget {
         children: [
           ChoiceChip(
             label: const Text('All'),
-            selected: filter.status == null,
+            selected: filter.onShift == null && filter.isActive == null,
             onSelected: (selected) {
-               if(selected) ref.read(usersFilterProvider.notifier).setStatus(null);
+               if(selected) ref.read(usersFilterProvider.notifier).state = filter.copyWith(clearOnShift: true, clearActive: true);
             },
           ),
           const SizedBox(width: 8),
           ChoiceChip(
             label: const Text('On Delivery'),
-            selected: filter.status == 'on_delivery',
+            selected: filter.onShift == true,
              onSelected: (selected) {
-               if(selected) ref.read(usersFilterProvider.notifier).setStatus('on_delivery');
+               if(selected) ref.read(usersFilterProvider.notifier).state = filter.copyWith(onShift: true, isActive: true);
             },
           ),
           const SizedBox(width: 8),
           ChoiceChip(
             label: const Text('Available'),
-            selected: filter.status == 'available',
+            selected: filter.onShift == false && filter.isActive == true,
              onSelected: (selected) {
-                if(selected) ref.read(usersFilterProvider.notifier).setStatus('available');
+                if(selected) ref.read(usersFilterProvider.notifier).state = filter.copyWith(onShift: false, isActive: true);
             },
           ),
           const SizedBox(width: 8),
           ChoiceChip(
             label: const Text('Off Duty'),
-            selected: filter.status == 'off_duty',
+            selected: filter.isActive == false,
              onSelected: (selected) {
-               if(selected) ref.read(usersFilterProvider.notifier).setStatus('off_duty');
+               if(selected) ref.read(usersFilterProvider.notifier).state = filter.copyWith(isActive: false, clearOnShift: true);
             },
           ),
         ],
@@ -257,13 +257,4 @@ Widget _buildBottomNav(BuildContext context) {
         }
       },
   );
-}
-
-extension on UsersFilterNotifier {
-  void setSearch(String? search) {
-    state = state.copyWith(search: search);
-  }
-  void setStatus(String? status) {
-    // This is a simplified filter. A real one would handle different statuses.
-  }
 }

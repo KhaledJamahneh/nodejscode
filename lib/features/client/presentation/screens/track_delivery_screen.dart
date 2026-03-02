@@ -1,4 +1,5 @@
 // lib/features/client/presentation/screens/track_delivery_screen.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -118,7 +119,7 @@ class _DraggableSheet extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
@@ -134,7 +135,7 @@ class _DraggableSheet extends StatelessWidget {
                         Text('10:45 AM', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue)),
                          Chip(
                           label: Text('On Time', style: TextStyle(color: Colors.blue)),
-                          backgroundColor: Colors.blue.withOpacity(0.1),
+                          backgroundColor: Colors.blue.shade50,
                         )
                       ],
                     )

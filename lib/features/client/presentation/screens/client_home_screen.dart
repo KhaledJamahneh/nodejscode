@@ -8,6 +8,7 @@ import 'package:einhod_water/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../providers/client_provider.dart';
 import '../../../../core/providers/notification_provider.dart';
+import '../../data/models/client_models.dart';
 
 class ClientHomeScreen extends ConsumerWidget {
   const ClientHomeScreen({super.key});

@@ -42,7 +42,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get useDemoAccount => 'استخدام حساب تجريبي';
 
   @override
-  String get dashboard => 'لوحة الإحصائيات';
+  String get dashboard => 'لوحة القيادة';
+
+  @override
+  String get adminWorkerManagement => 'إدارة الموظفين';
+
+  @override
+  String get addNew => 'إضافة جديد';
 
   @override
   String get dashboardDesc => 'عرض وإدارة نظرة عامة على عملك';
