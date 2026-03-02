@@ -805,7 +805,7 @@ const updateCouponBookRequest = async (req, res) => {
     const result = await transaction(async (client) => {
       // Check if request exists and belongs to user
       const checkResult = await client.query(
-        `SELECT cbr.id, cbr.status, cp.user_id
+        `SELECT cbr.id, cbr.status, cbr.assigned_worker_id, cp.user_id
          FROM coupon_book_requests cbr
          JOIN client_profiles cp ON cbr.client_id = cp.id
          WHERE cbr.id = $1`,
@@ -820,8 +820,13 @@ const updateCouponBookRequest = async (req, res) => {
         throw new Error('Unauthorized');
       }
 
-      if (checkResult.rows[0].status !== 'pending') {
-        throw new Error('Can only edit pending requests');
+      // Can only edit if not assigned to worker yet
+      if (checkResult.rows[0].assigned_worker_id) {
+        throw new Error('Cannot edit request already assigned to worker');
+      }
+
+      if (!['pending', 'approved'].includes(checkResult.rows[0].status)) {
+        throw new Error('Can only edit pending or approved requests');
       }
 
       // Update request
@@ -861,7 +866,7 @@ const deleteCouponBookRequest = async (req, res) => {
     await transaction(async (client) => {
       // Check if request exists and belongs to user
       const checkResult = await client.query(
-        `SELECT cbr.id, cbr.status, cp.user_id
+        `SELECT cbr.id, cbr.status, cbr.assigned_worker_id, cbr.coupon_size_id, cp.user_id
          FROM coupon_book_requests cbr
          JOIN client_profiles cp ON cbr.client_id = cp.id
          WHERE cbr.id = $1`,
@@ -876,23 +881,40 @@ const deleteCouponBookRequest = async (req, res) => {
         throw new Error('Unauthorized');
       }
 
-      if (checkResult.rows[0].status !== 'pending') {
-        throw new Error('Can only delete pending requests');
+      const { status, assigned_worker_id, coupon_size_id } = checkResult.rows[0];
+
+      // Can only cancel if not assigned to worker yet
+      if (assigned_worker_id) {
+        throw new Error('Cannot cancel request already assigned to worker');
       }
 
-      // Delete request
-      await client.query('DELETE FROM coupon_book_requests WHERE id = $1', [requestId]);
+      // Can cancel pending or approved requests
+      if (!['pending', 'approved'].includes(status)) {
+        throw new Error('Can only cancel pending or approved requests');
+      }
+
+      // Restore stock if physical book
+      await client.query(
+        'UPDATE coupon_sizes SET available_stock = available_stock + 1 WHERE id = $1',
+        [coupon_size_id]
+      );
+
+      // Update status to cancelled
+      await client.query(
+        'UPDATE coupon_book_requests SET status = $1, updated_at = NOW() WHERE id = $2',
+        ['cancelled', requestId]
+      );
     });
 
     res.json({
       success: true,
-      message: 'Coupon book request deleted successfully'
+      message: 'Coupon book request cancelled successfully'
     });
   } catch (error) {
     logger.error('Delete coupon book request error:', error);
     res.status(getStatusCode(error)).json({
       success: false,
-      message: error.message || 'Failed to delete coupon book request'
+      message: error.message || 'Failed to cancel coupon book request'
     });
   }
 };
