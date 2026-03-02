@@ -1621,7 +1621,10 @@ class WorkerMainList extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 8),
-                  Text('${delivery.scheduledGallons} ${l10n.gallons}',
+                  Text(
+                      delivery.isCouponRequest
+                          ? l10n.coupon
+                          : '${delivery.scheduledGallons} ${l10n.gallons}',
                       style: const TextStyle(fontWeight: FontWeight.w700)),
                 ],
               ),
@@ -1755,9 +1758,13 @@ class WorkerSecondaryList extends ConsumerWidget {
                           )
                         else
                           ElevatedButton(
-                            onPressed: () => ref
-                                .read(workerOpsProvider.notifier)
-                                .acceptRequest(request.id),
+                            onPressed: () => request.taskType == 'coupon_request'
+                                ? ref
+                                    .read(workerOpsProvider.notifier)
+                                    .acceptCouponRequest(request.id)
+                                : ref
+                                    .read(workerOpsProvider.notifier)
+                                    .acceptRequest(request.id),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
@@ -1900,95 +1907,30 @@ class _RecordDeliverySheetContentState extends State<_RecordDeliverySheetContent
             ),
             const SizedBox(height: 24),
 
-            // ── Gallons Delivered ─────────────────────────────────────────
-            Text(l10n.gallons,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildStepButton(
-                    Icons.remove,
-                    () => setState(() {
-                          if (gallons > 0) {
-                            gallons--;
-                            if (!widget.delivery.isCouponBook) {
-                              paidAmount = (gallons * 10).toDouble();
-                              priceController.text = paidAmount.toStringAsFixed(2);
-                            }
-                          }
-                        })),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Text('$gallons',
-                      style: const TextStyle(
-                          fontSize: 48, fontWeight: FontWeight.w800)),
-                ),
-                _buildStepButton(
-                    Icons.add, () => setState(() {
-                      gallons++;
-                      if (!widget.delivery.isCouponBook) {
-                        paidAmount = (gallons * 10).toDouble();
-                        priceController.text = paidAmount.toStringAsFixed(2);
-                      }
-                    })),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // ── Empty Gallons Returned ────────────────────────────────────
-            Text(l10n.emptyGallons,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildStepButton(
-                    Icons.remove,
-                    () => setState(() {
-                          if (emptyGallons > 0) emptyGallons--;
-                        })),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Text('$emptyGallons',
-                      style: const TextStyle(
-                          fontSize: 48, fontWeight: FontWeight.w800)),
-                ),
-                _buildStepButton(
-                    Icons.add, () => setState(() => emptyGallons++)),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // ── Paid Coupons (coupon_book clients only) ───────────────────
-            if (widget.delivery.isCouponBook) ...[
-              Row(
-                children: [
-                  const Text(
-                    'Paid Coupons (قسائم مدفوعة)',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+            // ── Coupon Book Delivery (only for coupon_request task_type) ────
+            if (widget.delivery.isCouponRequest) ...[
+              const Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.auto_stories_rounded, size: 64, color: AppTheme.primary),
+                    SizedBox(height: 16),
+                    Text(
+                      'DELIVERING COUPON BOOK',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.primary),
                     ),
-                    child: Text(
-                      '${widget.delivery.remainingCoupons} remaining',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.primary,
-                          fontWeight: FontWeight.w600),
+                    Text(
+                      '(تسليم دفتر القسائم)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(height: 32),
+            ] else ...[
+              // ── Gallons Delivered ─────────────────────────────────────────
+              Text(l10n.gallons,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15)),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1996,79 +1938,165 @@ class _RecordDeliverySheetContentState extends State<_RecordDeliverySheetContent
                   _buildStepButton(
                       Icons.remove,
                       () => setState(() {
-                            if (paidCoupons > 0) paidCoupons--;
+                            if (gallons > 0) {
+                              gallons--;
+                              if (!widget.delivery.isCouponBook) {
+                                paidAmount = (gallons * 10).toDouble();
+                                priceController.text = paidAmount.toStringAsFixed(2);
+                              }
+                            }
                           })),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text('$paidCoupons',
+                    child: Text('$gallons',
                         style: const TextStyle(
                             fontSize: 48, fontWeight: FontWeight.w800)),
                   ),
                   _buildStepButton(
-                      Icons.add,
-                      () => setState(() {
-                            if (paidCoupons < widget.delivery.remainingCoupons)
-                              paidCoupons++;
-                          })),
+                      Icons.add, () => setState(() {
+                        gallons++;
+                        if (!widget.delivery.isCouponBook) {
+                          paidAmount = (gallons * 10).toDouble();
+                          priceController.text = paidAmount.toStringAsFixed(2);
+                        }
+                      })),
                 ],
               ),
+              const SizedBox(height: 24),
+
+              // ── Empty Gallons Returned ────────────────────────────────────
+              Text(l10n.emptyGallons,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15)),
               const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  'After this delivery: ${(widget.delivery.remainingCoupons - paidCoupons).clamp(0, 999)} coupons left',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: (widget.delivery.remainingCoupons - paidCoupons) < 5
-                        ? AppTheme.criticalRed
-                        : AppTheme.iosGray,
-                    fontWeight: FontWeight.w500,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildStepButton(
+                      Icons.remove,
+                      () => setState(() {
+                            if (emptyGallons > 0) emptyGallons--;
+                          })),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: Text('$emptyGallons',
+                        style: const TextStyle(
+                            fontSize: 48, fontWeight: FontWeight.w800)),
+                  ),
+                  _buildStepButton(
+                      Icons.add, () => setState(() => emptyGallons++)),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ── Paid Coupons (coupon_book clients only) ───────────────────
+              if (widget.delivery.isCouponBook) ...[
+                Row(
+                  children: [
+                    const Text(
+                      'Paid Coupons (قسائم مدفوعة)',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${widget.delivery.remainingCoupons} remaining',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildStepButton(
+                        Icons.remove,
+                        () => setState(() {
+                              if (paidCoupons > 0) paidCoupons--;
+                            })),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Text('$paidCoupons',
+                          style: const TextStyle(
+                              fontSize: 48, fontWeight: FontWeight.w800)),
+                    ),
+                    _buildStepButton(
+                        Icons.add,
+                        () => setState(() {
+                              if (paidCoupons < widget.delivery.remainingCoupons)
+                                paidCoupons++;
+                            })),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    'After this delivery: ${(widget.delivery.remainingCoupons - paidCoupons).clamp(0, 999)} coupons left',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: (widget.delivery.remainingCoupons - paidCoupons) < 5
+                          ? AppTheme.criticalRed
+                          : AppTheme.iosGray,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-            ] else ...[
-              // ── Cash Details (price & paid) ──────────────────────────────
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Total Price (السعر الإجمالي)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: priceController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: const InputDecoration(
-                            prefixText: '₪ ',
-                            border: OutlineInputBorder(),
+                const SizedBox(height: 24),
+              ] else ...[
+                // ── Cash Details (price & paid) ──────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total Price (السعر الإجمالي)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: priceController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: const InputDecoration(
+                              prefixText: '₪ ',
+                              border: OutlineInputBorder(),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Amount Paid (المبلغ المدفوع)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        const SizedBox(height: 8),
-                        TextField(
-                          onChanged: (v) => paidAmount = double.tryParse(v) ?? 0,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: InputDecoration(
-                            hintText: paidAmount.toStringAsFixed(2),
-                            prefixText: '₪ ',
-                            border: const OutlineInputBorder(),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Amount Paid (المبلغ المدفوع)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          const SizedBox(height: 8),
+                          TextField(
+                            onChanged: (v) => paidAmount = double.tryParse(v) ?? 0,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: InputDecoration(
+                              hintText: paidAmount.toStringAsFixed(2),
+                              prefixText: '₪ ',
+                              border: const OutlineInputBorder(),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
             ],
 
             Row(
@@ -2099,7 +2127,14 @@ class _RecordDeliverySheetContentState extends State<_RecordDeliverySheetContent
               onPressed: () async {
                 final totalPriceValue = double.tryParse(priceController.text) ?? (gallons * 10);
 
-                if (widget.delivery.isRequest) {
+                if (widget.delivery.taskType == 'coupon_request') {
+                  widget.ref.read(workerOpsProvider.notifier).completeCouponRequest({
+                    'request_id': widget.delivery.id,
+                    'latitude': capturedLat,
+                    'longitude': capturedLng,
+                    'notes': notesController.text,
+                  });
+                } else if (widget.delivery.isRequest) {
                   widget.ref.read(workerOpsProvider.notifier).completeRequest({
                     'request_id': widget.delivery.id,
                     'gallons_delivered': gallons,
