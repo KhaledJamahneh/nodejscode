@@ -2289,30 +2289,29 @@ class _QuickDeliveryDialogState extends State<_QuickDeliveryDialog> {
                   ],
                 ),
               ] else ...[
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: priceController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'Total Price',
-                          prefixText: '₪ ',
-                          border: OutlineInputBorder(),
-                        ),
+                    const Text('Total Price', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: priceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        prefixText: '₪ ',
+                        border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        onChanged: (v) => paidAmount = double.tryParse(v) ?? 0,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          labelText: 'Amount Paid',
-                          hintText: paidAmount.toStringAsFixed(2),
-                          prefixText: '₪ ',
-                          border: const OutlineInputBorder(),
-                        ),
+                    const SizedBox(height: 12),
+                    const Text('Amount Paid', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      onChanged: (v) => paidAmount = double.tryParse(v) ?? 0,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        hintText: paidAmount.toStringAsFixed(2),
+                        prefixText: '₪ ',
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ],
