@@ -1885,6 +1885,281 @@ const completeCouponBookRequest = async (req, res) => {
   }
 };
 
+// ============================================================================
+// WORKER PROFILE MANAGEMENT
+// ============================================================================
+
+async function getProfile(req, res) {
+  try {
+    const workerId = req.user.workerId;
+    
+    const result = await pool.query(
+      `SELECT wp.*, u.username, u.phone_number, u.email
+       FROM worker_profiles wp
+       JOIN users u ON wp.user_id = u.id
+       WHERE wp.id = $1`,
+      [workerId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Worker profile not found' });
+    }
+    
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    logger.error('Get worker profile error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get profile' });
+  }
+}
+
+async function updateProfile(req, res) {
+  try {
+    const workerId = req.user.workerId;
+    const { full_name, vehicle_plate_number, vehicle_capacity } = req.body;
+    
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (full_name) {
+      updates.push(`full_name = $${paramCount++}`);
+      values.push(full_name);
+    }
+    if (vehicle_plate_number !== undefined) {
+      updates.push(`vehicle_plate_number = $${paramCount++}`);
+      values.push(vehicle_plate_number);
+    }
+    if (vehicle_capacity !== undefined) {
+      updates.push(`vehicle_capacity = $${paramCount++}`);
+      values.push(vehicle_capacity);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+    
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(workerId);
+    
+    await pool.query(
+      `UPDATE worker_profiles SET ${updates.join(', ')} WHERE id = $${paramCount}`,
+      values
+    );
+    
+    res.json({ success: true, message: 'Profile updated successfully' });
+  } catch (error) {
+    logger.error('Update worker profile error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update profile' });
+  }
+}
+
+// ============================================================================
+// SHIFT MANAGEMENT
+// ============================================================================
+
+async function getShifts(req, res) {
+  try {
+    const workerId = req.user.workerId;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = parseInt(req.query.offset) || 0;
+    
+    const result = await pool.query(
+      `SELECT * FROM worker_shifts 
+       WHERE worker_id = $1 
+       ORDER BY shift_start DESC 
+       LIMIT $2 OFFSET $3`,
+      [workerId, limit, offset]
+    );
+    
+    const countResult = await pool.query(
+      'SELECT COUNT(*) FROM worker_shifts WHERE worker_id = $1',
+      [workerId]
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        shifts: result.rows,
+        total: parseInt(countResult.rows[0].count),
+        limit,
+        offset
+      }
+    });
+  } catch (error) {
+    logger.error('Get shifts error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get shifts' });
+  }
+}
+
+async function startShift(req, res) {
+  try {
+    const workerId = req.user.workerId;
+    
+    // Check if already on shift
+    const activeShift = await pool.query(
+      'SELECT id FROM worker_shifts WHERE worker_id = $1 AND shift_end IS NULL',
+      [workerId]
+    );
+    
+    if (activeShift.rows.length > 0) {
+      return res.status(400).json({ success: false, message: 'Shift already active' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO worker_shifts (worker_id, shift_start) 
+       VALUES ($1, CURRENT_TIMESTAMP) 
+       RETURNING *`,
+      [workerId]
+    );
+    
+    await pool.query(
+      'UPDATE worker_profiles SET is_on_shift = true, shift_start_time = CURRENT_TIMESTAMP WHERE id = $1',
+      [workerId]
+    );
+    
+    res.json({ success: true, message: 'Shift started', data: result.rows[0] });
+  } catch (error) {
+    logger.error('Start shift error:', error);
+    res.status(500).json({ success: false, message: 'Failed to start shift' });
+  }
+}
+
+async function endShift(req, res) {
+  try {
+    const workerId = req.user.workerId;
+    
+    const result = await pool.query(
+      `UPDATE worker_shifts 
+       SET shift_end = CURRENT_TIMESTAMP 
+       WHERE worker_id = $1 AND shift_end IS NULL 
+       RETURNING *`,
+      [workerId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(400).json({ success: false, message: 'No active shift found' });
+    }
+    
+    await pool.query(
+      'UPDATE worker_profiles SET is_on_shift = false, shift_start_time = NULL WHERE id = $1',
+      [workerId]
+    );
+    
+    res.json({ success: true, message: 'Shift ended', data: result.rows[0] });
+  } catch (error) {
+    logger.error('End shift error:', error);
+    res.status(500).json({ success: false, message: 'Failed to end shift' });
+  }
+}
+
+async function getCurrentShift(req, res) {
+  try {
+    const workerId = req.user.workerId;
+    
+    const result = await pool.query(
+      'SELECT * FROM worker_shifts WHERE worker_id = $1 AND shift_end IS NULL',
+      [workerId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({ success: true, data: null, message: 'No active shift' });
+    }
+    
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    logger.error('Get current shift error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get current shift' });
+  }
+}
+
+// ============================================================================
+// EARNINGS
+// ============================================================================
+
+async function getEarnings(req, res) {
+  try {
+    const workerId = req.user.workerId;
+    const startDate = req.query.start_date || new Date(new Date().setDate(1)).toISOString();
+    const endDate = req.query.end_date || new Date().toISOString();
+    
+    const deliveries = await pool.query(
+      `SELECT COUNT(*) as count, SUM(gallons_delivered) as total_gallons
+       FROM delivery_requests
+       WHERE worker_id = $1 AND status = 'completed'
+       AND completed_at BETWEEN $2 AND $3`,
+      [workerId, startDate, endDate]
+    );
+    
+    const advances = await pool.query(
+      'SELECT debt_advances FROM worker_profiles WHERE id = $1',
+      [workerId]
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        deliveries_completed: parseInt(deliveries.rows[0].count) || 0,
+        total_gallons_delivered: parseFloat(deliveries.rows[0].total_gallons) || 0,
+        debt_advances: parseFloat(advances.rows[0]?.debt_advances) || 0,
+        period: { start: startDate, end: endDate }
+      }
+    });
+  } catch (error) {
+    logger.error('Get earnings error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get earnings' });
+  }
+}
+
+// ============================================================================
+// INVENTORY MANAGEMENT
+// ============================================================================
+
+async function loadInventory(req, res) {
+  try {
+    const workerId = req.user.workerId;
+    const { gallons } = req.body;
+    
+    const worker = await pool.query(
+      'SELECT vehicle_capacity, vehicle_current_gallons FROM worker_profiles WHERE id = $1',
+      [workerId]
+    );
+    
+    if (worker.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Worker not found' });
+    }
+    
+    const { vehicle_capacity, vehicle_current_gallons } = worker.rows[0];
+    const newTotal = parseInt(vehicle_current_gallons) + parseInt(gallons);
+    
+    if (newTotal > vehicle_capacity) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot load ${gallons} gallons. Capacity: ${vehicle_capacity}, Current: ${vehicle_current_gallons}` 
+      });
+    }
+    
+    await pool.query(
+      'UPDATE worker_profiles SET vehicle_current_gallons = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [newTotal, workerId]
+    );
+    
+    res.json({ 
+      success: true, 
+      message: 'Inventory loaded successfully',
+      data: {
+        previous: parseInt(vehicle_current_gallons),
+        loaded: parseInt(gallons),
+        current: newTotal,
+        capacity: parseInt(vehicle_capacity),
+        available: parseInt(vehicle_capacity) - newTotal
+      }
+    });
+  } catch (error) {
+    logger.error('Load inventory error:', error);
+    res.status(500).json({ success: false, message: 'Failed to load inventory' });
+  }
+}
+
 module.exports = {
   getWorkerProfile,
   getMainSchedule,
@@ -1910,5 +2185,13 @@ module.exports = {
   getExpenses,
   submitExpense,
   updateExpense,
-  deleteExpense
+  deleteExpense,
+  getProfile,
+  updateProfile,
+  getShifts,
+  startShift,
+  endShift,
+  getCurrentShift,
+  getEarnings,
+  loadInventory
 };

@@ -21,16 +21,7 @@ router.post(
   locationController.updateLocation
 );
 
-router.get(
-  '/worker/:workerId',
-  authenticateToken,
-  authorizeRoles('administrator', 'owner'), // Only admin/owner can get specific worker location
-  [param('workerId').isInt({ min: 1 }).withMessage('Worker ID must be a positive integer')],
-  validate,
-  locationController.getWorkerLocation
-);
-
-// Admin routes
+// Admin routes only
 router.get('/active', authenticateToken, authorizeRoles('administrator', 'owner'), locationController.getActiveWorkerLocations);
 
 module.exports = router;

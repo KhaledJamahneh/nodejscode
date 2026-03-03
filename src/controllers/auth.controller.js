@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
 const { getStatusCode } = require('../middleware/error-handler.middleware');
+const { localizeResponse } = require('../utils/i18n');
 
 // In-memory store for refresh tokens (in production, use Redis)
 const refreshTokens = new Set();
@@ -72,7 +73,7 @@ const login = async (req, res) => {
       logger.warn('Failed login attempt:', { username, ip: req.ip });
       return res.status(401).json({
         success: false,
-        message: 'Invalid username or password'
+        message: localizeResponse(req, 'error_invalid_credentials')
       });
     }
 
@@ -100,7 +101,7 @@ const login = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Login successful',
+      message: localizeResponse(req, 'success_login'),
       data: {
         user: {
           id: user.id,
@@ -119,7 +120,7 @@ const login = async (req, res) => {
     logger.error('Login error:', error);
     res.status(getStatusCode(error)).json({
       success: false,
-      message: 'Login failed'
+      message: localizeResponse(req, 'error_server_error')
     });
   }
 };

@@ -2,7 +2,7 @@
 // Admin dashboard, management, and analytics
 
 const { query, transaction } = require('../config/database');
-const { t } = require('../utils/i18n');
+const { t, localizeResponse } = require('../utils/i18n');
 const logger = require('../utils/logger');
 const notificationService = require('../services/notification.service');
 const bcrypt = require('bcrypt');
@@ -2774,6 +2774,88 @@ const updateExpenseStatus = async (req, res) => {
 };
 
 /**
+ * PATCH /api/v1/admin/expenses/:id/approve
+ * Approve an expense
+ */
+const approveExpense = async (req, res) => {
+  try {
+    const expenseId = req.params.id;
+    
+    const result = await query(
+      `UPDATE worker_expenses 
+       SET approval_status = 'approved', 
+           approved_by = $1, 
+           approved_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND approval_status = 'pending'
+       RETURNING *`,
+      [req.user.userId, expenseId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Expense not found or already processed' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Expense approved successfully', 
+      data: result.rows[0] 
+    });
+  } catch (error) {
+    logger.error('Approve expense error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to approve expense' 
+    });
+  }
+};
+
+/**
+ * PATCH /api/v1/admin/expenses/:id/reject
+ * Reject an expense
+ */
+const rejectExpense = async (req, res) => {
+  try {
+    const expenseId = req.params.id;
+    const { rejection_reason } = req.body;
+    
+    const result = await query(
+      `UPDATE worker_expenses 
+       SET approval_status = 'rejected', 
+           approved_by = $1, 
+           approved_at = CURRENT_TIMESTAMP,
+           rejection_reason = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3 AND approval_status = 'pending'
+       RETURNING *`,
+      [req.user.userId, rejection_reason, expenseId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Expense not found or already processed' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Expense rejected successfully', 
+      data: result.rows[0] 
+    });
+  } catch (error) {
+    logger.error('Reject expense error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to reject expense' 
+    });
+  }
+};
+
+/**
  * PUT /api/v1/admin/expenses/:id
  * Update expense details
  */
@@ -3055,6 +3137,202 @@ const getAllAssets = async (req, res) => {
   }
 };
 
+// ============================================================================
+// REPORTS
+// ============================================================================
+
+const getRevenueReport = async (req, res) => {
+  try {
+    const { start_date, end_date } = req.query;
+    const startDate = start_date || new Date(new Date().setDate(1)).toISOString();
+    const endDate = end_date || new Date().toISOString();
+    
+    const deliveryRevenue = await query(
+      `SELECT COALESCE(SUM(total_price), 0) as total, COUNT(*) as count
+       FROM delivery_requests
+       WHERE status = 'completed' AND completed_at BETWEEN $1 AND $2`,
+      [startDate, endDate]
+    );
+    
+    const couponRevenue = await query(
+      `SELECT COALESCE(SUM(total_price), 0) as total, COUNT(*) as count
+       FROM coupon_book_purchases
+       WHERE purchased_at BETWEEN $1 AND $2`,
+      [startDate, endDate]
+    );
+    
+    const payments = await query(
+      `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
+       FROM payments
+       WHERE created_at BETWEEN $1 AND $2`,
+      [startDate, endDate]
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        period: { start: startDate, end: endDate },
+        delivery_revenue: parseFloat(deliveryRevenue.rows[0].total),
+        delivery_count: parseInt(deliveryRevenue.rows[0].count),
+        coupon_revenue: parseFloat(couponRevenue.rows[0].total),
+        coupon_count: parseInt(couponRevenue.rows[0].count),
+        payment_collections: parseFloat(payments.rows[0].total),
+        payment_count: parseInt(payments.rows[0].count),
+        total_revenue: parseFloat(deliveryRevenue.rows[0].total) + parseFloat(couponRevenue.rows[0].total)
+      }
+    });
+  } catch (error) {
+    logger.error('Get revenue report error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get revenue report' });
+  }
+};
+
+const getClientReport = async (req, res) => {
+  try {
+    const total = await query('SELECT COUNT(*) FROM client_profiles');
+    const active = await query('SELECT COUNT(*) FROM client_profiles cp JOIN users u ON cp.user_id = u.id WHERE u.is_active = true');
+    const withDebt = await query('SELECT COUNT(*) FROM client_profiles WHERE current_debt > 0');
+    const totalDebt = await query('SELECT COALESCE(SUM(current_debt), 0) as total FROM client_profiles');
+    const bySubscription = await query('SELECT subscription_type, COUNT(*) as count FROM client_profiles GROUP BY subscription_type');
+    
+    res.json({
+      success: true,
+      data: {
+        total_clients: parseInt(total.rows[0].count),
+        active_clients: parseInt(active.rows[0].count),
+        clients_with_debt: parseInt(withDebt.rows[0].count),
+        total_debt: parseFloat(totalDebt.rows[0].total),
+        by_subscription_type: bySubscription.rows
+      }
+    });
+  } catch (error) {
+    logger.error('Get client report error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get client report' });
+  }
+};
+
+const getWorkerReport = async (req, res) => {
+  try {
+    const { start_date, end_date } = req.query;
+    const startDate = start_date || new Date(new Date().setDate(1)).toISOString();
+    const endDate = end_date || new Date().toISOString();
+    
+    const workers = await query(
+      `SELECT wp.id, wp.full_name, wp.worker_type,
+              COUNT(dr.id) as deliveries_completed,
+              COALESCE(SUM(dr.gallons_delivered), 0) as total_gallons
+       FROM worker_profiles wp
+       LEFT JOIN delivery_requests dr ON wp.id = dr.worker_id 
+         AND dr.status = 'completed' 
+         AND dr.completed_at BETWEEN $1 AND $2
+       GROUP BY wp.id, wp.full_name, wp.worker_type
+       ORDER BY deliveries_completed DESC`,
+      [startDate, endDate]
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        period: { start: startDate, end: endDate },
+        workers: workers.rows
+      }
+    });
+  } catch (error) {
+    logger.error('Get worker report error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get worker report' });
+  }
+};
+
+const getInventoryReport = async (req, res) => {
+  try {
+    const workers = await query(
+      `SELECT id, full_name, vehicle_capacity, vehicle_current_gallons, is_on_shift
+       FROM worker_profiles
+       WHERE worker_type = 'delivery_worker'
+       ORDER BY full_name`
+    );
+    
+    const couponStock = await query(
+      `SELECT size, available_stock, is_active
+       FROM coupon_sizes
+       ORDER BY size`
+    );
+    
+    const totalCapacity = await query(
+      'SELECT COALESCE(SUM(vehicle_capacity), 0) as total FROM worker_profiles WHERE worker_type = \'delivery_worker\''
+    );
+    
+    const totalCurrent = await query(
+      'SELECT COALESCE(SUM(vehicle_current_gallons), 0) as total FROM worker_profiles WHERE worker_type = \'delivery_worker\''
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        vehicle_inventory: {
+          total_capacity: parseInt(totalCapacity.rows[0].total),
+          current_gallons: parseInt(totalCurrent.rows[0].total),
+          available_gallons: parseInt(totalCapacity.rows[0].total) - parseInt(totalCurrent.rows[0].total),
+          workers: workers.rows
+        },
+        coupon_stock: couponStock.rows
+      }
+    });
+  } catch (error) {
+    logger.error('Get inventory report error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get inventory report' });
+  }
+};
+
+// ============================================================================
+// DISPENSER ASSIGNMENT
+// ============================================================================
+
+const assignDispenser = async (req, res) => {
+  try {
+    const { dispenser_id, client_id } = req.body;
+    
+    await query(
+      `UPDATE dispensers 
+       SET current_client_id = $1, 
+           status = 'used', 
+           installation_date = CURRENT_DATE,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND status IN ('new', 'available')`,
+      [client_id, dispenser_id]
+    );
+    
+    res.json({ success: true, message: 'Dispenser assigned successfully' });
+  } catch (error) {
+    logger.error('Assign dispenser error:', error);
+    res.status(500).json({ success: false, message: 'Failed to assign dispenser' });
+  }
+};
+
+const unassignDispenser = async (req, res) => {
+  try {
+    const { dispenser_id } = req.body;
+    
+    await query(
+      `UPDATE dispensers 
+       SET current_client_id = NULL, 
+           status = 'available',
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [dispenser_id]
+    );
+    
+    res.json({ success: true, message: 'Dispenser unassigned successfully' });
+  } catch (error) {
+    logger.error('Unassign dispenser error:', error);
+    res.status(500).json({ success: false, message: 'Failed to unassign dispenser' });
+  }
+};
+
+// ============================================================================
+// CLIENT MANAGEMENT
+// ============================================================================
+
 // Get all clients
 const getAllClients = async (req, res) => {
   try {
@@ -3158,6 +3436,14 @@ module.exports = {
   getAllExpenses,
   updateExpenseStatus,
   updateExpense,
+  approveExpense,
+  rejectExpense,
+  getRevenueReport,
+  getClientReport,
+  getWorkerReport,
+  getInventoryReport,
+  assignDispenser,
+  unassignDispenser,
   getDispensers,
   createDispenser,
   updateDispenser,

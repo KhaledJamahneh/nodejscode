@@ -569,6 +569,31 @@ router.patch(
 );
 
 /**
+ * PATCH /api/v1/admin/expenses/:id/approve
+ * Approve an expense
+ */
+router.patch(
+  '/expenses/:id/approve',
+  [param('id').isInt().withMessage('Expense ID must be a number')],
+  validate,
+  adminController.approveExpense
+);
+
+/**
+ * PATCH /api/v1/admin/expenses/:id/reject
+ * Reject an expense
+ */
+router.patch(
+  '/expenses/:id/reject',
+  [
+    param('id').isInt().withMessage('Expense ID must be a number'),
+    body('rejection_reason').trim().isLength({ min: 1, max: 500 }).withMessage('Rejection reason required (max 500 chars)')
+  ],
+  validate,
+  adminController.rejectExpense
+);
+
+/**
  * PUT /api/v1/admin/expenses/:id
  * Update expense details
  */
@@ -611,5 +636,30 @@ router.delete('/assets/:assetId', adminController.deleteClientAsset);
 // Revenue Analytics
 const revenueController = require('../controllers/revenue.controller');
 router.get('/revenues', revenueController.getRevenueData);
+
+// Reports
+router.get('/reports/revenue', [
+  query('start_date').optional().isISO8601().withMessage('Invalid start date'),
+  query('end_date').optional().isISO8601().withMessage('Invalid end date')
+], validate, adminController.getRevenueReport);
+
+router.get('/reports/clients', adminController.getClientReport);
+
+router.get('/reports/workers', [
+  query('start_date').optional().isISO8601().withMessage('Invalid start date'),
+  query('end_date').optional().isISO8601().withMessage('Invalid end date')
+], validate, adminController.getWorkerReport);
+
+router.get('/reports/inventory', adminController.getInventoryReport);
+
+// Dispenser Assignment
+router.post('/dispensers/assign', [
+  body('dispenser_id').isInt().withMessage('Dispenser ID required'),
+  body('client_id').isInt().withMessage('Client ID required')
+], validate, adminController.assignDispenser);
+
+router.post('/dispensers/unassign', [
+  body('dispenser_id').isInt().withMessage('Dispenser ID required')
+], validate, adminController.unassignDispenser);
 
 module.exports = router;

@@ -340,4 +340,100 @@ router.delete(
   workerController.deleteExpense
 );
 
+// ============================================================================
+// WORKER PROFILE ROUTES
+// ============================================================================
+
+/**
+ * GET /api/v1/workers/profile
+ * Get worker profile information
+ */
+router.get('/profile', workerAuth, workerController.getProfile);
+
+/**
+ * PUT /api/v1/workers/profile
+ * Update worker profile
+ */
+router.put(
+  '/profile',
+  workerAuth,
+  [
+    body('full_name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('Full name must be between 2 and 255 characters'),
+    body('vehicle_plate_number').optional().trim().isLength({ max: 20 }).withMessage('Plate number must be less than 20 characters'),
+    body('vehicle_capacity').optional().isInt({ min: 0, max: 10000 }).withMessage('Vehicle capacity must be between 0 and 10000')
+  ],
+  validate,
+  workerController.updateProfile
+);
+
+// ============================================================================
+// SHIFT MANAGEMENT ROUTES
+// ============================================================================
+
+/**
+ * GET /api/v1/workers/shifts
+ * Get shift history
+ */
+router.get(
+  '/shifts',
+  workerAuth,
+  [
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be 0 or greater')
+  ],
+  validate,
+  workerController.getShifts
+);
+
+/**
+ * POST /api/v1/workers/shifts/start
+ * Start a new shift
+ */
+router.post('/shifts/start', workerAuth, workerController.startShift);
+
+/**
+ * POST /api/v1/workers/shifts/end
+ * End current shift
+ */
+router.post('/shifts/end', workerAuth, workerController.endShift);
+
+/**
+ * GET /api/v1/workers/shifts/current
+ * Get current active shift
+ */
+router.get('/shifts/current', workerAuth, workerController.getCurrentShift);
+
+// ============================================================================
+// EARNINGS ROUTES
+// ============================================================================
+
+/**
+ * GET /api/v1/workers/earnings
+ * Get earnings summary
+ */
+router.get(
+  '/earnings',
+  workerAuth,
+  [
+    query('start_date').optional().isISO8601().withMessage('Start date must be valid'),
+    query('end_date').optional().isISO8601().withMessage('End date must be valid')
+  ],
+  validate,
+  workerController.getEarnings
+);
+
+/**
+ * POST /api/v1/workers/inventory/load
+ * Load vehicle inventory
+ */
+router.post(
+  '/inventory/load',
+  workerAuth,
+  [
+    body('gallons').isInt({ min: 1, max: 10000 }).withMessage('Gallons must be between 1 and 10000')
+  ],
+  validate,
+  workerController.loadInventory
+);
+
 module.exports = router;

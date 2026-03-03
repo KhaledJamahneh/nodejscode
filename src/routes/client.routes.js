@@ -121,6 +121,20 @@ router.patch('/coupon-books/:id', clientController.updateCouponBookRequest);
 router.delete('/coupon-books/:id', clientController.deleteCouponBookRequest);
 
 /**
+ * GET /api/v1/clients/payments
+ * Get payment history
+ */
+router.get(
+  '/payments',
+  [
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be 0 or greater')
+  ],
+  validate,
+  clientController.getPaymentHistory
+);
+
+/**
  * GET /api/v1/clients/assets
  * Get list of company assets (dispensers, bottles) in client's possession
  */
@@ -131,6 +145,20 @@ router.get('/assets', clientController.getAssets);
  * Get detailed debt information and payment history
  */
 router.get('/debt', clientController.getDebtInfo);
+
+/**
+ * POST /api/v1/clients/dispensers/request
+ * Request a dispenser
+ */
+router.post(
+  '/dispensers/request',
+  [
+    body('dispenser_type').isIn(['touch', 'manual', 'electric']).withMessage('Invalid dispenser type'),
+    body('notes').optional().trim().isLength({ max: 500 }).withMessage('Notes max 500 characters')
+  ],
+  validate,
+  clientController.requestDispenser
+);
 
 // ============================================================================
 // LOCATION & PROXIMITY ROUTES

@@ -1,204 +1,90 @@
-
-const translationLoader = require('./translation-loader');
-const logger = require('./logger');
-
-// Deduplicate warning logs in production
-const warnedKeys = new Set();
+// src/utils/i18n.js
+const messages = require('../locales/messages.json');
+const units = require('../locales/units.json');
 
 /**
- * Escape HTML special characters to prevent XSS
- * 
- * SECURITY NOTE: This only escapes parameters, not translation strings.
- * Translation strings in messages.json are trusted (controlled by developers).
- * User-provided data should NEVER be added to messages.json.
- * 
- * Safe: t('en', 'welcome_message', { name: userInput })  // name is escaped
- * Unsafe: Adding userInput directly to messages.json     // DON'T DO THIS
- * 
- * @param {string} str - String to escape
- * @returns {string} - Escaped string
+ * Get message in specified language
+ * @param {string} key - Message key
+ * @param {string} lang - Language code (en, ar)
+ * @param {object} params - Parameters to replace in message
+ * @returns {string} Localized message
  */
-const escapeHtml = (str) => {
-  if (typeof str !== 'string') return str;
+function getMessage(key, lang = 'en', params = {}) {
+  const langMessages = messages[lang] || messages.en;
+  let message = langMessages[key] || messages.en[key] || key;
   
-  const htmlEscapeMap = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#x27;',
-    '/': '&#x2F;'
-  };
-  
-  return str.replace(/[&<>"'/]/g, (char) => htmlEscapeMap[char]);
-};
-
-/**
- * Arabic pluralization rules for numbers
- * 
- * NOTE: This is a simplified implementation suitable for this application.
- * Full CLDR Arabic pluralization has 6 categories based on mod 100.
- * This implementation covers the common cases for gallons/coupons/deliveries.
- * 
- * Simplified rules:
- * - 0: zero form
- * - 1: one/singular
- * - 2: two/dual
- * - 3-10: few
- * - 11-99: many
- * - 100+: other
- * 
- * @param {number} count - The number
- * @param {object} forms - {zero, one, two, few, many, other}
- */
-const pluralizeArabic = (count, forms) => {
-  if (count === 0) return forms.zero || forms.other;
-  if (count === 1) return forms.one;
-  if (count === 2) return forms.two;
-  if (count >= 3 && count <= 10) return forms.few;
-  if (count >= 11 && count <= 99) return forms.many;
-  return forms.other;
-};
-
-/**
- * English pluralization rules
- * @param {number} count - The number
- * @param {object} forms - {one, other}
- */
-const pluralizeEnglish = (count, forms) => {
-  return count === 1 ? forms.one : forms.other;
-};
-
-/**
- * Get pluralized unit
- * @param {string} lang - Language code
- * @param {string} unit - Unit name
- * @param {number} count - Count for pluralization
- */
-const getUnit = (lang, unit, count) => {
-  const normalized = normalizeLanguage(lang);
-  const units = translationLoader.loadUnits();
-  const unitForms = units[normalized]?.[unit];
-  
-  if (!unitForms) return unit;
-  
-  if (normalized === 'ar') {
-    return pluralizeArabic(count, unitForms);
-  } else {
-    return pluralizeEnglish(count, unitForms);
-  }
-};
-
-/**
- * Normalize language code to supported language
- * @param {string} lang - Language code (e.g., 'en', 'ar', 'fr', null, undefined)
- * @returns {string} - Normalized language code ('en' or 'ar')
- */
-const normalizeLanguage = (lang) => {
-  if (!lang || typeof lang !== 'string') return 'en';
-  
-  const normalized = lang.toLowerCase().trim();
-  
-  // Arabic variants
-  if (normalized === 'ar' || normalized.startsWith('ar-')) return 'ar';
-  
-  // English variants
-  if (normalized === 'en' || normalized.startsWith('en-')) return 'en';
-  
-  // Default to English for unsupported languages
-  return 'en';
-};
-
-/**
- * Get localized string with parameter interpolation
- * @param {string} lang - Language code (e.g., 'en', 'ar', 'fr', null)
- * @param {string} key - Translation key
- * @param {object} params - Parameters for interpolation (e.g., { amount: 5, unit: 'gallon', worker: 'John', delivery_time: '2pm' })
- * @param {object} options - { escape: boolean } - Whether to escape HTML (default: true)
- * @returns {string} - Interpolated message
- */
-const t = (lang, key, params = {}, options = { escape: true }) => {
-  const userLang = normalizeLanguage(lang);
-  const messages = translationLoader.loadMessages();
-  
-  // Try user's language first
-  let message = messages[userLang]?.[key];
-  
-  // Fallback to English if missing
-  if (!message && userLang !== 'en') {
-    message = messages.en?.[key];
-    if (message) {
-      // Deduplicate warnings in production
-      const warnKey = `${key}:${userLang}`;
-      if (!warnedKeys.has(warnKey)) {
-        warnedKeys.add(warnKey);
-        logger.warn('Missing translation', {
-          key,
-          requestedLang: userLang,
-          fallbackLang: 'en'
-        });
-      }
-    }
-  }
-  
-  // Last resort: return key itself
-  if (!message) {
-    // Deduplicate errors in production
-    if (!warnedKeys.has(key)) {
-      warnedKeys.add(key);
-      logger.error('Translation key not found', {
-        key,
-        requestedLang: userLang,
-        availableLanguages: Object.keys(messages)
-      });
-    }
-    return key;
-  }
-  
-  // Handle unit pluralization if amount and unit are provided
-  if (params.amount !== undefined && params.unit) {
-    const unitText = getUnit(userLang, params.unit, params.amount);
-    params = { ...params, unit: unitText };
-  }
-  
-  // Escape parameters if enabled (default)
-  const processedParams = options.escape
-    ? Object.keys(params).reduce((acc, key) => {
-        acc[key] = escapeHtml(params[key]);
-        return acc;
-      }, {})
-    : params;
-  
-  // Generic parameter interpolation - replace all {param} placeholders
-  Object.keys(processedParams).forEach(param => {
-    const placeholder = `{${param}}`;
-    message = message.replace(new RegExp(placeholder, 'g'), processedParams[param]);
+  // Replace parameters
+  Object.keys(params).forEach(param => {
+    message = message.replace(new RegExp(`{${param}}`, 'g'), params[param]);
   });
   
   return message;
-};
+}
 
 /**
- * Get language metadata for frontend rendering
- * @param {string} lang - Language code (e.g., 'en', 'ar', 'fr', null)
- * @returns {object} - { dir: 'ltr'|'rtl', locale: string }
+ * Get unit translation
+ * @param {string} unit - Unit key
+ * @param {string} lang - Language code
+ * @returns {string} Localized unit
  */
-const getLanguageMetadata = (lang) => {
-  const normalized = normalizeLanguage(lang);
-  
-  const metadata = {
-    en: { dir: 'ltr', locale: 'en-US' },
-    ar: { dir: 'rtl', locale: 'ar-SA' }
-  };
-  
-  return metadata[normalized] || metadata.en;
-};
+function getUnit(unit, lang = 'en') {
+  const langUnits = units[lang] || units.en;
+  return langUnits[unit] || units.en[unit] || unit;
+}
 
 /**
- * Reload translations (for production updates)
+ * Get language from request headers
+ * @param {object} req - Express request object
+ * @returns {string} Language code
  */
-const reloadTranslations = () => {
-  translationLoader.reload();
-};
+function getLanguage(req) {
+  const acceptLanguage = req.headers['accept-language'];
+  if (!acceptLanguage) return 'en';
+  
+  // Parse Accept-Language header
+  const lang = acceptLanguage.split(',')[0].split('-')[0].toLowerCase();
+  return ['en', 'ar'].includes(lang) ? lang : 'en';
+}
 
-module.exports = { t, getLanguageMetadata, reloadTranslations, normalizeLanguage };
+/**
+ * Localize response
+ * @param {object} req - Express request object
+ * @param {string} messageKey - Message key
+ * @param {object} params - Parameters
+ * @returns {string} Localized message
+ */
+function localizeResponse(req, messageKey, params = {}) {
+  const lang = getLanguage(req);
+  return getMessage(messageKey, lang, params);
+}
+
+/**
+ * Localize status
+ * @param {string} status - Status value
+ * @param {string} lang - Language code
+ * @returns {string} Localized status
+ */
+function localizeStatus(status, lang = 'en') {
+  const statusKey = `status_${status}`;
+  return getMessage(statusKey, lang);
+}
+
+/**
+ * Localize priority
+ * @param {string} priority - Priority value
+ * @param {string} lang - Language code
+ * @returns {string} Localized priority
+ */
+function localizePriority(priority, lang = 'en') {
+  const priorityKey = `priority_${priority}`;
+  return getMessage(priorityKey, lang);
+}
+
+module.exports = {
+  getMessage,
+  getUnit,
+  getLanguage,
+  localizeResponse,
+  localizeStatus,
+  localizePriority
+};

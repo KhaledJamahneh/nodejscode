@@ -4,6 +4,7 @@
 const { query, transaction } = require('../config/database');
 const logger = require('../utils/logger');
 const { getStatusCode } = require('../middleware/error-handler.middleware');
+const { localizeResponse } = require('../utils/i18n');
 
 /**
  * GET /api/v1/clients/profile
@@ -919,6 +920,73 @@ const deleteCouponBookRequest = async (req, res) => {
   }
 };
 
+// ============================================================================
+// PAYMENT HISTORY
+// ============================================================================
+
+const getPaymentHistory = async (req, res) => {
+  try {
+    const clientId = req.user.clientId;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = parseInt(req.query.offset) || 0;
+    
+    const result = await pool.query(
+      `SELECT p.*, dr.requested_gallons, dr.gallons_delivered
+       FROM payments p
+       LEFT JOIN delivery_requests dr ON p.delivery_id = dr.id
+       WHERE p.client_id = $1
+       ORDER BY p.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [clientId, limit, offset]
+    );
+    
+    const countResult = await pool.query(
+      'SELECT COUNT(*) FROM payments WHERE client_id = $1',
+      [clientId]
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        payments: result.rows,
+        total: parseInt(countResult.rows[0].count),
+        limit,
+        offset
+      }
+    });
+  } catch (error) {
+    logger.error('Get payment history error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get payment history' });
+  }
+};
+
+// ============================================================================
+// DISPENSER MANAGEMENT
+// ============================================================================
+
+const requestDispenser = async (req, res) => {
+  try {
+    const clientId = req.user.clientId;
+    const { dispenser_type, notes } = req.body;
+    
+    const result = await query(
+      `INSERT INTO dispenser_requests (client_id, dispenser_type, notes, status)
+       VALUES ($1, $2, $3, 'pending')
+       RETURNING *`,
+      [clientId, dispenser_type, notes]
+    );
+    
+    res.status(201).json({
+      success: true,
+      message: 'Dispenser request submitted successfully',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    logger.error('Request dispenser error:', error);
+    res.status(500).json({ success: false, message: 'Failed to submit dispenser request' });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -933,5 +1001,7 @@ module.exports = {
   createCouponBookRequest,
   getCouponBookRequests,
   updateCouponBookRequest,
-  deleteCouponBookRequest
+  deleteCouponBookRequest,
+  getPaymentHistory,
+  requestDispenser
 };
