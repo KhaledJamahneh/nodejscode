@@ -3406,10 +3406,97 @@ const deleteClientAsset = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/v1/admin/requests/batch-assign
+ * Bulk assign workers to multiple delivery requests
+ */
+const batchAssignWorkersToRequests = async (req, res) => {
+  try {
+    const { request_ids, worker_id } = req.body;
+
+    if (!Array.isArray(request_ids) || request_ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'request_ids must be a non-empty array'
+      });
+    }
+
+    // Check if worker exists
+    const workerCheck = await query(
+      'SELECT id FROM worker_profiles WHERE id = $1',
+      [worker_id]
+    );
+
+    if (workerCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    const results = await transaction(async (client) => {
+      const assignmentResults = [];
+
+      for (const requestId of request_ids) {
+        // Check request status
+        const requestCheck = await client.query(
+          'SELECT id, status FROM delivery_requests WHERE id = $1 FOR UPDATE',
+          [requestId]
+        );
+
+        if (requestCheck.rows.length === 0 || requestCheck.rows[0].status !== 'pending') {
+          continue; // Skip already assigned or missing requests
+        }
+
+        // Assign worker
+        await client.query(
+          `UPDATE delivery_requests 
+           SET assigned_worker_id = $1, status = 'in_progress', updated_at = CURRENT_TIMESTAMP 
+           WHERE id = $2`,
+          [worker_id, requestId]
+        );
+
+        // Notify Worker
+        const workerUser = await client.query('SELECT u.id as user_id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.id = $1', [worker_id]);
+        const workerLang = workerUser.rows[0].preferred_language || 'en';
+        await notificationService.createNotification({
+          userId: workerUser.rows[0].user_id,
+          title: t(workerLang, 'new_task_assigned_title'),
+          message: t(workerLang, 'new_task_assigned_body'),
+          type: 'worker_assignment',
+          referenceId: requestId,
+          referenceType: 'delivery_request',
+          dbClient: client,
+          sendPush: true
+        });
+
+        assignmentResults.push(requestId);
+      }
+
+      return assignmentResults;
+    });
+
+    logger.info('Batch worker assignment completed:', { assigned_count: results.length, worker_id, admin: req.user.id });
+
+    res.json({
+      success: true,
+      message: `Successfully assigned ${results.length} requests`,
+      data: { assigned_ids: results }
+    });
+  } catch (error) {
+    logger.error('Batch assign workers error:', error);
+    res.status(getStatusCode(error)).json({
+      success: false,
+      message: 'Failed to complete batch assignment'
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   getAllRequests,
   assignWorkerToRequest,
+  batchAssignWorkersToRequests,
   updateRequestStatus,
   deleteDeliveryRequest,
   getAllDeliveries,
