@@ -249,6 +249,20 @@ router.get(
 );
 
 /**
+ * POST /api/v1/admin/requests/batch-assign
+ * Bulk assign workers to multiple delivery requests
+ */
+router.post(
+  '/requests/batch-assign',
+  [
+    body('request_ids').isArray().withMessage('request_ids must be an array'),
+    body('worker_id').isInt().withMessage('worker_id must be an integer')
+  ],
+  validate,
+  adminController.batchAssignWorkersToRequests
+);
+
+/**
  * POST /api/v1/admin/requests/:id/assign
  * Assign a worker to a delivery request
  */
