@@ -64,6 +64,16 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Strict rate limiter for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: 'Too many login attempts, please try again after 15 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // Don't count successful logins
+});
+
 // Request logging
 app.use((req, res, next) => {
   res.on('finish', () => {
@@ -95,8 +105,8 @@ app.get('/health', (req, res) => {
 // API version prefix
 const API_PREFIX = `/api/${process.env.API_VERSION || 'v1'}`;
 
-// Mount routes
-app.use(`${API_PREFIX}/auth`, authRoutes);
+// Mount routes (auth routes get strict limiter)
+app.use(`${API_PREFIX}/auth`, authLimiter, authRoutes);
 app.use(`${API_PREFIX}/clients`, clientRoutes);
 app.use(`${API_PREFIX}/deliveries`, deliveryRoutes);
 app.use(`${API_PREFIX}/workers`, workerRoutes);

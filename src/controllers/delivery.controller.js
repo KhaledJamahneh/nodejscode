@@ -14,7 +14,7 @@ const notificationService = require('../services/notification.service');
 const createDeliveryRequest = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { priority, requested_gallons, payment_method, notes } = req.body;
+    const { priority, requested_gallons, payment_method, notes, delivery_address, delivery_latitude, delivery_longitude } = req.body;
 
     logger.info('Create delivery request attempt:', { userId, body: req.body });
 
@@ -114,10 +114,13 @@ const createDeliveryRequest = async (req, res) => {
       // 8. Create the delivery request
       const result = await client.query(
         `INSERT INTO delivery_requests (
-          client_id, priority, requested_gallons, payment_method, notes, status
-        ) VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, client_id, priority, requested_gallons, payment_method, request_date, status, notes`,
-        [clientData.id, priority || 'non_urgent', requested_gallons, payment_method, notes, 'pending']
+          client_id, priority, requested_gallons, payment_method, notes, status,
+          delivery_address, delivery_latitude, delivery_longitude
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, client_id, priority, requested_gallons, payment_method, request_date, status, notes,
+                  delivery_address, delivery_latitude, delivery_longitude`,
+        [clientData.id, priority || 'non_urgent', requested_gallons, payment_method, notes, 'pending',
+         delivery_address, delivery_latitude, delivery_longitude]
       );
 
       const newRequest = result.rows[0];

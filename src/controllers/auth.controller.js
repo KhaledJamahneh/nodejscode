@@ -255,18 +255,11 @@ const requestPasswordReset = async (req, res) => {
     });
 
     // TODO: Send SMS with verification code using Twilio or SMS service
-    // For now, we'll log it (NEVER do this in production!)
-    logger.info('Password reset code generated:', {
-      phone_number,
-      code: verificationCode,
-      userId: user.id
-    });
+    logger.info('Password reset code generated for user:', { phone_number, userId: user.id });
 
     res.json({
       success: true,
-      message: 'Verification code sent to your phone',
-      // Remove this in production:
-      dev_code: process.env.NODE_ENV === 'development' ? verificationCode : undefined
+      message: 'Verification code sent via SMS'
     });
   } catch (error) {
     logger.error('Password reset request error:', error);

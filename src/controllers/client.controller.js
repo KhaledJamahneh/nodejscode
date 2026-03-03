@@ -987,6 +987,94 @@ const requestDispenser = async (req, res) => {
   }
 };
 
+// ============================================================================
+// ACTIVE DELIVERY TRACKING
+// ============================================================================
+
+const getActiveDelivery = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await query(
+      `SELECT 
+        d.id as delivery_id,
+        d.delivery_date,
+        d.scheduled_time,
+        d.gallons_delivered,
+        d.status,
+        cp.full_name as client_name,
+        cp.address as client_address,
+        cp.home_latitude,
+        cp.home_longitude,
+        wp.full_name as worker_name,
+        u.phone_number as worker_phone,
+        wl.latitude as worker_latitude,
+        wl.longitude as worker_longitude,
+        wl.updated_at as location_updated_at
+      FROM deliveries d
+      JOIN client_profiles cp ON d.client_id = cp.id
+      JOIN worker_profiles wp ON d.worker_id = wp.id
+      JOIN users u ON wp.user_id = u.id
+      LEFT JOIN worker_locations wl ON wp.id = wl.user_id
+      WHERE cp.user_id = $1 
+        AND d.status IN ('pending', 'in_progress')
+        AND d.delivery_date = CURRENT_DATE
+      ORDER BY d.scheduled_time ASC
+      LIMIT 1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: true,
+        data: null,
+        message: 'No active delivery'
+      });
+    }
+
+    const delivery = result.rows[0];
+
+    // Calculate ETA if worker location is available
+    if (delivery.worker_latitude && delivery.worker_longitude && delivery.home_latitude && delivery.home_longitude) {
+      const distance = calculateDistance(
+        delivery.worker_latitude,
+        delivery.worker_longitude,
+        delivery.home_latitude,
+        delivery.home_longitude
+      );
+      
+      const avgSpeedKmh = 40; // Average speed in km/h
+      const etaMinutes = Math.ceil((distance / avgSpeedKmh) * 60);
+      const estimatedArrival = new Date(Date.now() + etaMinutes * 60000).toISOString();
+      
+      delivery.distance_km = distance.toFixed(2);
+      delivery.estimated_arrival = estimatedArrival;
+      delivery.eta_minutes = etaMinutes;
+    }
+
+    res.json({
+      success: true,
+      data: delivery
+    });
+  } catch (error) {
+    logger.error('Get active delivery error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get active delivery' });
+  }
+};
+
+// Helper: Calculate distance between two coordinates (Haversine formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -1003,5 +1091,6 @@ module.exports = {
   updateCouponBookRequest,
   deleteCouponBookRequest,
   getPaymentHistory,
-  requestDispenser
+  requestDispenser,
+  getActiveDelivery
 };

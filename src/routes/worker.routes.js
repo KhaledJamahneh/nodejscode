@@ -2,6 +2,7 @@
 // Worker schedule and delivery management routes
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { body, query, param } = require('express-validator');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth.middleware');
 const { validate } = require('../middleware/validation.middleware');
@@ -15,6 +16,16 @@ router.use(authenticateToken);
 
 // General worker role requirement for most routes in this file
 const workerAuth = authorizeRoles('delivery_worker', 'onsite_worker', 'administrator', 'owner');
+
+// GPS location update rate limiter - 60 requests per minute per worker
+const gpsLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute
+  message: 'Too many GPS updates, please slow down',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user.id.toString(), // Rate limit per user
+});
 
 // ============================================================================
 // VALIDATION RULES
@@ -125,6 +136,7 @@ router.get('/profile', workerAuth, workerController.getWorkerProfile);
  */
 router.put(
   '/location',
+  gpsLimiter,
   workerAuth,
   updateLocationValidation,
   validate,

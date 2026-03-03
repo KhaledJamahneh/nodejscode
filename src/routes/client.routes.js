@@ -147,6 +147,12 @@ router.get('/assets', clientController.getAssets);
 router.get('/debt', clientController.getDebtInfo);
 
 /**
+ * GET /api/v1/clients/deliveries/active
+ * Get current active delivery with real-time tracking and ETA
+ */
+router.get('/deliveries/active', clientController.getActiveDelivery);
+
+/**
  * POST /api/v1/clients/dispensers/request
  * Request a dispenser
  */
