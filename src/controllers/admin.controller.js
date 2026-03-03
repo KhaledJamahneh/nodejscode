@@ -1158,6 +1158,23 @@ const assignWorkerToDelivery = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/v1/admin/deliveries/:id/unassign
+ */
+const unassignWorkerFromDelivery = async (req, res) => {
+  try {
+    const deliveryId = req.params.id;
+    await query(
+      'UPDATE deliveries SET worker_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [deliveryId]
+    );
+    res.json({ success: true, message: 'Worker unassigned from delivery' });
+  } catch (error) {
+    logger.error('Unassign delivery worker error:', error);
+    res.status(500).json({ success: false, message: 'Failed to unassign worker' });
+  }
+};
+
 const deleteDelivery = async (req, res) => {
   try {
     const { id } = req.params;
@@ -3690,6 +3707,7 @@ module.exports = {
   getAllDeliveries,
   updateDeliveryStatus,
   assignWorkerToDelivery,
+  unassignWorkerFromDelivery,
   deleteDelivery,
   createQuickDelivery,
   updateDelivery,

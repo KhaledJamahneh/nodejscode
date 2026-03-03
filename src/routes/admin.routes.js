@@ -490,6 +490,16 @@ router.post(
 );
 
 /**
+ * POST /api/v1/admin/deliveries/:id/unassign
+ */
+router.post(
+  '/deliveries/:id/unassign',
+  [param('id').isInt().withMessage('Valid ID required')],
+  validate,
+  adminController.unassignWorkerFromDelivery
+);
+
+/**
  * DELETE /api/v1/admin/deliveries/:id
  * Delete a delivery
  */
