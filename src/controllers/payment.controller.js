@@ -12,6 +12,7 @@ const notificationService = require('../services/notification.service');
 const recordPayment = async (req, res) => {
   try {
     const { client_id, amount, payment_method, notes } = req.body;
+    const debt = req.body.debt || 0; // Safety check for null debt
 
     if (!client_id || !amount || amount <= 0) {
       return res.status(400).json({
@@ -34,7 +35,7 @@ const recordPayment = async (req, res) => {
         throw new Error('Client profile not found');
       }
 
-      const currentDebt = parseFloat(profileRes.rows[0].current_debt);
+      const currentDebt = parseFloat(profileRes.rows[0].current_debt) || 0; // Safety check
       const paymentAmount = Math.round(parseFloat(amount) * 100) / 100;
       const userId = profileRes.rows[0].user_id;
 

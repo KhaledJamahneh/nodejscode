@@ -184,4 +184,16 @@ router.put(
   clientController.saveHomeLocation
 );
 
+/**
+ * GET /api/v1/clients/dispensers/settings
+ * Get client's dispenser settings
+ */
+router.get('/dispensers/settings', clientController.getDispenserSettings);
+
+/**
+ * PUT /api/v1/clients/dispensers/settings
+ * Update client's dispenser settings
+ */
+router.put('/dispensers/settings', clientController.updateDispenserSettings);
+
 module.exports = router;

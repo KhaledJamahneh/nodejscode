@@ -296,6 +296,28 @@ router.delete(
 );
 
 /**
+ * DELETE /api/v1/admin/requests/:id/permanent
+ * Permanently delete a delivery request
+ */
+router.delete(
+  '/requests/:id/permanent',
+  userIdValidation,
+  validate,
+  adminController.deleteRequest
+);
+
+/**
+ * POST /api/v1/admin/requests/:id/cancel
+ * Cancel a delivery request
+ */
+router.post(
+  '/requests/:id/cancel',
+  userIdValidation,
+  validate,
+  adminController.cancelRequest
+);
+
+/**
  * GET /api/v1/admin/coupon-book-requests
  * Get all coupon book requests
  */

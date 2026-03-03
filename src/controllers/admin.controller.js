@@ -3492,6 +3492,59 @@ const batchAssignWorkersToRequests = async (req, res) => {
   }
 };
 
+/**
+ * DELETE /api/v1/admin/requests/:id
+ * Permanently delete a delivery request
+ */
+const deleteRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await query(`DELETE FROM delivery_requests WHERE id = $1`, [id]);
+
+    logger.info('Request deleted by admin:', { request_id: id, admin: req.user.id });
+
+    res.json({
+      success: true,
+      message: 'Request deleted successfully'
+    });
+  } catch (error) {
+    logger.error('Delete request error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete request'
+    });
+  }
+};
+
+/**
+ * POST /api/v1/admin/requests/:id/cancel
+ * Cancel a delivery request (soft delete)
+ */
+const cancelRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await query(
+      `UPDATE delivery_requests SET status = 'cancelled' WHERE id = $1`,
+      [id]
+    );
+
+    logger.info('Request cancelled by admin:', { request_id: id, admin: req.user.id });
+
+    res.json({
+      success: true,
+      message: 'Request cancelled successfully'
+    });
+  } catch (error) {
+    logger.error('Cancel request error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cancel request'
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   getAllRequests,
@@ -3554,5 +3607,7 @@ module.exports = {
   deleteCouponBookRequest,
   deleteClientAsset,
   getCouponSizes,
-  updateCouponSize
+  updateCouponSize,
+  deleteRequest,
+  cancelRequest
 };

@@ -1075,6 +1075,74 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+/**
+ * GET /api/v1/clients/dispensers/settings
+ * Get client's dispenser settings
+ */
+const getDispenserSettings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await query(
+      `SELECT dispenser_settings FROM client_profiles WHERE user_id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client profile not found'
+      });
+    }
+
+    const settings = result.rows[0].dispenser_settings || {
+      auto_refill: true,
+      notifications_enabled: true,
+      low_water_threshold: 2
+    };
+
+    res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    logger.error('Error getting dispenser settings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get dispenser settings'
+    });
+  }
+};
+
+/**
+ * PUT /api/v1/clients/dispensers/settings
+ * Update client's dispenser settings
+ */
+const updateDispenserSettings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const settings = req.body;
+
+    await query(
+      `UPDATE client_profiles 
+       SET dispenser_settings = $1 
+       WHERE user_id = $2`,
+      [JSON.stringify(settings), userId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Settings updated successfully'
+    });
+  } catch (error) {
+    logger.error('Error updating dispenser settings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update dispenser settings'
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -1092,5 +1160,7 @@ module.exports = {
   deleteCouponBookRequest,
   getPaymentHistory,
   requestDispenser,
-  getActiveDelivery
+  getActiveDelivery,
+  getDispenserSettings,
+  updateDispenserSettings
 };
