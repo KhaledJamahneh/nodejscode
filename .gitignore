@@ -26,6 +26,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.kiro/
 
 # Test coverage
 coverage/
@@ -42,3 +43,30 @@ temp/
 # Database dumps
 *.sql.backup
 *.dump
+
+# Flutter/Dart (frontend files)
+.dart_tool/
+.flutter-plugins-dependencies
+android/
+ios/
+linux/
+macos/
+windows/
+web/
+lib/
+test/
+pubspec.yaml
+pubspec.lock
+analysis_options.yaml
+l10n.yaml
+assets/
+
+# Process files
+.backend.pid
+
+# Documentation and scripts (keep in docs/)
+*.docx
+*.sh
+*.txt
+!README.md
+!docs/**
