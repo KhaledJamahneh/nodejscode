@@ -274,6 +274,16 @@ router.post(
 );
 
 /**
+ * POST /api/v1/admin/requests/:id/unassign
+ */
+router.post(
+  '/requests/:id/unassign',
+  [param('id').isInt().withMessage('Valid ID required')],
+  validate,
+  adminController.unassignWorkerFromRequest
+);
+
+/**
  * PATCH /api/v1/admin/requests/:id/status
  * Update status of a delivery request
  */
@@ -282,6 +292,16 @@ router.patch(
   updateStatusValidation,
   validate,
   adminController.updateRequestStatus
+);
+
+/**
+ * PATCH /api/v1/admin/requests/:id
+ */
+router.patch(
+  '/requests/:id',
+  [param('id').isInt().withMessage('Valid ID required')],
+  validate,
+  adminController.updateRequest
 );
 
 /**
@@ -338,6 +358,16 @@ router.patch(
 );
 
 /**
+ * POST /api/v1/admin/coupon-book-requests/:id/unassign
+ */
+router.post(
+  '/coupon-book-requests/:id/unassign',
+  [param('id').isInt().withMessage('Valid ID required')],
+  validate,
+  adminController.unassignWorkerFromCouponBookRequest
+);
+
+/**
  * PATCH /api/v1/admin/coupon-book-requests/:id/status
  * Update status of a coupon book request
  */
@@ -348,7 +378,17 @@ router.patch(
     body('status').isIn(['pending', 'approved', 'assigned', 'in_progress', 'completed', 'cancelled']).withMessage('Invalid status')
   ],
   validate,
-  adminController.updateCouponBookRequestStatus
+  adminController.updateCouponBookRequest
+);
+
+/**
+ * PATCH /api/v1/admin/coupon-book-requests/:id
+ */
+router.patch(
+  '/coupon-book-requests/:id',
+  [param('id').isInt().withMessage('Valid ID required')],
+  validate,
+  adminController.updateCouponBookRequest
 );
 
 /**
@@ -367,6 +407,20 @@ router.delete(
  * Get all coupon sizes for management
  */
 router.get('/coupon-sizes', adminController.getCouponSizes);
+
+/**
+ * POST /api/v1/admin/coupon-sizes
+ */
+router.post(
+  '/coupon-sizes',
+  [
+    body('size').isInt({ min: 1 }).withMessage('Size must be a positive integer'),
+    body('price_per_page').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+    body('bonus_gallons').optional().isInt({ min: 0 }).withMessage('Bonus must be a non-negative integer')
+  ],
+  validate,
+  adminController.createCouponSize
+);
 
 /**
  * PATCH /api/v1/admin/coupon-sizes/:id

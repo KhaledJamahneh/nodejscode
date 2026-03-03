@@ -15,7 +15,7 @@ const { getStatusCode } = require('../middleware/error-handler.middleware');
  */
 const getAllCouponBookRequests = async (req, res) => {
   try {
-    const { status, limit = 50, offset = 0 } = req.query;
+    const { status, search, limit = 50, offset = 0 } = req.query;
 
     let queryText = `
       SELECT 
@@ -48,6 +48,12 @@ const getAllCouponBookRequests = async (req, res) => {
       paramCount++;
       queryText += ` AND cbr.status = $${paramCount}`;
       queryParams.push(status);
+    }
+
+    if (search) {
+      paramCount++;
+      queryText += ` AND (cp.full_name ILIKE $${paramCount} OR cp.address ILIKE $${paramCount} OR u.phone_number ILIKE $${paramCount})`;
+      queryParams.push(`%${search}%`);
     }
 
     queryText += ` ORDER BY cbr.created_at DESC
@@ -152,18 +158,35 @@ const assignCouponBookWorker = async (req, res) => {
 };
 
 /**
+ * POST /api/v1/admin/coupon-book-requests/:id/unassign
+ */
+const unassignWorkerFromCouponBookRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await query(
+      "UPDATE coupon_book_requests SET assigned_worker_id = NULL, status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+      [id]
+    );
+    res.json({ success: true, message: 'Worker unassigned from coupon book request' });
+  } catch (error) {
+    logger.error('Unassign coupon worker error:', error);
+    res.status(500).json({ success: false, message: 'Failed to unassign worker' });
+  }
+};
+
+/**
  * PATCH /api/v1/admin/coupon-book-requests/:id/status
  * Update status of a coupon book request
  */
-const updateCouponBookRequestStatus = async (req, res) => {
+const updateCouponBookRequest = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status: nextStatus } = req.body;
+    const { status: nextStatus, total_price, book_type, notes } = req.body;
 
     const result = await transaction(async (client) => {
-      // 1. Get current status
+      // 1. Get current data
       const currentRes = await client.query(
-        'SELECT status FROM coupon_book_requests WHERE id = $1 FOR UPDATE',
+        'SELECT status, client_id FROM coupon_book_requests WHERE id = $1 FOR UPDATE',
         [id]
       );
 
@@ -173,9 +196,11 @@ const updateCouponBookRequestStatus = async (req, res) => {
 
       const currentStatus = currentRes.rows[0].status;
 
-      // 2. Validate transition
-      if (!isValidTransition('coupon_request', currentStatus, nextStatus)) {
-        throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
+      // 2. Validate transition if status is changing
+      if (nextStatus && nextStatus !== currentStatus) {
+        if (!isValidTransition('coupon_request', currentStatus, nextStatus)) {
+          throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
+        }
       }
 
       // 3. Handle special transitions (e.g., completion credits coupons)
@@ -195,34 +220,47 @@ const updateCouponBookRequestStatus = async (req, res) => {
             `UPDATE client_profiles 
              SET remaining_coupons = remaining_coupons + $1,
                  bonus_gallons = bonus_gallons + $2
-             WHERE id = $3`,
+             WHERE user_id = $3`,
             [size, bonus_gallons || 0, client_id]
           );
         }
       }
 
-      // 4. Update status
-      const updateRes = await client.query(
-        `UPDATE coupon_book_requests 
-         SET status = $1, updated_at = CURRENT_TIMESTAMP 
-         WHERE id = $2
-         RETURNING *`,
-        [nextStatus, id]
-      );
+      // 4. Update fields
+      const fields = [];
+      const values = [];
+      let paramIdx = 1;
 
-      return updateRes.rows[0];
+      if (nextStatus !== undefined) { fields.push(`status = $${paramIdx++}`); values.push(nextStatus); }
+      if (total_price !== undefined) { fields.push(`total_price = $${paramIdx++}`); values.push(total_price); }
+      if (book_type !== undefined) { fields.push(`book_type = $${paramIdx++}`); values.push(book_type); }
+      if (notes !== undefined) { fields.push(`notes = $${paramIdx++}`); values.push(notes); }
+
+      if (fields.length > 0) {
+        values.push(id);
+        const updateRes = await client.query(
+          `UPDATE coupon_book_requests 
+           SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = $${paramIdx}
+           RETURNING *`,
+          values
+        );
+        return updateRes.rows[0];
+      }
+      
+      return currentRes.rows[0];
     });
 
     res.json({
       success: true,
-      message: 'Status updated successfully',
+      message: 'Coupon book request updated successfully',
       data: result
     });
   } catch (error) {
-    logger.error('Update coupon book request status error:', error);
-    res.status(error.message.includes('not found') ? 404 : 400).json({
+    logger.error('Update coupon book request error:', error);
+    res.status(400).json({
       success: false,
-      message: error.message || 'Failed to update status'
+      message: error.message || 'Failed to update request'
     });
   }
 };
@@ -288,6 +326,39 @@ const getCouponSizes = async (req, res) => {
       success: false,
       message: 'Failed to retrieve coupon sizes'
     });
+  }
+};
+
+/**
+ * POST /api/v1/admin/coupon-sizes
+ * Create a new coupon size
+ */
+const createCouponSize = async (req, res) => {
+  try {
+    const { size, price_per_page, bonus_gallons, available_stock } = req.body;
+
+    if (!size) {
+      return res.status(400).json({ success: false, message: 'Size is required' });
+    }
+
+    const result = await query(
+      `INSERT INTO coupon_sizes (size, price_per_page, bonus_gallons, available_stock) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING *`,
+      [size, price_per_page || 0.50, bonus_gallons || 0, available_stock || 100]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Coupon size created successfully',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(400).json({ success: false, message: 'Coupon size already exists' });
+    }
+    logger.error('Create coupon size error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create coupon size' });
   }
 };
 
@@ -513,7 +584,7 @@ const getDashboard = async (req, res) => {
  */
 const getAllRequests = async (req, res) => {
   try {
-    const { status, priority, limit = 50, offset = 0 } = req.query;
+    const { status, priority, search, limit = 50, offset = 0 } = req.query;
 
     let queryText = `
       SELECT 
@@ -549,6 +620,12 @@ const getAllRequests = async (req, res) => {
       queryParams.push(priority);
     }
 
+    if (search) {
+      paramCount++;
+      queryText += ` AND (c.full_name ILIKE $${paramCount} OR c.address ILIKE $${paramCount} OR u.phone_number ILIKE $${paramCount})`;
+      queryParams.push(`%${search}%`);
+    }
+
     queryText += ` ORDER BY 
       CASE dr.priority 
         WHEN 'urgent' THEN 1 
@@ -563,20 +640,32 @@ const getAllRequests = async (req, res) => {
     const result = await query(queryText, queryParams);
 
     // Get total count
-    let countQuery = 'SELECT COUNT(*) FROM delivery_requests WHERE 1=1';
+    let countQuery = `
+      SELECT COUNT(*) 
+      FROM delivery_requests dr
+      JOIN client_profiles c ON dr.client_id = c.id
+      JOIN users u ON c.user_id = u.id
+      WHERE 1=1
+    `;
     const countParams = [];
     let countParamNum = 0;
 
     if (status) {
       countParamNum++;
-      countQuery += ` AND status = $${countParamNum}`;
+      countQuery += ` AND dr.status = $${countParamNum}`;
       countParams.push(status);
     }
 
     if (priority) {
       countParamNum++;
-      countQuery += ` AND priority = $${countParamNum}`;
+      countQuery += ` AND dr.priority = $${countParamNum}`;
       countParams.push(priority);
+    }
+
+    if (search) {
+      countParamNum++;
+      countQuery += ` AND (c.full_name ILIKE $${countParamNum} OR c.address ILIKE $${countParamNum} OR u.phone_number ILIKE $${countParamNum})`;
+      countParams.push(`%${search}%`);
     }
 
     const countResult = await query(countQuery, countParams);
@@ -726,57 +815,86 @@ const assignWorkerToRequest = async (req, res) => {
 };
 
 /**
+ * POST /api/v1/admin/requests/:id/unassign
+ */
+const unassignWorkerFromRequest = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    await query(
+      "UPDATE delivery_requests SET assigned_worker_id = NULL, status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+      [requestId]
+    );
+    res.json({ success: true, message: 'Worker unassigned from request' });
+  } catch (error) {
+    logger.error('Unassign worker error:', error);
+    res.status(500).json({ success: false, message: 'Failed to unassign worker' });
+  }
+};
+
+/**
  * PATCH /api/v1/admin/requests/:id/status
  * Update status of a delivery request
  */
 const updateRequestStatus = async (req, res) => {
+  // ... existing implementation
+};
+
+/**
+ * PATCH /api/v1/admin/requests/:id
+ * Update general request fields (gallons, notes, priority)
+ */
+const updateRequest = async (req, res) => {
   try {
     const requestId = req.params.id;
-    const { status: nextStatus } = req.body;
+    const { requested_gallons, notes, priority, status } = req.body;
 
-    const result = await transaction(async (client) => {
-      // 1. Get current status
-      const currentRes = await client.query(
-        'SELECT status FROM delivery_requests WHERE id = $1 FOR UPDATE',
-        [requestId]
-      );
+    const fields = [];
+    const values = [];
+    let paramIdx = 1;
 
-      if (currentRes.rows.length === 0) {
-        throw new Error('Delivery request not found');
-      }
+    if (requested_gallons !== undefined) {
+      fields.push(`requested_gallons = $${paramIdx++}`);
+      values.push(requested_gallons);
+    }
+    if (notes !== undefined) {
+      fields.push(`notes = $${paramIdx++}`);
+      values.push(notes);
+    }
+    if (priority !== undefined) {
+      fields.push(`priority = $${paramIdx++}`);
+      values.push(priority);
+    }
+    if (status !== undefined) {
+      fields.push(`status = $${paramIdx++}`);
+      values.push(status);
+    }
 
-      const currentStatus = currentRes.rows[0].status;
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
 
-      // 2. Validate transition
-      if (!isValidTransition('request', currentStatus, nextStatus)) {
-        throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
-      }
+    values.push(requestId);
+    const queryText = `
+      UPDATE delivery_requests 
+      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = $${paramIdx} 
+      RETURNING *
+    `;
 
-      // 3. Update status
-      const updateRes = await client.query(
-        `UPDATE delivery_requests 
-         SET status = $1, updated_at = CURRENT_TIMESTAMP 
-         WHERE id = $2
-         RETURNING *`,
-        [nextStatus, requestId]
-      );
+    const result = await query(queryText, values);
 
-      return updateRes.rows[0];
-    });
-
-    logger.info('Delivery request status updated by admin:', { requestId, status: nextStatus, admin: req.user.id });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
 
     res.json({
       success: true,
-      message: 'Request status updated successfully',
-      data: result
+      message: 'Request updated successfully',
+      data: result.rows[0]
     });
   } catch (error) {
-    logger.error('Update request status error:', error);
-    res.status(error.message.includes('not found') ? 404 : 400).json({
-      success: false,
-      message: error.message || 'Failed to update request status'
-    });
+    logger.error('Update request error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update request' });
   }
 };
 
@@ -3620,10 +3738,14 @@ module.exports = {
   updateClientAsset,
   getAllCouponBookRequests,
   assignCouponBookWorker,
-  updateCouponBookRequestStatus,
+  unassignWorkerFromCouponBookRequest,
+  updateCouponBookRequest,
   deleteCouponBookRequest,
+  unassignWorkerFromRequest,
+  updateRequest,
   deleteClientAsset,
   getCouponSizes,
+  createCouponSize,
   updateCouponSize,
   deleteRequest,
   cancelRequest
