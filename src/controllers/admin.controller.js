@@ -1551,7 +1551,8 @@ const createUser = async (req, res) => {
       initial_coupons,
       payment_method,
       is_paid,
-      custom_amount
+      custom_amount,
+      current_salary
     } = req.body;
 
     const roles = Array.isArray(role) ? role : [role];
@@ -1618,13 +1619,13 @@ const createUser = async (req, res) => {
         }
       }
       
-      if (roles.includes('delivery_worker') || roles.includes('onsite_worker') || primaryRole === 'delivery_worker' || primaryRole === 'onsite_worker') {
-        const defaultType = roles.includes('onsite_worker') || primaryRole === 'onsite_worker' ? 'onsite' : 'delivery';
+      if (roles.includes('delivery_worker') || roles.includes('onsite_worker')) {
+        const defaultType = roles.includes('onsite_worker') ? 'onsite' : 'delivery';
         await client.query(
           `INSERT INTO worker_profiles (
-            user_id, full_name, worker_type, hire_date
-          ) VALUES ($1, $2, $3, CURRENT_DATE)`,
-          [userId, full_name || 'New Worker', worker_type || defaultType]
+            user_id, full_name, worker_type, hire_date, current_salary
+          ) VALUES ($1, $2, $3, CURRENT_DATE, $4)`,
+          [userId, full_name || 'New Worker', worker_type || defaultType, current_salary || 0]
         );
       }
 
