@@ -383,6 +383,20 @@ router.patch(
   adminController.updateCouponSize
 );
 
+/**
+ * PUT /api/v1/admin/coupon-sizes/:id
+ */
+router.put(
+  '/coupon-sizes/:id',
+  [
+    param('id').isInt().withMessage('Size ID must be a number'),
+    body('price_per_page').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+    body('bonus_gallons').optional().isInt({ min: 0 }).withMessage('Bonus must be a non-negative integer')
+  ],
+  validate,
+  adminController.updateCouponSize
+);
+
 // ============================================================================
 // DELIVERY MANAGEMENT
 // ============================================================================
@@ -477,12 +491,8 @@ router.get(
  * POST /api/v1/admin/users
  * Create a new user (client or worker)
  */
-router.post(
-  '/users',
-  createUserValidation,
-  validate,
-  adminController.createUser
-);
+router.post('/users', createUserValidation, validate, adminController.createUser);
+router.post('/users/register', createUserValidation, validate, adminController.createUser); // Alias for registration
 
 /**
  * PATCH /api/v1/admin/users/:id

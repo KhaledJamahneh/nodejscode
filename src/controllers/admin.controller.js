@@ -98,19 +98,35 @@ const assignCouponBookWorker = async (req, res) => {
 
     // Notify worker
     try {
+      const details = await query(
+        `SELECT u.full_name as client_name, cbr.book_type, cbr.total_price 
+         FROM coupon_book_requests cbr 
+         JOIN client_profiles cp ON cbr.client_id = cp.id 
+         JOIN users u ON cp.user_id = u.id 
+         WHERE cbr.id = $1`,
+        [id]
+      );
+
       const workerRes = await query(
         'SELECT user_id, preferred_language FROM users JOIN worker_profiles ON users.id = worker_profiles.user_id WHERE worker_profiles.id = $1',
         [worker_id]
       );
       
-      if (workerRes.rows.length > 0) {
+      if (workerRes.rows.length > 0 && details.rows.length > 0) {
         const worker = workerRes.rows[0];
+        const detail = details.rows[0];
         const lang = worker.preferred_language || 'en';
         
+        const titleKey = detail.book_type === 'physical' ? 'physical_coupon_assigned_title' : 'coupon_assigned_title';
+        const bodyKey = detail.book_type === 'physical' ? 'physical_coupon_assigned_body' : 'coupon_assigned_body';
+
         await notificationService.createNotification({
           userId: worker.user_id,
-          title: t(lang, 'coupon_assignment_title'),
-          message: t(lang, 'coupon_assignment_body', id),
+          title: t(titleKey, lang),
+          message: t(bodyKey, lang, { 
+            clientName: detail.client_name,
+            amount: detail.total_price 
+          }),
           type: 'assignment',
           referenceId: id,
           referenceType: 'coupon_book_request'

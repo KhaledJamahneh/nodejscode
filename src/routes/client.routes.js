@@ -195,5 +195,6 @@ router.get('/dispensers/settings', clientController.getDispenserSettings);
  * Update client's dispenser settings
  */
 router.put('/dispensers/settings', clientController.updateDispenserSettings);
+router.put('/dispensers/:id/settings', clientController.updateDispenserSettings);
 
 module.exports = router;
