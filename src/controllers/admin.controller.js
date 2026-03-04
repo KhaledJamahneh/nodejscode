@@ -1878,17 +1878,25 @@ const getAnalyticsOverview = async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
 
-    const dateFilter = start_date && end_date 
-      ? `AND delivery_date BETWEEN '${start_date}' AND '${end_date}'`
+    // Build safe date filters
+    const startDate = start_date || null;
+    const endDate = end_date || new Date().toISOString().split('T')[0];
+
+    const dateFilter = startDate
+      ? `AND delivery_date BETWEEN '${startDate}' AND '${endDate}'`
       : `AND delivery_date >= CURRENT_DATE - INTERVAL '30 days'`;
 
-    const paymentDateFilter = start_date && end_date 
-      ? `AND DATE(payment_date) BETWEEN '${start_date}' AND '${end_date}'`
+    const paymentDateFilter = startDate
+      ? `AND DATE(payment_date) BETWEEN '${startDate}' AND '${endDate}'`
       : `AND DATE(payment_date) >= CURRENT_DATE - INTERVAL '30 days'`;
 
-    const expenseDateFilter = start_date && end_date 
-      ? `AND DATE(created_at) BETWEEN '${start_date}' AND '${end_date}'`
+    const expenseDateFilter = startDate
+      ? `AND DATE(created_at) BETWEEN '${startDate}' AND '${endDate}'`
       : `AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30 days'`;
+
+    const fillingDateFilter = startDate
+      ? `AND DATE(fs.completion_time) BETWEEN '${startDate}' AND '${endDate}'`
+      : `AND fs.completion_time >= CURRENT_DATE - INTERVAL '30 days'`;
 
     // Get comprehensive analytics
     const [
@@ -2039,7 +2047,7 @@ const getAnalyticsOverview = async (req, res) => {
           COALESCE(AVG(fs.gallons_filled), 0) as avg_filling_rate
         FROM worker_profiles w
         LEFT JOIN filling_sessions fs ON w.id = fs.worker_id 
-          ${start_date && end_date ? `AND DATE(fs.completion_time) BETWEEN '${start_date}' AND '${end_date}'` : `AND fs.completion_time >= CURRENT_DATE - INTERVAL '30 days'`}
+          ${fillingDateFilter}
         WHERE w.worker_type = 'onsite'
         GROUP BY w.id, w.full_name
         ORDER BY total_gallons_filled DESC NULLS LAST
