@@ -1247,12 +1247,12 @@ const createQuickDelivery = async (req, res) => {
     logger.info('Quick delivery request:', { client_id, worker_id, gallons_delivered, empty_gallons_returned, is_paid, custom_amount });
 
     await transaction(async (client) => {
-      // Get client profile
+      // Get client profile - accept both user_id and profile_id
       const clientProfile = await client.query(
-        `SELECT cp.user_id, cp.subscription_type, cp.remaining_coupons, cp.current_debt, u.preferred_language, u.is_active 
+        `SELECT cp.id as profile_id, cp.user_id, cp.subscription_type, cp.remaining_coupons, cp.current_debt, u.preferred_language, u.is_active 
          FROM client_profiles cp
          JOIN users u ON cp.user_id = u.id
-         WHERE cp.id = $1 FOR UPDATE`,
+         WHERE cp.id = $1 OR cp.user_id = $1 FOR UPDATE`,
         [client_id]
       );
 
@@ -1262,6 +1262,7 @@ const createQuickDelivery = async (req, res) => {
       }
 
       const clientData = clientProfile.rows[0];
+      const actualClientId = clientData.profile_id;
 
       if (!clientData.is_active) {
         throw new Error('Client account is inactive');
@@ -1291,7 +1292,7 @@ const createQuickDelivery = async (req, res) => {
           status, notes, created_at, paid_amount, total_price
         ) VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE), NOW(), $4, $5, 'completed', $6, NOW(), $7, $8)
         RETURNING id`,
-        [client_id, worker_id, delivery_date, gallons_delivered, empty_gallons_returned || 0, notes, paidAmountValue, effectiveTotalPrice]
+        [actualClientId, worker_id, delivery_date, gallons_delivered, empty_gallons_returned || 0, notes, paidAmountValue, effectiveTotalPrice]
       );
 
       const deliveryId = deliveryResult.rows[0].id;
@@ -1303,7 +1304,7 @@ const createQuickDelivery = async (req, res) => {
       if (empty_gallons_returned && empty_gallons_returned > 0) {
         const clientCheck = await client.query(
           'SELECT gallons_on_hand FROM client_profiles WHERE id = $1',
-          [client_id]
+          [actualClientId]
         );
         const currentGallons = clientCheck.rows[0].gallons_on_hand;
         if (empty_gallons_returned > currentGallons + gallons_delivered) {
@@ -1313,7 +1314,7 @@ const createQuickDelivery = async (req, res) => {
       
       await client.query(
         'UPDATE client_profiles SET gallons_on_hand = gallons_on_hand + $1 WHERE id = $2',
-        [netGallons, client_id]
+        [netGallons, actualClientId]
       );
 
       // Handle payment based on subscription type
@@ -1322,7 +1323,7 @@ const createQuickDelivery = async (req, res) => {
         const couponsNeeded = Math.ceil(gallons_delivered / 20);
         await client.query(
           'UPDATE client_profiles SET remaining_coupons = remaining_coupons - $1 WHERE id = $2',
-          [couponsNeeded, client_id]
+          [couponsNeeded, actualClientId]
         );
       } else if (clientData.subscription_type === 'pay_as_you_go' || clientData.subscription_type === 'cash') {
         // Cash payment - use custom amount or default ₪10 per gallon
@@ -1340,13 +1341,13 @@ const createQuickDelivery = async (req, res) => {
           // Explicit lock for debt update
           await client.query(
             'SELECT current_debt FROM client_profiles WHERE id = $1 FOR UPDATE',
-            [client_id]
+            [actualClientId]
           );
 
           // Add to client debt
           await client.query(
             'UPDATE client_profiles SET current_debt = current_debt + $1 WHERE id = $2',
-            [amount, client_id]
+            [amount, actualClientId]
           );
         }
       }
