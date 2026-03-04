@@ -2085,13 +2085,14 @@ const getAnalyticsOverview = async (req, res) => {
       // Average response time (request to delivery)
       query(`
         SELECT 
-          ROUND(AVG(EXTRACT(EPOCH FROM (d.delivery_date - dr.created_at))/3600), 2) as avg_response_hours,
-          ROUND(MIN(EXTRACT(EPOCH FROM (d.delivery_date - dr.created_at))/3600), 2) as fastest_response_hours,
-          ROUND(MAX(EXTRACT(EPOCH FROM (d.delivery_date - dr.created_at))/3600), 2) as slowest_response_hours
+          ROUND(AVG(EXTRACT(EPOCH FROM (d.actual_delivery_time - dr.created_at))/3600), 2) as avg_response_hours,
+          ROUND(MIN(EXTRACT(EPOCH FROM (d.actual_delivery_time - dr.created_at))/3600), 2) as fastest_response_hours,
+          ROUND(MAX(EXTRACT(EPOCH FROM (d.actual_delivery_time - dr.created_at))/3600), 2) as slowest_response_hours
         FROM delivery_requests dr
         JOIN deliveries d ON dr.id = d.request_id
         WHERE dr.created_at >= CURRENT_DATE - INTERVAL '30 days'
           AND d.status = 'completed'
+          AND d.actual_delivery_time IS NOT NULL
       `),
 
       // Worker utilization (active vs total)
