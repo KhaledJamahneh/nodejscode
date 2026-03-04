@@ -1896,7 +1896,7 @@ const getAnalyticsOverview = async (req, res) => {
 
     const fillingDateFilter = startDate
       ? `AND DATE(fs.completion_time) BETWEEN '${startDate}' AND '${endDate}'`
-      : `AND fs.completion_time >= CURRENT_DATE - INTERVAL '30 days'`;
+      : `AND DATE(fs.completion_time) >= CURRENT_DATE - INTERVAL '30 days'`;
 
     // Get comprehensive analytics
     const [
