@@ -1905,7 +1905,8 @@ const getAnalyticsOverview = async (req, res) => {
       subscriptionBreakdown,
       requestStats,
       avgResponseTime,
-      workerUtilization
+      deliveryWorkerUtilization,
+      onsiteWorkerUtilization
     ] = await Promise.all([
       // ... previous queries ...
       // Delivery statistics
@@ -2095,13 +2096,13 @@ const getAnalyticsOverview = async (req, res) => {
           AND d.actual_delivery_time IS NOT NULL
       `),
 
-      // Worker utilization (active vs total)
+      // Worker utilization (delivery workers)
       query(`
         SELECT 
-          COUNT(*) as total_workers,
-          COUNT(CASE WHEN u.is_active = true THEN 1 END) as active_workers,
-          COUNT(CASE WHEN ws.id IS NOT NULL THEN 1 END) as workers_on_shift,
-          COUNT(CASE WHEN d.id IS NOT NULL THEN 1 END) as workers_with_deliveries_today
+          COUNT(*) as total_delivery_workers,
+          COUNT(CASE WHEN u.is_active = true THEN 1 END) as active_delivery_workers,
+          COUNT(CASE WHEN ws.id IS NOT NULL THEN 1 END) as delivery_workers_on_shift,
+          COUNT(CASE WHEN d.id IS NOT NULL THEN 1 END) as delivery_workers_busy_today
         FROM worker_profiles wp
         JOIN users u ON wp.user_id = u.id
         LEFT JOIN work_shifts ws ON wp.shift_id = ws.id
@@ -2109,6 +2110,22 @@ const getAnalyticsOverview = async (req, res) => {
           AND DATE(d.delivery_date) = CURRENT_DATE
           AND d.status IN ('pending', 'in_progress')
         WHERE wp.worker_type = 'delivery'
+      `),
+
+      // Onsite worker utilization
+      query(`
+        SELECT 
+          COUNT(*) as total_onsite_workers,
+          COUNT(CASE WHEN u.is_active = true THEN 1 END) as active_onsite_workers,
+          COUNT(CASE WHEN ws.id IS NOT NULL THEN 1 END) as onsite_workers_on_shift,
+          COUNT(CASE WHEN fs.id IS NOT NULL THEN 1 END) as onsite_workers_busy_today
+        FROM worker_profiles wp
+        JOIN users u ON wp.user_id = u.id
+        LEFT JOIN work_shifts ws ON wp.shift_id = ws.id
+        LEFT JOIN filling_sessions fs ON wp.id = fs.worker_id 
+          AND DATE(fs.start_time) = CURRENT_DATE
+          AND fs.status IN ('in_progress', 'paused')
+        WHERE wp.worker_type = 'onsite'
       `)
     ]);
 
@@ -2117,7 +2134,8 @@ const getAnalyticsOverview = async (req, res) => {
     const delivery = deliveryStats.rows[0];
     const requests = requestStats.rows[0];
     const responseTime = avgResponseTime.rows[0];
-    const utilization = workerUtilization.rows[0];
+    const deliveryUtilization = deliveryWorkerUtilization.rows[0];
+    const onsiteUtilization = onsiteWorkerUtilization.rows[0];
     
     const totalAdvances = salaryAdvances.rows.reduce((sum, row) => sum + parseFloat(row.advance_amount || 0), 0);
     const totalOutcome = (parseFloat(expenses.total_expenses_amount) || 0) + totalAdvances;
@@ -2133,8 +2151,11 @@ const getAnalyticsOverview = async (req, res) => {
     const requestFulfillmentRate = requests.total_requests > 0
       ? ((requests.completed_requests / requests.total_requests) * 100).toFixed(1)
       : 0;
-    const workerUtilizationRate = utilization.active_workers > 0
-      ? ((utilization.workers_with_deliveries_today / utilization.active_workers) * 100).toFixed(1)
+    const deliveryWorkerUtilizationRate = deliveryUtilization.active_delivery_workers > 0
+      ? ((deliveryUtilization.delivery_workers_busy_today / deliveryUtilization.active_delivery_workers) * 100).toFixed(1)
+      : 0;
+    const onsiteWorkerUtilizationRate = onsiteUtilization.active_onsite_workers > 0
+      ? ((onsiteUtilization.onsite_workers_busy_today / onsiteUtilization.active_onsite_workers) * 100).toFixed(1)
       : 0;
     const avgGallonsPerDelivery = delivery.completed_deliveries > 0
       ? (delivery.total_gallons / delivery.completed_deliveries).toFixed(1)
@@ -2161,10 +2182,20 @@ const getAnalyticsOverview = async (req, res) => {
           avg_response_time_hours: parseFloat(responseTime.avg_response_hours) || 0,
           fastest_response_hours: parseFloat(responseTime.fastest_response_hours) || 0,
           slowest_response_hours: parseFloat(responseTime.slowest_response_hours) || 0,
-          worker_utilization_rate: parseFloat(workerUtilizationRate),
-          active_workers: utilization.active_workers,
-          workers_on_shift: utilization.workers_on_shift,
-          workers_busy_today: utilization.workers_with_deliveries_today,
+          delivery_worker_utilization_rate: parseFloat(deliveryWorkerUtilizationRate),
+          delivery_workers: {
+            total: deliveryUtilization.total_delivery_workers,
+            active: deliveryUtilization.active_delivery_workers,
+            on_shift: deliveryUtilization.delivery_workers_on_shift,
+            busy_today: deliveryUtilization.delivery_workers_busy_today
+          },
+          onsite_worker_utilization_rate: parseFloat(onsiteWorkerUtilizationRate),
+          onsite_workers: {
+            total: onsiteUtilization.total_onsite_workers,
+            active: onsiteUtilization.active_onsite_workers,
+            on_shift: onsiteUtilization.onsite_workers_on_shift,
+            busy_today: onsiteUtilization.onsite_workers_busy_today
+          },
           avg_gallons_per_delivery: parseFloat(avgGallonsPerDelivery),
           avg_revenue_per_delivery: parseFloat(avgRevenuePerDelivery),
           pending_requests: requests.pending_requests,
