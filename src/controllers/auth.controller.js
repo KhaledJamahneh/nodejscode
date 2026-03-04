@@ -344,6 +344,8 @@ const changePassword = async (req, res) => {
   try {
     const { current_password, new_password } = req.body;
     const userId = req.user.id;
+    const userRoles = req.user.roles || [];
+    const isAdmin = userRoles.some(role => ['admin', 'administrator', 'owner'].includes(role));
 
     // Get user
     const result = await query(
@@ -360,13 +362,20 @@ const changePassword = async (req, res) => {
 
     const user = result.rows[0];
 
-    // Verify current password
-    const isValidPassword = await bcrypt.compare(current_password, user.password_hash);
-
-    if (!isValidPassword) {
-      return res.status(401).json({
+    // Verify current password if provided OR if not admin
+    if (current_password) {
+      const isValidPassword = await bcrypt.compare(current_password, user.password_hash);
+      if (!isValidPassword) {
+        return res.status(401).json({
+          success: false,
+          message: 'Current password is incorrect'
+        });
+      }
+    } else if (!isAdmin) {
+      // Not admin and no current password provided
+      return res.status(400).json({
         success: false,
-        message: 'Current password is incorrect'
+        message: 'Current password is required'
       });
     }
 

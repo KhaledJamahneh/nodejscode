@@ -42,7 +42,6 @@ const passwordResetValidation = [
 ];
 
 const changePasswordValidation = [
-  body('current_password').notEmpty().withMessage('Current password is required'),
   body('new_password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters')
