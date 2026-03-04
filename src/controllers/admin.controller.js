@@ -2134,7 +2134,6 @@ const getAnalyticsOverview = async (req, res) => {
         LEFT JOIN work_shifts ws ON wp.shift_id = ws.id
         LEFT JOIN filling_sessions fs ON wp.id = fs.worker_id 
           AND DATE(fs.start_time) = CURRENT_DATE
-          AND fs.status IN ('in_progress', 'paused')
         WHERE wp.worker_type = 'onsite'
       `)
     ]);
