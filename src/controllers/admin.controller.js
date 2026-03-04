@@ -2229,10 +2229,15 @@ const getAnalyticsOverview = async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error('Get analytics error:', error);
-    res.status(getStatusCode(error)).json({
+    logger.error('Get analytics error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({
       success: false,
-      message: 'Failed to get analytics'
+      message: 'Failed to get analytics',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
