@@ -1164,10 +1164,42 @@ const assignWorkerToDelivery = async (req, res) => {
 const unassignWorkerFromDelivery = async (req, res) => {
   try {
     const deliveryId = req.params.id;
-    await query(
-      'UPDATE deliveries SET worker_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+    
+    // Check if delivery has a linked request
+    const deliveryCheck = await query(
+      'SELECT request_id FROM deliveries WHERE id = $1',
       [deliveryId]
     );
+
+    if (deliveryCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Delivery not found'
+      });
+    }
+
+    const requestId = deliveryCheck.rows[0].request_id;
+
+    await transaction(async (client) => {
+      // If delivery came from a request, restore the request
+      if (requestId) {
+        await client.query(
+          `UPDATE delivery_requests 
+           SET status = 'pending', assigned_worker_id = NULL, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = $1`,
+          [requestId]
+        );
+        // Delete the delivery
+        await client.query('DELETE FROM deliveries WHERE id = $1', [deliveryId]);
+      } else {
+        // Just unassign worker for quick deliveries
+        await client.query(
+          'UPDATE deliveries SET worker_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+          [deliveryId]
+        );
+      }
+    });
+
     res.json({ success: true, message: 'Worker unassigned from delivery' });
   } catch (error) {
     logger.error('Unassign delivery worker error:', error);
