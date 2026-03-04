@@ -1899,6 +1899,8 @@ const getAnalyticsOverview = async (req, res) => {
       : `AND DATE(fs.completion_time) >= CURRENT_DATE - INTERVAL '30 days'`;
 
     // Get comprehensive analytics
+    logger.info('Fetching analytics with filters:', { startDate, endDate, dateFilter, paymentDateFilter, expenseDateFilter, fillingDateFilter });
+    
     const [
       deliveryStats,
       revenueStats,
