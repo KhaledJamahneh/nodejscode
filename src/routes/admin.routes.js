@@ -137,7 +137,7 @@ const assignWorkerValidation = [
 ];
 
 const updateStatusValidation = [
-  param('id').isInt().withMessage('Request ID must be a number'),
+  param('id').isInt().toInt(),
   body('status').isIn(['pending', 'in_progress', 'completed', 'cancelled']).withMessage('Invalid status')
 ];
 
