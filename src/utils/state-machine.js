@@ -5,7 +5,7 @@
 const DELIVERY_TRANSITIONS = {
   'pending': ['in_progress', 'cancelled'],
   'in_progress': ['completed', 'cancelled'],
-  'completed': [], // Terminal state
+  'completed': ['in_progress'], // Allow admin to revert if needed
   'cancelled': []  // Terminal state
 };
 

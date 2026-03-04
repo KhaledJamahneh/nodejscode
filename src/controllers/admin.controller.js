@@ -1687,7 +1687,8 @@ const createUser = async (req, res) => {
       payment_method,
       is_paid,
       custom_amount,
-      current_salary
+      current_salary,
+      shift_id
     } = req.body;
 
     const roles = Array.isArray(role) ? role : [role];
@@ -1758,9 +1759,9 @@ const createUser = async (req, res) => {
         const defaultType = roles.includes('onsite_worker') ? 'onsite' : 'delivery';
         await client.query(
           `INSERT INTO worker_profiles (
-            user_id, full_name, worker_type, hire_date, current_salary
-          ) VALUES ($1, $2, $3, CURRENT_DATE, $4)`,
-          [userId, full_name || 'New Worker', worker_type || defaultType, current_salary || 0]
+            user_id, full_name, worker_type, hire_date, current_salary, shift_id
+          ) VALUES ($1, $2, $3, CURRENT_DATE, $4, $5)`,
+          [userId, full_name || 'New Worker', worker_type || defaultType, current_salary || 0, shift_id || null]
         );
       }
 
@@ -2381,7 +2382,8 @@ const updateUser = async (req, res) => {
       worker_type,
       current_salary,
       debt_advances,
-      vehicle_current_gallons
+      vehicle_current_gallons,
+      shift_id
     } = req.body;
 
     // Check if user exists
@@ -2533,6 +2535,7 @@ const updateUser = async (req, res) => {
           if (current_salary !== undefined) { profileFields.push(`current_salary = $${pIdx++}`); profileValues.push(current_salary); }
           if (debt_advances !== undefined) { profileFields.push(`debt_advances = $${pIdx++}`); profileValues.push(debt_advances); }
           if (vehicle_current_gallons !== undefined) { profileFields.push(`vehicle_current_gallons = $${pIdx++}`); profileValues.push(vehicle_current_gallons); }
+          if (shift_id !== undefined) { profileFields.push(`shift_id = $${pIdx++}`); profileValues.push(shift_id); }
           
           if (profileFields.length > 0) {
             profileValues.push(userId);
