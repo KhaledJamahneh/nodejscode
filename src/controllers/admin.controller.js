@@ -965,7 +965,7 @@ const getAllDeliveries = async (req, res) => {
         cbr.created_at as delivery_date,
         NULL as scheduled_time,
         NULL as actual_delivery_time,
-        cbr.book_size as gallons_delivered,
+        cbr.size as gallons_delivered,
         0 as empty_gallons_returned,
         cbr.status,
         CONCAT('Coupon Book - ', cbr.book_type) as notes,
