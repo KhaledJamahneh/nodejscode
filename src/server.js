@@ -156,6 +156,20 @@ const startServer = async () => {
     await connectDatabase();
     logger.info('Database connected successfully');
 
+    // Run migration for payment columns
+    try {
+      const { query } = require('./config/database');
+      await query(`
+        ALTER TABLE deliveries 
+        ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(10, 2) DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS total_price DECIMAL(10, 2) DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS paid_coupons_count INTEGER DEFAULT 0
+      `);
+      logger.info('✅ Payment columns migration completed');
+    } catch (migrationError) {
+      logger.warn('Migration warning (may already exist):', migrationError.message);
+    }
+
     // Setup domain-specific type parsers
     const { setupDomainTypeParsers } = require('./config/domain-types');
     await setupDomainTypeParsers();
