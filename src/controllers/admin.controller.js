@@ -928,7 +928,7 @@ const getAllDeliveries = async (req, res) => {
         u.phone_number as client_phone,
         w.full_name as worker_name,
         'delivery' as source_type,
-        NULL as book_size
+        NULL::integer as book_size
       FROM deliveries d
       JOIN client_profiles c ON d.client_id = c.id
       JOIN users u ON c.user_id = u.id
@@ -952,7 +952,7 @@ const getAllDeliveries = async (req, res) => {
         u.phone_number as client_phone,
         w.full_name as worker_name,
         'request' as source_type,
-        NULL as book_size
+        NULL::integer as book_size
       FROM delivery_requests dr
       JOIN client_profiles c ON dr.client_id = c.id
       JOIN users u ON c.user_id = u.id
