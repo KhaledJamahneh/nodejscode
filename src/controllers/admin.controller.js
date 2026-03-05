@@ -1764,7 +1764,40 @@ const getAllUsers = async (req, res) => {
                   UNION ALL
                   SELECT id FROM delivery_requests WHERE assigned_worker_id = wp.id AND status = 'in_progress'
                 ) as tasks
-              )
+              ),
+              'productivity', CASE 
+                WHEN wp.worker_type = 'delivery' THEN (
+                  SELECT json_build_object(
+                    'avg_per_day', COALESCE(ROUND(AVG(daily_count), 1), 0),
+                    'avg_per_week', COALESCE(ROUND(AVG(daily_count) * 7, 1), 0),
+                    'avg_per_month', COALESCE(ROUND(AVG(daily_count) * 30, 1), 0),
+                    'total_deliveries', COALESCE(SUM(daily_count), 0)
+                  )
+                  FROM (
+                    SELECT DATE(delivery_date) as day, COUNT(*) as daily_count
+                    FROM deliveries
+                    WHERE worker_id = wp.id AND status = 'completed'
+                    AND delivery_date >= CURRENT_DATE - INTERVAL '30 days'
+                    GROUP BY DATE(delivery_date)
+                  ) daily_stats
+                )
+                WHEN wp.worker_type = 'onsite' THEN (
+                  SELECT json_build_object(
+                    'avg_per_day', COALESCE(ROUND(AVG(daily_gallons), 1), 0),
+                    'avg_per_week', COALESCE(ROUND(AVG(daily_gallons) * 7, 1), 0),
+                    'avg_per_month', COALESCE(ROUND(AVG(daily_gallons) * 30, 1), 0),
+                    'total_gallons', COALESCE(SUM(daily_gallons), 0)
+                  )
+                  FROM (
+                    SELECT DATE(created_at) as day, SUM(gallons_filled) as daily_gallons
+                    FROM filling_sessions
+                    WHERE worker_id = wp.id
+                    AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+                    GROUP BY DATE(created_at)
+                  ) daily_stats
+                )
+                ELSE NULL
+              END
             )
           ELSE NULL
         END as profile
