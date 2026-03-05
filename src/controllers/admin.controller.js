@@ -964,6 +964,10 @@ const getAllDeliveries = async (req, res) => {
     if (status) {
       paramCount++;
       deliveriesQuery += ` AND d.status = $${paramCount}`;
+      // Don't include in_progress requests when filtering by specific status
+      if (status === 'completed') {
+        requestsQuery = ''; // Exclude requests from completed tab
+      }
       queryParams.push(status);
     }
 
@@ -977,18 +981,24 @@ const getAllDeliveries = async (req, res) => {
     if (date) {
       paramCount++;
       deliveriesQuery += ` AND d.delivery_date = $${paramCount}`;
-      requestsQuery += ` AND dr.request_date = $${paramCount}`;
+      if (requestsQuery) requestsQuery += ` AND dr.request_date = $${paramCount}`;
       queryParams.push(date);
     }
 
-    // Combine both queries with UNION
-    const combinedQuery = `
-      (${deliveriesQuery})
-      UNION ALL
-      (${requestsQuery})
-      ORDER BY delivery_date DESC, actual_delivery_time DESC NULLS LAST, scheduled_time ASC NULLS LAST
-      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
-    `;
+    // Combine both queries with UNION (skip requests if empty)
+    const combinedQuery = requestsQuery 
+      ? `
+        (${deliveriesQuery})
+        UNION ALL
+        (${requestsQuery})
+        ORDER BY delivery_date DESC, actual_delivery_time DESC NULLS LAST, scheduled_time ASC NULLS LAST
+        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+      `
+      : `
+        ${deliveriesQuery}
+        ORDER BY d.delivery_date DESC, d.actual_delivery_time DESC NULLS LAST, d.scheduled_time ASC NULLS LAST
+        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+      `;
 
     queryParams.push(parseInt(limit), parseInt(offset));
 
