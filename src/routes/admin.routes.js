@@ -9,6 +9,11 @@ const adminController = require('../controllers/admin.controller');
 
 const router = express.Router();
 
+// Test endpoint
+router.get('/test-route', (req, res) => {
+  res.json({ message: 'Admin routes are working' });
+});
+
 // Migration endpoint - BEFORE auth middleware
 router.get('/migrate-payment-columns', async (req, res) => {
   try {
