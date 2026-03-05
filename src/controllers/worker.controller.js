@@ -196,7 +196,7 @@ const getMainSchedule = async (req, res) => {
         AND cbr.status IN ('assigned', 'in_progress')
 
       ORDER BY is_request ASC, scheduled_time ASC NULLS LAST`,
-      [workerId, targetDate, ['pending', 'in_progress']]
+      [workerId, targetDate, ['pending', 'in_progress', 'completed']]
     );
     res.json({
       success: true,
