@@ -927,7 +927,8 @@ const getAllDeliveries = async (req, res) => {
         c.address as client_address,
         u.phone_number as client_phone,
         w.full_name as worker_name,
-        'delivery' as source_type
+        'delivery' as source_type,
+        NULL as book_size
       FROM deliveries d
       JOIN client_profiles c ON d.client_id = c.id
       JOIN users u ON c.user_id = u.id
@@ -948,6 +949,16 @@ const getAllDeliveries = async (req, res) => {
         dr.notes,
         c.full_name as client_name,
         c.address as client_address,
+        u.phone_number as client_phone,
+        w.full_name as worker_name,
+        'request' as source_type,
+        NULL as book_size
+      FROM delivery_requests dr
+      JOIN client_profiles c ON dr.client_id = c.id
+      JOIN users u ON c.user_id = u.id
+      LEFT JOIN worker_profiles w ON dr.assigned_worker_id = w.id
+      WHERE dr.status = 'in_progress'
+    `;
         u.phone_number as client_phone,
         w.full_name as worker_name,
         'request' as source_type
@@ -973,11 +984,13 @@ const getAllDeliveries = async (req, res) => {
         c.address as client_address,
         u.phone_number as client_phone,
         w.full_name as worker_name,
-        'coupon_request' as source_type
+        'coupon_request' as source_type,
+        COALESCE(cs.size, 10) as book_size
       FROM coupon_book_requests cbr
       JOIN client_profiles c ON cbr.client_id = c.id
       JOIN users u ON c.user_id = u.id
       LEFT JOIN worker_profiles w ON cbr.assigned_worker_id = w.id
+      LEFT JOIN coupon_sizes cs ON cbr.coupon_size_id = cs.id
       WHERE cbr.status IN ('assigned', 'in_progress')
     `;
 
