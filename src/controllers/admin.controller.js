@@ -1020,21 +1020,13 @@ const getAllDeliveries = async (req, res) => {
 
     // Combine all queries with UNION
     let combinedQuery;
-    if (requestsQuery && couponRequestsQuery) {
+    const queries = [deliveriesQuery];
+    if (requestsQuery) queries.push(requestsQuery);
+    if (couponRequestsQuery) queries.push(couponRequestsQuery);
+    
+    if (queries.length > 1) {
       combinedQuery = `
-        (${deliveriesQuery})
-        UNION ALL
-        (${requestsQuery})
-        UNION ALL
-        (${couponRequestsQuery})
-        ORDER BY delivery_date DESC, actual_delivery_time DESC NULLS LAST, scheduled_time ASC NULLS LAST
-        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
-      `;
-    } else if (requestsQuery) {
-      combinedQuery = `
-        (${deliveriesQuery})
-        UNION ALL
-        (${requestsQuery})
+        ${queries.map(q => `(${q})`).join('\n        UNION ALL\n        ')}
         ORDER BY delivery_date DESC, actual_delivery_time DESC NULLS LAST, scheduled_time ASC NULLS LAST
         LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
       `;
