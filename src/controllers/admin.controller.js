@@ -1060,7 +1060,7 @@ const updateDeliveryStatus = async (req, res) => {
         // This is an assigned request, update it
         const currentStatus = requestRes.rows[0].status;
         
-        if (!isValidTransition('delivery_request', currentStatus, nextStatus)) {
+        if (!isValidTransition('request', currentStatus, nextStatus)) {
           throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
         }
 
