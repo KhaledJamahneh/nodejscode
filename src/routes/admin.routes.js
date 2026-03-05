@@ -772,4 +772,7 @@ router.post('/dispensers/unassign', [
   body('dispenser_id').isInt().withMessage('Dispenser ID required')
 ], validate, adminController.unassignDispenser);
 
+// Debts
+router.get('/debts', adminController.getClientDebts);
+
 module.exports = router;
