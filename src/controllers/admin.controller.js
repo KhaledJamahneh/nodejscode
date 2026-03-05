@@ -2379,11 +2379,12 @@ const getAnalyticsOverview = async (req, res) => {
     const netIncome = (parseFloat(revenue.total_revenue) || 0) - totalOutcome;
 
     // Calculate operational efficiency metrics
-    const completionRate = delivery.total_deliveries > 0 
-      ? ((delivery.completed_deliveries / delivery.total_deliveries) * 100).toFixed(1)
+    const totalFinalizedDeliveries = parseInt(delivery.completed_deliveries) + parseInt(delivery.cancelled_deliveries);
+    const completionRate = totalFinalizedDeliveries > 0 
+      ? ((delivery.completed_deliveries / totalFinalizedDeliveries) * 100).toFixed(1)
       : 0;
-    const cancellationRate = delivery.total_deliveries > 0
-      ? ((delivery.cancelled_deliveries / delivery.total_deliveries) * 100).toFixed(1)
+    const cancellationRate = totalFinalizedDeliveries > 0
+      ? ((delivery.cancelled_deliveries / totalFinalizedDeliveries) * 100).toFixed(1)
       : 0;
     const requestFulfillmentRate = requests.total_requests > 0
       ? ((requests.completed_requests / requests.total_requests) * 100).toFixed(1)
