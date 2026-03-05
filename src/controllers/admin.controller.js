@@ -944,7 +944,7 @@ const getAllDeliveries = async (req, res) => {
         NULL as actual_delivery_time,
         dr.requested_gallons as gallons_delivered,
         0 as empty_gallons_returned,
-        dr.status,
+        dr.status::text as status,
         dr.notes,
         c.full_name as client_name,
         c.address as client_address,
