@@ -168,7 +168,7 @@ const getMainSchedule = async (req, res) => {
       JOIN users u ON c.user_id = u.id
       JOIN client_profiles cp ON c.id = cp.id
       WHERE dr.assigned_worker_id = $1
-        AND dr.status = 'in_progress'
+        AND dr.status IN ('in_progress', 'completed')
 
       UNION ALL
 
