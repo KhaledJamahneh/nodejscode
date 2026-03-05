@@ -775,8 +775,8 @@ router.post('/dispensers/unassign', [
 // Debts
 router.get('/debts', adminController.getClientDebts);
 
-// Migration endpoint
-router.post('/migrate/payment-columns', async (req, res) => {
+// Migration endpoint - GET for easier testing
+router.get('/migrate-payment-columns', async (req, res) => {
   try {
     const { query } = require('../config/database');
     await query(`
