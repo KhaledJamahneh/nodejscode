@@ -4018,6 +4018,65 @@ const cancelRequest = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/v1/admin/debts
+ * Get all client debts (unpaid coupons and cash shortfalls)
+ */
+const getClientDebts = async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT 
+        cp.id as client_id,
+        cp.full_name as client_name,
+        cp.address as client_address,
+        u.phone_number as client_phone,
+        d.id as delivery_id,
+        d.delivery_date,
+        d.gallons_delivered,
+        d.total_price,
+        COALESCE(d.paid_amount, 0) as paid_amount,
+        COALESCE(d.paid_coupons_count, 0) as paid_coupons,
+        (d.total_price - COALESCE(d.paid_amount, 0)) as cash_debt,
+        (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) as coupon_debt
+      FROM deliveries d
+      JOIN client_profiles cp ON d.client_id = cp.id
+      JOIN users u ON cp.user_id = u.id
+      WHERE d.status = 'completed'
+        AND (
+          (d.total_price - COALESCE(d.paid_amount, 0)) > 0
+          OR (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) > 0
+        )
+      ORDER BY d.delivery_date DESC
+    `);
+
+    const debts = result.rows.map(row => ({
+      clientId: row.client_id,
+      clientName: row.client_name,
+      clientAddress: row.client_address,
+      clientPhone: row.client_phone,
+      deliveryId: row.delivery_id,
+      deliveryDate: row.delivery_date,
+      gallonsDelivered: row.gallons_delivered,
+      totalPrice: parseFloat(row.total_price),
+      paidAmount: parseFloat(row.paid_amount),
+      paidCoupons: row.paid_coupons,
+      cashDebt: parseFloat(row.cash_debt),
+      couponDebt: row.coupon_debt
+    }));
+
+    res.json({
+      success: true,
+      data: debts
+    });
+  } catch (error) {
+    logger.error('Error fetching client debts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch client debts'
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   getAllRequests,
@@ -4089,63 +4148,4 @@ module.exports = {
   deleteRequest,
   cancelRequest,
   getClientDebts
-};
-
-/**
- * GET /api/v1/admin/debts
- * Get all client debts (unpaid coupons and cash shortfalls)
- */
-const getClientDebts = async (req, res) => {
-  try {
-    const result = await query(`
-      SELECT 
-        cp.id as client_id,
-        cp.full_name as client_name,
-        cp.address as client_address,
-        u.phone_number as client_phone,
-        d.id as delivery_id,
-        d.delivery_date,
-        d.gallons_delivered,
-        d.total_price,
-        COALESCE(d.paid_amount, 0) as paid_amount,
-        COALESCE(d.paid_coupons_count, 0) as paid_coupons,
-        (d.total_price - COALESCE(d.paid_amount, 0)) as cash_debt,
-        (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) as coupon_debt
-      FROM deliveries d
-      JOIN client_profiles cp ON d.client_id = cp.id
-      JOIN users u ON cp.user_id = u.id
-      WHERE d.status = 'completed'
-        AND (
-          (d.total_price - COALESCE(d.paid_amount, 0)) > 0
-          OR (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) > 0
-        )
-      ORDER BY d.delivery_date DESC
-    `);
-
-    const debts = result.rows.map(row => ({
-      clientId: row.client_id,
-      clientName: row.client_name,
-      clientAddress: row.client_address,
-      clientPhone: row.client_phone,
-      deliveryId: row.delivery_id,
-      deliveryDate: row.delivery_date,
-      gallonsDelivered: row.gallons_delivered,
-      totalPrice: parseFloat(row.total_price),
-      paidAmount: parseFloat(row.paid_amount),
-      paidCoupons: row.paid_coupons,
-      cashDebt: parseFloat(row.cash_debt),
-      couponDebt: row.coupon_debt
-    }));
-
-    res.json({
-      success: true,
-      data: debts
-    });
-  } catch (error) {
-    logger.error('Error fetching client debts:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch client debts'
-    });
-  }
 };
