@@ -234,7 +234,6 @@ const updateCouponBookRequest = async (req, res) => {
       if (nextStatus !== undefined) { fields.push(`status = $${paramIdx++}`); values.push(nextStatus); }
       if (total_price !== undefined) { fields.push(`total_price = $${paramIdx++}`); values.push(total_price); }
       if (book_type !== undefined) { fields.push(`book_type = $${paramIdx++}`); values.push(book_type); }
-      if (notes !== undefined) { fields.push(`notes = $${paramIdx++}`); values.push(notes); }
 
       if (fields.length > 0) {
         values.push(id);
