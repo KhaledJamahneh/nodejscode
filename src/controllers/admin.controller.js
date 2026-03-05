@@ -988,31 +988,6 @@ const getAllDeliveries = async (req, res) => {
       WHERE cbr.status IN ('assigned', 'in_progress')
     `;
 
-    // Query for assigned coupon requests (assigned/in_progress)
-    let couponRequestsQuery = `
-      SELECT 
-        cbr.id,
-        cbr.created_at as delivery_date,
-        NULL as scheduled_time,
-        NULL as actual_delivery_time,
-        NULL as gallons_delivered,
-        NULL as empty_gallons_returned,
-        cbr.status,
-        CONCAT('Coupon Book - ', cbr.book_type) as notes,
-        c.full_name as client_name,
-        c.address as client_address,
-        u.phone_number as client_phone,
-        w.full_name as worker_name,
-        'coupon_request' as source_type,
-        COALESCE(cs.size, 10) as book_size
-      FROM coupon_book_requests cbr
-      JOIN client_profiles c ON cbr.client_id = c.id
-      JOIN users u ON c.user_id = u.id
-      LEFT JOIN worker_profiles w ON cbr.assigned_worker_id = w.id
-      LEFT JOIN coupon_sizes cs ON cbr.coupon_size_id = cs.id
-      WHERE cbr.status IN ('assigned', 'in_progress')
-    `;
-
     const queryParams = [];
     let paramCount = 0;
 
