@@ -223,6 +223,9 @@ CREATE TABLE deliveries (
     empty_gallons_returned INTEGER DEFAULT 0,
     notes TEXT,
     photo_url TEXT,
+    paid_amount DECIMAL(10, 2) DEFAULT 0,
+    total_price DECIMAL(10, 2) DEFAULT 0,
+    paid_coupons_count INTEGER DEFAULT 0,
     is_main_list BOOLEAN DEFAULT TRUE, -- TRUE for scheduled, FALSE for request-based
     request_id INTEGER REFERENCES delivery_requests(id), -- Link to request if applicable
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
