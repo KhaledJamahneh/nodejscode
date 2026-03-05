@@ -959,15 +959,6 @@ const getAllDeliveries = async (req, res) => {
       LEFT JOIN worker_profiles w ON dr.assigned_worker_id = w.id
       WHERE dr.status = 'in_progress'
     `;
-        u.phone_number as client_phone,
-        w.full_name as worker_name,
-        'request' as source_type
-      FROM delivery_requests dr
-      JOIN client_profiles c ON dr.client_id = c.id
-      JOIN users u ON c.user_id = u.id
-      LEFT JOIN worker_profiles w ON dr.assigned_worker_id = w.id
-      WHERE dr.status = 'in_progress'
-    `;
 
     // Query for assigned coupon requests (assigned/in_progress)
     let couponRequestsQuery = `
