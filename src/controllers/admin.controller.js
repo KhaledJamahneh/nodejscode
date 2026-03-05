@@ -237,13 +237,11 @@ const updateCouponBookRequest = async (req, res) => {
 
       if (fields.length > 0) {
         values.push(id);
-        const updateRes = await client.query(
-          `UPDATE coupon_book_requests 
-           SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
+        const sql = `UPDATE coupon_book_requests 
+           SET ${fields.join(', ')}
            WHERE id = $${paramIdx}
-           RETURNING *`,
-          values
-        );
+           RETURNING *`;
+        const updateRes = await client.query(sql, values);
         return updateRes.rows[0];
       }
       
