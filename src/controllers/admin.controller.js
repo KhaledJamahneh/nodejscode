@@ -1239,6 +1239,26 @@ const deleteDelivery = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Check if this is an assigned request (in_progress) or actual delivery
+    const requestCheck = await query(
+      'SELECT id FROM delivery_requests WHERE id = $1 AND status = \'in_progress\'',
+      [id]
+    );
+
+    if (requestCheck.rows.length > 0) {
+      // This is an assigned request, cancel it
+      await query(
+        'UPDATE delivery_requests SET status = \'cancelled\', assigned_worker_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [id]
+      );
+      
+      return res.json({
+        success: true,
+        message: 'Request cancelled successfully'
+      });
+    }
+
+    // Otherwise, delete the actual delivery
     const result = await query(
       'DELETE FROM deliveries WHERE id = $1 RETURNING id',
       [id]
