@@ -742,7 +742,7 @@ const assignWorkerToRequest = async (req, res) => {
     }
 
     // Assign worker and mark as in_progress to show on schedule
-    await transaction(async (client) => {
+    const result = await transaction(async (client) => {
       await client.query(
         `UPDATE delivery_requests 
          SET assigned_worker_id = $1, status = 'in_progress', updated_at = CURRENT_TIMESTAMP 
