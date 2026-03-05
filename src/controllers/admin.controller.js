@@ -1051,11 +1051,17 @@ const getAllDeliveries = async (req, res) => {
     const result = await query(combinedQuery, queryParams);
 
     // Get total count (deliveries + assigned requests + assigned coupon requests)
+    const couponStatusCondition = status === 'completed' 
+      ? "status = 'completed'" 
+      : "status IN ('assigned', 'in_progress')";
+    
+    const requestCountCondition = status === 'completed' ? '' : "(SELECT COUNT(*) FROM delivery_requests WHERE status = 'in_progress'${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND request_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +";
+    
     let countQuery = `
       SELECT 
         (SELECT COUNT(*) FROM deliveries WHERE 1=1${status ? ' AND status = $1' : ''}${worker_id ? ` AND worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND delivery_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +
-        (SELECT COUNT(*) FROM delivery_requests WHERE status = 'in_progress'${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND request_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +
-        (SELECT COUNT(*) FROM coupon_book_requests WHERE status IN ('assigned', 'in_progress')${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND created_at::date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) as total
+        ${requestCountCondition}
+        (SELECT COUNT(*) FROM coupon_book_requests WHERE ${couponStatusCondition}${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND created_at::date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) as total
     `;
     const countParams = [];
 
