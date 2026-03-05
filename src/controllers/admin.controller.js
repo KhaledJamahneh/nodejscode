@@ -1005,14 +1005,6 @@ const getAllDeliveries = async (req, res) => {
     if (status) countParams.push(status);
     if (worker_id) countParams.push(worker_id);
     if (date) countParams.push(date);
-      countParams.push(worker_id);
-    }
-
-    if (date) {
-      countParamNum++;
-      countQuery += ` AND delivery_date = $${countParamNum}`;
-      countParams.push(date);
-    }
 
     const countResult = await query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
