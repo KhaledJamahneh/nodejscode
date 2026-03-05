@@ -21,7 +21,7 @@ const COUPON_BOOK_REQUEST_TRANSITIONS = {
   'approved': ['assigned', 'in_progress', 'cancelled'],
   'assigned': ['in_progress', 'completed', 'cancelled'],
   'in_progress': ['completed', 'cancelled'],
-  'completed': [], // Terminal state
+  'completed': ['in_progress', 'cancelled'], // Allow admin to revert if needed
   'cancelled': []  // Terminal state
 };
 

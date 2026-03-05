@@ -2390,6 +2390,7 @@ const getAnalyticsOverview = async (req, res) => {
           fastest_response_hours: parseFloat(responseTime.fastest_response_hours) || 0,
           slowest_response_hours: parseFloat(responseTime.slowest_response_hours) || 0,
           delivery_worker_utilization_rate: parseFloat(deliveryWorkerUtilizationRate),
+          worker_utilization_rate: parseFloat(deliveryWorkerUtilizationRate),
           delivery_workers: {
             total: deliveryUtilization.total_delivery_workers,
             active: deliveryUtilization.active_delivery_workers,
@@ -2403,6 +2404,11 @@ const getAnalyticsOverview = async (req, res) => {
             on_shift: onsiteUtilization.onsite_workers_on_shift,
             busy_today: onsiteUtilization.onsite_workers_busy_today
           },
+          workers_on_shift: parseInt(deliveryUtilization.delivery_workers_on_shift) + parseInt(onsiteUtilization.onsite_workers_on_shift),
+          delivery_workers_on_shift: parseInt(deliveryUtilization.delivery_workers_on_shift),
+          onsite_workers_on_shift: parseInt(onsiteUtilization.onsite_workers_on_shift),
+          total_deliveries: parseInt(delivery.completed_deliveries),
+          total_gallons_filled: parseInt(onsiteWorkerStats.rows.reduce((sum, w) => sum + (parseInt(w.total_gallons_filled) || 0), 0)),
           avg_gallons_per_delivery: parseFloat(avgGallonsPerDelivery),
           avg_revenue_per_delivery: parseFloat(avgRevenuePerDelivery),
           pending_requests: requests.pending_requests,
