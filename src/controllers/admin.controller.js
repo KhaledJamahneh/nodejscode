@@ -965,7 +965,7 @@ const getAllDeliveries = async (req, res) => {
         cbr.created_at as delivery_date,
         NULL as scheduled_time,
         NULL as actual_delivery_time,
-        cbr.size as gallons_delivered,
+        COALESCE(cs.size, 10) as gallons_delivered,
         0 as empty_gallons_returned,
         cbr.status,
         CONCAT('Coupon Book - ', cbr.book_type) as notes,
@@ -978,6 +978,7 @@ const getAllDeliveries = async (req, res) => {
       JOIN client_profiles c ON cbr.client_id = c.id
       JOIN users u ON c.user_id = u.id
       LEFT JOIN worker_profiles w ON cbr.assigned_worker_id = w.id
+      LEFT JOIN coupon_sizes cs ON cbr.coupon_size_id = cs.id
       WHERE cbr.status IN ('assigned', 'in_progress')
     `;
 
