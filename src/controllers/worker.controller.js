@@ -2,7 +2,7 @@
 // Worker schedule and delivery management
 
 const { query, transaction } = require('../config/database');
-const { t, getUnit } = require('../utils/i18n');
+const { getMessage: t, getUnit } = require('../utils/i18n');
 const logger = require('../utils/logger');
 const notificationService = require('../services/notification.service');
 const { ValidationError, NotFoundError, AuthorizationError } = require('../utils/errors');
