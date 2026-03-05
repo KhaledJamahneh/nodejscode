@@ -695,9 +695,10 @@ const completeDelivery = async (req, res) => {
                photo_url = $6,
                paid_amount = $7,
                total_price = $8,
+               paid_coupons_count = $9,
                updated_at = CURRENT_TIMESTAMP
-           WHERE id = $9 AND status != 'completed'`,
-          [gallons_delivered, empty_gallons_returned || 0, delivery_latitude, delivery_longitude, notes, photo_url, paid_amount || 0, effectiveTotalPrice, deliveryId]
+           WHERE id = $10 AND status != 'completed'`,
+          [gallons_delivered, empty_gallons_returned || 0, delivery_latitude, delivery_longitude, notes, photo_url, paid_amount || 0, effectiveTotalPrice, paid_coupons_count || 0, deliveryId]
         );
       } else {
         updateResult = await client.query(
