@@ -9,6 +9,22 @@ const adminController = require('../controllers/admin.controller');
 
 const router = express.Router();
 
+// Migration endpoint - BEFORE auth middleware
+router.get('/migrate-payment-columns', async (req, res) => {
+  try {
+    const { query } = require('../config/database');
+    await query(`
+      ALTER TABLE deliveries 
+      ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(10, 2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS total_price DECIMAL(10, 2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS paid_coupons_count INTEGER DEFAULT 0
+    `);
+    res.json({ success: true, message: 'Migration completed successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // All routes require authentication and admin/owner role
 router.use(authenticateToken);
 router.use(authorizeRoles('administrator', 'owner'));
@@ -774,21 +790,5 @@ router.post('/dispensers/unassign', [
 
 // Debts
 router.get('/debts', adminController.getClientDebts);
-
-// Migration endpoint - GET for easier testing
-router.get('/migrate-payment-columns', async (req, res) => {
-  try {
-    const { query } = require('../config/database');
-    await query(`
-      ALTER TABLE deliveries 
-      ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(10, 2) DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS total_price DECIMAL(10, 2) DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS paid_coupons_count INTEGER DEFAULT 0
-    `);
-    res.json({ success: true, message: 'Migration completed successfully' });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
 
 module.exports = router;
