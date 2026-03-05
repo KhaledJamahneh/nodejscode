@@ -1042,7 +1042,7 @@ const getAllDeliveries = async (req, res) => {
 
 /**
  * PATCH /api/v1/admin/deliveries/:id/status
- * Update status of a delivery
+ * Update status of a delivery or assigned request
  */
 const updateDeliveryStatus = async (req, res) => {
   try {
@@ -1050,7 +1050,32 @@ const updateDeliveryStatus = async (req, res) => {
     const { status: nextStatus } = req.body;
 
     const result = await transaction(async (client) => {
-      // 1. Get current status
+      // 1. Check if it's an assigned request first
+      const requestRes = await client.query(
+        'SELECT status FROM delivery_requests WHERE id = $1 AND status = \'in_progress\' FOR UPDATE',
+        [deliveryId]
+      );
+
+      if (requestRes.rows.length > 0) {
+        // This is an assigned request, update it
+        const currentStatus = requestRes.rows[0].status;
+        
+        if (!isValidTransition('delivery_request', currentStatus, nextStatus)) {
+          throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
+        }
+
+        const updateRes = await client.query(
+          `UPDATE delivery_requests 
+           SET status = $1, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = $2
+           RETURNING *`,
+          [nextStatus, deliveryId]
+        );
+
+        return { ...updateRes.rows[0], source_type: 'request' };
+      }
+
+      // 2. Otherwise, it's an actual delivery
       const currentRes = await client.query(
         'SELECT status FROM deliveries WHERE id = $1 FOR UPDATE',
         [deliveryId]
@@ -1062,12 +1087,12 @@ const updateDeliveryStatus = async (req, res) => {
 
       const currentStatus = currentRes.rows[0].status;
 
-      // 2. Validate transition
+      // 3. Validate transition
       if (!isValidTransition('delivery', currentStatus, nextStatus)) {
         throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
       }
 
-      // 3. Update status
+      // 4. Update status
       const updateRes = await client.query(
         `UPDATE deliveries 
          SET status = $1, updated_at = CURRENT_TIMESTAMP 
