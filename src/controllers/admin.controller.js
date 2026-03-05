@@ -958,6 +958,29 @@ const getAllDeliveries = async (req, res) => {
       WHERE dr.status = 'in_progress'
     `;
 
+    // Query for assigned coupon requests (assigned/in_progress)
+    let couponRequestsQuery = `
+      SELECT 
+        cbr.id,
+        cbr.created_at as delivery_date,
+        NULL as scheduled_time,
+        NULL as actual_delivery_time,
+        cbr.book_size as gallons_delivered,
+        0 as empty_gallons_returned,
+        cbr.status,
+        CONCAT('Coupon Book - ', cbr.book_type) as notes,
+        c.full_name as client_name,
+        c.address as client_address,
+        u.phone_number as client_phone,
+        w.full_name as worker_name,
+        'coupon_request' as source_type
+      FROM coupon_book_requests cbr
+      JOIN client_profiles c ON cbr.client_id = c.id
+      JOIN users u ON c.user_id = u.id
+      LEFT JOIN worker_profiles w ON cbr.assigned_worker_id = w.id
+      WHERE cbr.status IN ('assigned', 'in_progress')
+    `;
+
     const queryParams = [];
     let paramCount = 0;
 
@@ -967,6 +990,7 @@ const getAllDeliveries = async (req, res) => {
       // Don't include in_progress requests when filtering by specific status
       if (status === 'completed') {
         requestsQuery = ''; // Exclude requests from completed tab
+        couponRequestsQuery = ''; // Exclude coupon requests from completed tab
       }
       queryParams.push(status);
     }
@@ -975,6 +999,7 @@ const getAllDeliveries = async (req, res) => {
       paramCount++;
       deliveriesQuery += ` AND d.worker_id = $${paramCount}`;
       requestsQuery += ` AND dr.assigned_worker_id = $${paramCount}`;
+      couponRequestsQuery += ` AND cbr.assigned_worker_id = $${paramCount}`;
       queryParams.push(worker_id);
     }
 
@@ -982,33 +1007,48 @@ const getAllDeliveries = async (req, res) => {
       paramCount++;
       deliveriesQuery += ` AND d.delivery_date = $${paramCount}`;
       if (requestsQuery) requestsQuery += ` AND dr.request_date = $${paramCount}`;
+      if (couponRequestsQuery) couponRequestsQuery += ` AND cbr.created_at::date = $${paramCount}`;
       queryParams.push(date);
     }
 
-    // Combine both queries with UNION (skip requests if empty)
-    const combinedQuery = requestsQuery 
-      ? `
+    // Combine all queries with UNION
+    let combinedQuery;
+    if (requestsQuery && couponRequestsQuery) {
+      combinedQuery = `
+        (${deliveriesQuery})
+        UNION ALL
+        (${requestsQuery})
+        UNION ALL
+        (${couponRequestsQuery})
+        ORDER BY delivery_date DESC, actual_delivery_time DESC NULLS LAST, scheduled_time ASC NULLS LAST
+        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+      `;
+    } else if (requestsQuery) {
+      combinedQuery = `
         (${deliveriesQuery})
         UNION ALL
         (${requestsQuery})
         ORDER BY delivery_date DESC, actual_delivery_time DESC NULLS LAST, scheduled_time ASC NULLS LAST
         LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
-      `
-      : `
+      `;
+    } else {
+      combinedQuery = `
         ${deliveriesQuery}
         ORDER BY d.delivery_date DESC, d.actual_delivery_time DESC NULLS LAST, d.scheduled_time ASC NULLS LAST
         LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
       `;
+    }
 
     queryParams.push(parseInt(limit), parseInt(offset));
 
     const result = await query(combinedQuery, queryParams);
 
-    // Get total count (deliveries + assigned requests)
+    // Get total count (deliveries + assigned requests + assigned coupon requests)
     let countQuery = `
       SELECT 
         (SELECT COUNT(*) FROM deliveries WHERE 1=1${status ? ' AND status = $1' : ''}${worker_id ? ` AND worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND delivery_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +
-        (SELECT COUNT(*) FROM delivery_requests WHERE status = 'in_progress'${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND request_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) as total
+        (SELECT COUNT(*) FROM delivery_requests WHERE status = 'in_progress'${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND request_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +
+        (SELECT COUNT(*) FROM coupon_book_requests WHERE status IN ('assigned', 'in_progress')${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND created_at::date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) as total
     `;
     const countParams = [];
 
@@ -1075,7 +1115,31 @@ const updateDeliveryStatus = async (req, res) => {
         return { ...updateRes.rows[0], source_type: 'request' };
       }
 
-      // 2. Otherwise, it's an actual delivery
+      // 2. Check if it's an assigned coupon request
+      const couponRes = await client.query(
+        'SELECT status FROM coupon_book_requests WHERE id = $1 AND status IN (\'assigned\', \'in_progress\') FOR UPDATE',
+        [deliveryId]
+      );
+
+      if (couponRes.rows.length > 0) {
+        const currentStatus = couponRes.rows[0].status;
+        
+        if (!isValidTransition('coupon_request', currentStatus, nextStatus)) {
+          throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
+        }
+
+        const updateRes = await client.query(
+          `UPDATE coupon_book_requests 
+           SET status = $1, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = $2
+           RETURNING *`,
+          [nextStatus, deliveryId]
+        );
+
+        return { ...updateRes.rows[0], source_type: 'coupon_request' };
+      }
+
+      // 3. Otherwise, it's an actual delivery
       const currentRes = await client.query(
         'SELECT status FROM deliveries WHERE id = $1 FOR UPDATE',
         [deliveryId]
@@ -1087,12 +1151,12 @@ const updateDeliveryStatus = async (req, res) => {
 
       const currentStatus = currentRes.rows[0].status;
 
-      // 3. Validate transition
+      // 4. Validate transition
       if (!isValidTransition('delivery', currentStatus, nextStatus)) {
         throw new Error(`Invalid status transition from ${currentStatus} to ${nextStatus}`);
       }
 
-      // 4. Update status
+      // 5. Update status
       const updateRes = await client.query(
         `UPDATE deliveries 
          SET status = $1, updated_at = CURRENT_TIMESTAMP 
@@ -1274,7 +1338,7 @@ const deleteDelivery = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if this is an assigned request (in_progress) or actual delivery
+    // Check if this is an assigned request (in_progress)
     const requestCheck = await query(
       'SELECT id FROM delivery_requests WHERE id = $1 AND status = \'in_progress\'',
       [id]
@@ -1284,6 +1348,25 @@ const deleteDelivery = async (req, res) => {
       // This is an assigned request, cancel it
       await query(
         'UPDATE delivery_requests SET status = \'cancelled\', assigned_worker_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [id]
+      );
+      
+      return res.json({
+        success: true,
+        message: 'Request cancelled successfully'
+      });
+    }
+
+    // Check if this is an assigned coupon request
+    const couponCheck = await query(
+      'SELECT id FROM coupon_book_requests WHERE id = $1 AND status IN (\'assigned\', \'in_progress\')',
+      [id]
+    );
+
+    if (couponCheck.rows.length > 0) {
+      // This is an assigned coupon request, cancel it
+      await query(
+        'UPDATE coupon_book_requests SET status = \'cancelled\', assigned_worker_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
         [id]
       );
       
