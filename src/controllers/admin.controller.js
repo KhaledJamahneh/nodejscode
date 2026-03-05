@@ -991,10 +991,13 @@ const getAllDeliveries = async (req, res) => {
     if (status) {
       paramCount++;
       deliveriesQuery += ` AND d.status = $${paramCount}`;
-      // Don't include requests/coupon requests when filtering by completed
       if (status === 'completed') {
-        requestsQuery = ''; // Exclude requests from completed tab
-        couponRequestsQuery = ''; // Exclude coupon requests from completed tab
+        requestsQuery = ''; // Exclude in_progress requests from completed tab
+        // Include completed coupon requests
+        couponRequestsQuery = couponRequestsQuery.replace(
+          "WHERE cbr.status IN ('assigned', 'in_progress')",
+          "WHERE cbr.status = 'completed'"
+        );
       } else if (status === 'in_progress') {
         // Include both in_progress requests and assigned coupon requests in the in_progress tab
         // Requests query already filters by in_progress, no change needed
