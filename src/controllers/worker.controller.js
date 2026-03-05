@@ -679,6 +679,14 @@ const completeDelivery = async (req, res) => {
         "SELECT column_name FROM information_schema.columns WHERE table_name = 'deliveries' AND column_name = 'paid_amount'"
       );
       const hasPaymentColumns = columnCheck.rows.length > 0;
+      
+      logger.info('Completing delivery:', { 
+        deliveryId, 
+        hasPaymentColumns,
+        paid_amount,
+        total_price: effectiveTotalPrice,
+        paid_coupons_count 
+      });
 
       // Update delivery with idempotency check (enforce state transition)
       let updateResult;
