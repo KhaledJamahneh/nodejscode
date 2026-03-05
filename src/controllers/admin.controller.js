@@ -2402,9 +2402,9 @@ const getAnalyticsOverview = async (req, res) => {
             busy_today: onsiteUtilization.onsite_workers_busy_today
           },
           workers_on_shift: parseInt(deliveryUtilization.delivery_workers_on_shift) + parseInt(onsiteUtilization.onsite_workers_on_shift),
-          delivery_workers_on_shift: parseInt(deliveryUtilization.delivery_workers_on_shift),
-          onsite_workers_on_shift: parseInt(onsiteUtilization.onsite_workers_on_shift),
-          total_deliveries: parseInt(delivery.total_deliveries),
+          delivery_workers_on_shift: parseInt(deliveryUtilization.active_delivery_workers),
+          onsite_workers_on_shift: parseInt(onsiteUtilization.active_onsite_workers),
+          total_deliveries: parseInt(delivery.completed_deliveries),
           total_gallons_filled: parseInt(onsiteWorkerStats.rows.reduce((sum, w) => sum + (parseInt(w.total_gallons_filled) || 0), 0)),
           avg_gallons_per_delivery: parseFloat(avgGallonsPerDelivery),
           avg_revenue_per_delivery: parseFloat(avgRevenuePerDelivery),
