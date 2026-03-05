@@ -806,10 +806,16 @@ const assignWorkerToRequest = async (req, res) => {
       message: 'Worker assigned successfully and notifications sent'
     });
   } catch (error) {
-    logger.error('Assign worker error:', error);
+    logger.error('Assign worker error:', {
+      message: error.message,
+      stack: error.stack,
+      requestId: req.params.id,
+      workerId: req.body.worker_id
+    });
     res.status(getStatusCode(error)).json({
       success: false,
-      message: 'Failed to assign worker'
+      message: 'Failed to assign worker',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
