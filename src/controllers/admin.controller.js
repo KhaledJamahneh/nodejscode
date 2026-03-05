@@ -2401,7 +2401,7 @@ const getAnalyticsOverview = async (req, res) => {
             on_shift: onsiteUtilization.onsite_workers_on_shift,
             busy_today: onsiteUtilization.onsite_workers_busy_today
           },
-          workers_on_shift: parseInt(deliveryUtilization.delivery_workers_on_shift) + parseInt(onsiteUtilization.onsite_workers_on_shift),
+          workers_on_shift: parseInt(deliveryUtilization.active_delivery_workers) + parseInt(onsiteUtilization.active_onsite_workers),
           delivery_workers_on_shift: parseInt(deliveryUtilization.active_delivery_workers),
           onsite_workers_on_shift: parseInt(onsiteUtilization.active_onsite_workers),
           total_deliveries: parseInt(delivery.completed_deliveries),
