@@ -164,7 +164,7 @@ const unassignWorkerFromCouponBookRequest = async (req, res) => {
   try {
     const { id } = req.params;
     await query(
-      "UPDATE coupon_book_requests SET assigned_worker_id = NULL, status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+      "UPDATE coupon_book_requests SET assigned_worker_id = NULL, status = 'pending' WHERE id = $1",
       [id]
     );
     res.json({ success: true, message: 'Worker unassigned from coupon book request' });
@@ -993,15 +993,11 @@ const getAllDeliveries = async (req, res) => {
       deliveriesQuery += ` AND d.status = $${paramCount}`;
       if (status === 'completed') {
         requestsQuery = ''; // Exclude in_progress requests from completed tab
-        // Include completed coupon requests
+        // Change coupon requests to show completed instead of assigned/in_progress
         couponRequestsQuery = couponRequestsQuery.replace(
-          "WHERE cbr.status IN ('assigned', 'in_progress')",
-          "WHERE cbr.status = 'completed'"
+          "cbr.status IN ('assigned', 'in_progress')",
+          "cbr.status = 'completed'"
         );
-      } else if (status === 'in_progress') {
-        // Include both in_progress requests and assigned coupon requests in the in_progress tab
-        // Requests query already filters by in_progress, no change needed
-        // Coupon requests stay as is (assigned or in_progress)
       }
       queryParams.push(status);
     }
@@ -1009,8 +1005,8 @@ const getAllDeliveries = async (req, res) => {
     if (worker_id) {
       paramCount++;
       deliveriesQuery += ` AND d.worker_id = $${paramCount}`;
-      requestsQuery += ` AND dr.assigned_worker_id = $${paramCount}`;
-      couponRequestsQuery += ` AND cbr.assigned_worker_id = $${paramCount}`;
+      if (requestsQuery) requestsQuery += ` AND dr.assigned_worker_id = $${paramCount}`;
+      if (couponRequestsQuery) couponRequestsQuery += ` AND cbr.assigned_worker_id = $${paramCount}`;
       queryParams.push(worker_id);
     }
 
@@ -1141,7 +1137,7 @@ const updateDeliveryStatus = async (req, res) => {
 
         const updateRes = await client.query(
           `UPDATE coupon_book_requests 
-           SET status = $1, updated_at = CURRENT_TIMESTAMP 
+           SET status = $1 
            WHERE id = $2
            RETURNING *`,
           [nextStatus, deliveryId]
@@ -1377,7 +1373,7 @@ const deleteDelivery = async (req, res) => {
     if (couponCheck.rows.length > 0) {
       // This is an assigned coupon request, cancel it
       await query(
-        'UPDATE coupon_book_requests SET status = \'cancelled\', assigned_worker_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+        'UPDATE coupon_book_requests SET status = \'cancelled\', assigned_worker_id = NULL WHERE id = $1',
         [id]
       );
       

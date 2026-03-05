@@ -902,7 +902,7 @@ const deleteCouponBookRequest = async (req, res) => {
 
       // Update status to cancelled
       await client.query(
-        'UPDATE coupon_book_requests SET status = $1, updated_at = NOW() WHERE id = $2',
+        'UPDATE coupon_book_requests SET status = $1 WHERE id = $2',
         ['cancelled', requestId]
       );
     });
