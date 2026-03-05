@@ -987,7 +987,7 @@ const completeRequest = async (req, res) => {
     const workerId = workerResult.rows[0].id;
     const workerLang = workerResult.rows[0].preferred_language;
 
-    await transaction(async (client) => {
+    const result = await transaction(async (client) => {
       // 1. Lock worker profile to check and update inventory safely
       const workerLock = await client.query(
         'SELECT vehicle_current_gallons FROM worker_profiles WHERE id = $1 FOR UPDATE',
