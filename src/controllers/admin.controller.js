@@ -906,13 +906,14 @@ const updateRequest = async (req, res) => {
 
 /**
  * GET /api/v1/admin/deliveries
- * Get all deliveries with filtering
+ * Get all deliveries with filtering (includes assigned requests)
  */
 const getAllDeliveries = async (req, res) => {
   try {
     const { status, worker_id, date, limit = 50, offset = 0 } = req.query;
 
-    let queryText = `
+    // Query for actual deliveries
+    let deliveriesQuery = `
       SELECT 
         d.id,
         d.delivery_date,
@@ -925,7 +926,8 @@ const getAllDeliveries = async (req, res) => {
         c.full_name as client_name,
         c.address as client_address,
         u.phone_number as client_phone,
-        w.full_name as worker_name
+        w.full_name as worker_name,
+        'delivery' as source_type
       FROM deliveries d
       JOIN client_profiles c ON d.client_id = c.id
       JOIN users u ON c.user_id = u.id
@@ -933,48 +935,76 @@ const getAllDeliveries = async (req, res) => {
       WHERE 1=1
     `;
 
+    // Query for assigned requests (in_progress)
+    let requestsQuery = `
+      SELECT 
+        dr.id,
+        dr.requested_date as delivery_date,
+        NULL as scheduled_time,
+        NULL as actual_delivery_time,
+        dr.requested_gallons as gallons_delivered,
+        0 as empty_gallons_returned,
+        dr.status,
+        dr.notes,
+        c.full_name as client_name,
+        c.address as client_address,
+        u.phone_number as client_phone,
+        w.full_name as worker_name,
+        'request' as source_type
+      FROM delivery_requests dr
+      JOIN client_profiles c ON dr.client_id = c.id
+      JOIN users u ON c.user_id = u.id
+      LEFT JOIN worker_profiles w ON dr.assigned_worker_id = w.id
+      WHERE dr.status = 'in_progress'
+    `;
+
     const queryParams = [];
     let paramCount = 0;
 
     if (status) {
       paramCount++;
-      queryText += ` AND d.status = $${paramCount}`;
+      deliveriesQuery += ` AND d.status = $${paramCount}`;
       queryParams.push(status);
     }
 
     if (worker_id) {
       paramCount++;
-      queryText += ` AND d.worker_id = $${paramCount}`;
+      deliveriesQuery += ` AND d.worker_id = $${paramCount}`;
+      requestsQuery += ` AND dr.assigned_worker_id = $${paramCount}`;
       queryParams.push(worker_id);
     }
 
     if (date) {
       paramCount++;
-      queryText += ` AND d.delivery_date = $${paramCount}`;
+      deliveriesQuery += ` AND d.delivery_date = $${paramCount}`;
+      requestsQuery += ` AND dr.requested_date = $${paramCount}`;
       queryParams.push(date);
     }
 
-    queryText += ` ORDER BY d.delivery_date DESC, d.actual_delivery_time DESC NULLS LAST, d.scheduled_time ASC NULLS LAST
-      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    // Combine both queries with UNION
+    const combinedQuery = `
+      (${deliveriesQuery})
+      UNION ALL
+      (${requestsQuery})
+      ORDER BY delivery_date DESC, actual_delivery_time DESC NULLS LAST, scheduled_time ASC NULLS LAST
+      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+    `;
 
     queryParams.push(parseInt(limit), parseInt(offset));
 
-    const result = await query(queryText, queryParams);
+    const result = await query(combinedQuery, queryParams);
 
-    // Get total count
-    let countQuery = 'SELECT COUNT(*) FROM deliveries WHERE 1=1';
+    // Get total count (deliveries + assigned requests)
+    let countQuery = `
+      SELECT 
+        (SELECT COUNT(*) FROM deliveries WHERE 1=1${status ? ' AND status = $1' : ''}${worker_id ? ` AND worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND delivery_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +
+        (SELECT COUNT(*) FROM delivery_requests WHERE status = 'in_progress'${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND requested_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) as total
+    `;
     const countParams = [];
-    let countParamNum = 0;
 
-    if (status) {
-      countParamNum++;
-      countQuery += ` AND status = $${countParamNum}`;
-      countParams.push(status);
-    }
-
-    if (worker_id) {
-      countParamNum++;
-      countQuery += ` AND worker_id = $${countParamNum}`;
+    if (status) countParams.push(status);
+    if (worker_id) countParams.push(worker_id);
+    if (date) countParams.push(date);
       countParams.push(worker_id);
     }
 
@@ -985,7 +1015,7 @@ const getAllDeliveries = async (req, res) => {
     }
 
     const countResult = await query(countQuery, countParams);
-    const total = parseInt(countResult.rows[0].count);
+    const total = parseInt(countResult.rows[0].total);
 
     res.json({
       success: true,
