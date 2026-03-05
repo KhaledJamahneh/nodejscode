@@ -1055,16 +1055,40 @@ const getAllDeliveries = async (req, res) => {
       ? "status = 'completed'" 
       : "status IN ('assigned', 'in_progress')";
     
-    const requestCountCondition = status === 'completed' ? '' : "(SELECT COUNT(*) FROM delivery_requests WHERE status = 'in_progress'${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND request_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +";
+    let deliveriesCountWhere = '1=1';
+    let requestsCountWhere = "status = 'in_progress'";
+    let couponsCountWhere = couponStatusCondition;
+    
+    let countParamIndex = 0;
+    if (status) {
+      countParamIndex++;
+      deliveriesCountWhere += ` AND status = $${countParamIndex}`;
+    }
+    if (worker_id) {
+      countParamIndex++;
+      deliveriesCountWhere += ` AND worker_id = $${countParamIndex}`;
+      requestsCountWhere += ` AND assigned_worker_id = $${countParamIndex}`;
+      couponsCountWhere += ` AND assigned_worker_id = $${countParamIndex}`;
+    }
+    if (date) {
+      countParamIndex++;
+      deliveriesCountWhere += ` AND delivery_date = $${countParamIndex}`;
+      requestsCountWhere += ` AND request_date = $${countParamIndex}`;
+      couponsCountWhere += ` AND created_at::date = $${countParamIndex}`;
+    }
+    
+    const requestCountPart = status === 'completed' 
+      ? '' 
+      : `(SELECT COUNT(*) FROM delivery_requests WHERE ${requestsCountWhere}) +`;
     
     let countQuery = `
       SELECT 
-        (SELECT COUNT(*) FROM deliveries WHERE 1=1${status ? ' AND status = $1' : ''}${worker_id ? ` AND worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND delivery_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +
-        ${requestCountCondition}
-        (SELECT COUNT(*) FROM coupon_book_requests WHERE ${couponStatusCondition}${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND created_at::date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) as total
+        (SELECT COUNT(*) FROM deliveries WHERE ${deliveriesCountWhere}) +
+        ${requestCountPart}
+        (SELECT COUNT(*) FROM coupon_book_requests WHERE ${couponsCountWhere}) as total
     `;
+    
     const countParams = [];
-
     if (status) countParams.push(status);
     if (worker_id) countParams.push(worker_id);
     if (date) countParams.push(date);
