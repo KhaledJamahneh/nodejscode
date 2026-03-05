@@ -939,7 +939,7 @@ const getAllDeliveries = async (req, res) => {
     let requestsQuery = `
       SELECT 
         dr.id,
-        dr.requested_date as delivery_date,
+        dr.request_date as delivery_date,
         NULL as scheduled_time,
         NULL as actual_delivery_time,
         dr.requested_gallons as gallons_delivered,
@@ -977,7 +977,7 @@ const getAllDeliveries = async (req, res) => {
     if (date) {
       paramCount++;
       deliveriesQuery += ` AND d.delivery_date = $${paramCount}`;
-      requestsQuery += ` AND dr.requested_date = $${paramCount}`;
+      requestsQuery += ` AND dr.request_date = $${paramCount}`;
       queryParams.push(date);
     }
 
@@ -998,7 +998,7 @@ const getAllDeliveries = async (req, res) => {
     let countQuery = `
       SELECT 
         (SELECT COUNT(*) FROM deliveries WHERE 1=1${status ? ' AND status = $1' : ''}${worker_id ? ` AND worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND delivery_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) +
-        (SELECT COUNT(*) FROM delivery_requests WHERE status = 'in_progress'${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND requested_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) as total
+        (SELECT COUNT(*) FROM delivery_requests WHERE status = 'in_progress'${worker_id ? ` AND assigned_worker_id = $${status ? 2 : 1}` : ''}${date ? ` AND request_date = $${(status ? 1 : 0) + (worker_id ? 1 : 0) + 1}` : ''}) as total
     `;
     const countParams = [];
 
