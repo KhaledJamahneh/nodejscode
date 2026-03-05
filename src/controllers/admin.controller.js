@@ -2,7 +2,7 @@
 // Admin dashboard, management, and analytics
 
 const { query, transaction } = require('../config/database');
-const { t, localizeResponse } = require('../utils/i18n');
+const { getMessage: t, localizeResponse } = require('../utils/i18n');
 const logger = require('../utils/logger');
 const notificationService = require('../services/notification.service');
 const bcrypt = require('bcrypt');
