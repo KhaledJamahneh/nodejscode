@@ -775,4 +775,20 @@ router.post('/dispensers/unassign', [
 // Debts
 router.get('/debts', adminController.getClientDebts);
 
+// Migration endpoint
+router.post('/migrate/payment-columns', async (req, res) => {
+  try {
+    const { query } = require('../config/database');
+    await query(`
+      ALTER TABLE deliveries 
+      ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(10, 2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS total_price DECIMAL(10, 2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS paid_coupons_count INTEGER DEFAULT 0
+    `);
+    res.json({ success: true, message: 'Migration completed successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
