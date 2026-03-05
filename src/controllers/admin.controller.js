@@ -2383,9 +2383,13 @@ const getAnalyticsOverview = async (req, res) => {
     const completionRate = totalFinalizedDeliveries > 0 
       ? ((delivery.completed_deliveries / totalFinalizedDeliveries) * 100).toFixed(1)
       : 0;
-    const cancellationRate = totalFinalizedDeliveries > 0
-      ? ((delivery.cancelled_deliveries / totalFinalizedDeliveries) * 100).toFixed(1)
+    
+    // Cancellation rate based on requests (not deliveries)
+    const totalFinalizedRequests = parseInt(requests.completed_requests) + parseInt(requests.cancelled_requests);
+    const cancellationRate = totalFinalizedRequests > 0
+      ? ((requests.cancelled_requests / totalFinalizedRequests) * 100).toFixed(1)
       : 0;
+      
     const requestFulfillmentRate = requests.total_requests > 0
       ? ((requests.completed_requests / requests.total_requests) * 100).toFixed(1)
       : 0;
