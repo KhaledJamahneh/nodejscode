@@ -1020,11 +1020,11 @@ const getAllDeliveries = async (req, res) => {
 
     // Filter by list type (main = from schedules, secondary = from requests)
     if (list_type === 'main') {
-      deliveriesQuery += ` AND d.request_id IS NULL`; // Main list: deliveries without request_id
+      deliveriesQuery += ` AND d.request_id IS NULL AND d.status != 'completed'`; // Main list: deliveries without request_id, exclude completed
       requestsQuery = ''; // Exclude requests from main list
       couponRequestsQuery = ''; // Exclude coupon requests from main list
     } else if (list_type === 'secondary') {
-      deliveriesQuery += ` AND d.request_id IS NOT NULL`; // Secondary list: deliveries with request_id
+      deliveriesQuery += ` AND d.request_id IS NOT NULL AND d.status != 'completed'`; // Secondary list: deliveries with request_id, exclude completed
       // Keep requests and coupon requests for secondary list
     }
 
