@@ -989,11 +989,11 @@ const getAllDeliveries = async (req, res) => {
     let paramCount = 0;
 
     if (status) {
-      paramCount++;
       if (status === 'not_completed') {
         deliveriesQuery += ` AND d.status != 'completed'`;
         // Keep in_progress requests and assigned/in_progress coupon requests
       } else {
+        paramCount++;
         deliveriesQuery += ` AND d.status = $${paramCount}`;
         if (status === 'completed') {
           requestsQuery = ''; // Exclude in_progress requests from completed tab
