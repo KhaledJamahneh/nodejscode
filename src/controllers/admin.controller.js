@@ -4132,6 +4132,45 @@ const markDebtAsPaid = async (req, res) => {
   }
 };
 
+/**
+ * PATCH /api/v1/admin/debts/:deliveryId/mark-unpaid
+ * Mark a delivery debt as unpaid (undo payment)
+ */
+const markDebtAsUnpaid = async (req, res) => {
+  try {
+    const { deliveryId } = req.params;
+
+    const result = await query(
+      `UPDATE deliveries 
+       SET debt_paid = false, 
+           debt_paid_at = NULL, 
+           debt_payment_method = NULL
+       WHERE id = $1
+       RETURNING *`,
+      [deliveryId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Delivery not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Debt marked as unpaid',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    logger.error('Error marking debt as unpaid:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark debt as unpaid'
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   getAllRequests,
@@ -4203,5 +4242,6 @@ module.exports = {
   deleteRequest,
   cancelRequest,
   getClientDebts,
-  markDebtAsPaid
+  markDebtAsPaid,
+  markDebtAsUnpaid
 };

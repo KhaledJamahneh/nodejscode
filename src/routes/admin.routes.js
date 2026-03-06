@@ -798,5 +798,6 @@ router.get('/debts', adminController.getClientDebts);
 router.patch('/debts/:deliveryId/mark-paid', [
   body('paymentMethod').isIn(['cash', 'coupon']).withMessage('Payment method must be cash or coupon')
 ], validate, adminController.markDebtAsPaid);
+router.patch('/debts/:deliveryId/mark-unpaid', adminController.markDebtAsUnpaid);
 
 module.exports = router;
