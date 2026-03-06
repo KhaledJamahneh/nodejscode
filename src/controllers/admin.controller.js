@@ -1068,8 +1068,12 @@ const getAllDeliveries = async (req, res) => {
     
     let countParamIndex = 0;
     if (status) {
-      countParamIndex++;
-      deliveriesCountWhere += ` AND status = $${countParamIndex}`;
+      if (status === 'not_completed') {
+        deliveriesCountWhere += ` AND status != 'completed'`;
+      } else {
+        countParamIndex++;
+        deliveriesCountWhere += ` AND status = $${countParamIndex}`;
+      }
     }
     if (worker_id) {
       countParamIndex++;
@@ -1096,7 +1100,7 @@ const getAllDeliveries = async (req, res) => {
     `;
     
     const countParams = [];
-    if (status) countParams.push(status);
+    if (status && status !== 'not_completed') countParams.push(status);
     if (worker_id) countParams.push(worker_id);
     if (date) countParams.push(date);
 
