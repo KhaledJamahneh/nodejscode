@@ -1255,11 +1255,24 @@ const assignWorkerToDelivery = async (req, res) => {
     }
 
     await transaction(async (client) => {
+      // Get the client_id from the delivery being assigned
+      const deliveryResult = await client.query(
+        'SELECT client_id FROM deliveries WHERE id = $1',
+        [deliveryId]
+      );
+
+      if (deliveryResult.rows.length === 0) {
+        throw new Error('Delivery not found');
+      }
+
+      const clientId = deliveryResult.rows[0].client_id;
+
+      // Assign worker to ALL pending deliveries for this client
       await client.query(
         `UPDATE deliveries 
          SET worker_id = $1, updated_at = CURRENT_TIMESTAMP 
-         WHERE id = $2`,
-        [worker_id, deliveryId]
+         WHERE client_id = $2 AND status != 'completed'`,
+        [worker_id, clientId]
       );
 
       // Notify Worker
