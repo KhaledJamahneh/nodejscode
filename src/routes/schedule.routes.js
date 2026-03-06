@@ -63,5 +63,6 @@ router.put('/:id', scheduleIdValidation, createScheduleValidation, validate, sch
 router.delete('/:id', scheduleIdValidation, validate, scheduleController.deleteSchedule);
 router.post('/batch-delete', scheduleController.batchDeleteSchedules);
 router.post('/:id/create-delivery', scheduleIdValidation, validate, scheduleController.createDeliveryFromSchedule);
+router.delete('/:id/unassign-delivery', scheduleIdValidation, validate, scheduleController.unassignScheduleDelivery);
 
 module.exports = router;

@@ -203,3 +203,28 @@ exports.createDeliveryFromSchedule = async (req, res) => {
     res.status(500).json({ error: 'Failed to create delivery' });
   }
 };
+
+// ── Unassign delivery from schedule ───────────────────────────────────────────
+exports.unassignScheduleDelivery = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const schedule = await query('SELECT * FROM scheduled_deliveries WHERE id = $1', [id]);
+    if (schedule.rows.length === 0) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+
+    const s = schedule.rows[0];
+    await query(`
+      DELETE FROM deliveries 
+      WHERE client_id = $1 
+        AND delivery_date = CURRENT_DATE 
+        AND status = 'pending'
+    `, [s.client_id]);
+
+    res.json({ message: 'Delivery unassigned successfully' });
+  } catch (error) {
+    console.error('Error unassigning delivery:', error);
+    res.status(500).json({ error: 'Failed to unassign delivery' });
+  }
+};
