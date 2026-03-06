@@ -990,16 +990,21 @@ const getAllDeliveries = async (req, res) => {
 
     if (status) {
       paramCount++;
-      deliveriesQuery += ` AND d.status = $${paramCount}`;
-      if (status === 'completed') {
-        requestsQuery = ''; // Exclude in_progress requests from completed tab
-        // Change coupon requests to show completed instead of assigned/in_progress
-        couponRequestsQuery = couponRequestsQuery.replace(
-          "cbr.status IN ('assigned', 'in_progress')",
-          "cbr.status = 'completed'"
-        );
+      if (status === 'not_completed') {
+        deliveriesQuery += ` AND d.status != 'completed'`;
+        // Keep in_progress requests and assigned/in_progress coupon requests
+      } else {
+        deliveriesQuery += ` AND d.status = $${paramCount}`;
+        if (status === 'completed') {
+          requestsQuery = ''; // Exclude in_progress requests from completed tab
+          // Change coupon requests to show completed instead of assigned/in_progress
+          couponRequestsQuery = couponRequestsQuery.replace(
+            "cbr.status IN ('assigned', 'in_progress')",
+            "cbr.status = 'completed'"
+          );
+        }
+        queryParams.push(status);
       }
-      queryParams.push(status);
     }
 
     if (worker_id) {
@@ -1020,11 +1025,11 @@ const getAllDeliveries = async (req, res) => {
 
     // Filter by list type (main = from schedules, secondary = from requests)
     if (list_type === 'main') {
-      deliveriesQuery += ` AND d.request_id IS NULL AND d.status != 'completed'`; // Main list: deliveries without request_id, exclude completed
+      deliveriesQuery += ` AND d.request_id IS NULL`; // Main list: deliveries without request_id
       requestsQuery = ''; // Exclude requests from main list
       couponRequestsQuery = ''; // Exclude coupon requests from main list
     } else if (list_type === 'secondary') {
-      deliveriesQuery += ` AND d.request_id IS NOT NULL AND d.status != 'completed'`; // Secondary list: deliveries with request_id, exclude completed
+      deliveriesQuery += ` AND d.request_id IS NOT NULL`; // Secondary list: deliveries with request_id
       // Keep requests and coupon requests for secondary list
     }
 
