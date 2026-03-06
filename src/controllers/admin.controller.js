@@ -4024,6 +4024,19 @@ const cancelRequest = async (req, res) => {
  */
 const getClientDebts = async (req, res) => {
   try {
+    const { status = 'unpaid' } = req.query;
+    
+    let whereClause = `d.status = 'completed'`;
+    
+    if (status === 'unpaid') {
+      whereClause += ` AND (
+        (d.total_price - COALESCE(d.paid_amount, 0)) > 0
+        OR (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) > 0
+      ) AND COALESCE(d.debt_paid, false) = false`;
+    } else if (status === 'paid') {
+      whereClause += ` AND COALESCE(d.debt_paid, false) = true`;
+    }
+
     const result = await query(`
       SELECT 
         cp.id as client_id,
@@ -4037,15 +4050,14 @@ const getClientDebts = async (req, res) => {
         COALESCE(d.paid_amount, 0) as paid_amount,
         COALESCE(d.paid_coupons_count, 0) as paid_coupons,
         (d.total_price - COALESCE(d.paid_amount, 0)) as cash_debt,
-        (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) as coupon_debt
+        (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) as coupon_debt,
+        COALESCE(d.debt_paid, false) as debt_paid,
+        d.debt_paid_at,
+        d.debt_payment_method
       FROM deliveries d
       JOIN client_profiles cp ON d.client_id = cp.id
       JOIN users u ON cp.user_id = u.id
-      WHERE d.status = 'completed'
-        AND (
-          (d.total_price - COALESCE(d.paid_amount, 0)) > 0
-          OR (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) > 0
-        )
+      WHERE ${whereClause}
       ORDER BY d.delivery_date DESC
     `);
 
@@ -4061,7 +4073,10 @@ const getClientDebts = async (req, res) => {
       paidAmount: parseFloat(row.paid_amount),
       paidCoupons: row.paid_coupons,
       cashDebt: parseFloat(row.cash_debt),
-      couponDebt: row.coupon_debt
+      couponDebt: row.coupon_debt,
+      debtPaid: row.debt_paid,
+      debtPaidAt: row.debt_paid_at,
+      debtPaymentMethod: row.debt_payment_method
     }));
 
     res.json({
@@ -4073,6 +4088,46 @@ const getClientDebts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch client debts'
+    });
+  }
+};
+
+/**
+ * PATCH /api/v1/admin/debts/:deliveryId/mark-paid
+ * Mark a delivery debt as paid
+ */
+const markDebtAsPaid = async (req, res) => {
+  try {
+    const { deliveryId } = req.params;
+    const { paymentMethod } = req.body;
+
+    const result = await query(
+      `UPDATE deliveries 
+       SET debt_paid = true, 
+           debt_paid_at = NOW(), 
+           debt_payment_method = $1
+       WHERE id = $2
+       RETURNING *`,
+      [paymentMethod, deliveryId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Delivery not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Debt marked as paid',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    logger.error('Error marking debt as paid:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark debt as paid'
     });
   }
 };
@@ -4147,5 +4202,6 @@ module.exports = {
   updateCouponSize,
   deleteRequest,
   cancelRequest,
-  getClientDebts
+  getClientDebts,
+  markDebtAsPaid
 };

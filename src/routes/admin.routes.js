@@ -795,5 +795,8 @@ router.post('/dispensers/unassign', [
 
 // Debts
 router.get('/debts', adminController.getClientDebts);
+router.patch('/debts/:deliveryId/mark-paid', [
+  body('paymentMethod').isIn(['cash', 'coupon']).withMessage('Payment method must be cash or coupon')
+], validate, adminController.markDebtAsPaid);
 
 module.exports = router;
