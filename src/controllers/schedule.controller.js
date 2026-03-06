@@ -7,7 +7,19 @@ exports.getSchedules = async (req, res) => {
       SELECT 
         sd.*,
         cp.full_name as client_name,
-        wp.full_name as worker_name
+        wp.full_name as worker_name,
+        (
+          SELECT json_build_object(
+            'worker_id', d.worker_id,
+            'worker_name', wp2.full_name
+          )
+          FROM deliveries d
+          LEFT JOIN worker_profiles wp2 ON d.worker_id = wp2.id
+          WHERE d.client_id = sd.client_id 
+            AND d.delivery_date = CURRENT_DATE
+          ORDER BY d.created_at DESC
+          LIMIT 1
+        ) as today_assignment
       FROM scheduled_deliveries sd
       LEFT JOIN client_profiles cp ON cp.id = sd.client_id
       LEFT JOIN worker_profiles wp ON sd.worker_id = wp.id
