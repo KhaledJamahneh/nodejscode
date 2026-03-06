@@ -907,7 +907,7 @@ const updateRequest = async (req, res) => {
  */
 const getAllDeliveries = async (req, res) => {
   try {
-    const { status, worker_id, date, limit = 50, offset = 0 } = req.query;
+    const { status, worker_id, date, list_type, limit = 50, offset = 0 } = req.query;
 
     // Query for actual deliveries
     let deliveriesQuery = `
@@ -1016,6 +1016,16 @@ const getAllDeliveries = async (req, res) => {
       if (requestsQuery) requestsQuery += ` AND dr.request_date = $${paramCount}`;
       if (couponRequestsQuery) couponRequestsQuery += ` AND cbr.created_at::date = $${paramCount}`;
       queryParams.push(date);
+    }
+
+    // Filter by list type (main = from schedules, secondary = from requests)
+    if (list_type === 'main') {
+      deliveriesQuery += ` AND d.is_main_list = true`;
+      requestsQuery = ''; // Exclude requests from main list
+      couponRequestsQuery = ''; // Exclude coupon requests from main list
+    } else if (list_type === 'secondary') {
+      deliveriesQuery += ` AND d.is_main_list = false`;
+      // Keep requests and coupon requests for secondary list
     }
 
     // Combine all queries with UNION
