@@ -58,9 +58,7 @@ exports.createSchedule = async (req, res) => {
       start_date,
       end_date,
       is_active,
-      notes,
-      frequency_per_week,
-      frequency_per_month
+      notes
     } = req.body;
 
     // Support both single client_id and array of client_ids
@@ -69,20 +67,18 @@ exports.createSchedule = async (req, res) => {
     const result = await query(`
       INSERT INTO scheduled_deliveries (
         client_id, worker_id, gallons, schedule_type, schedule_time,
-        schedule_days, start_date, end_date, is_active, notes,
-        frequency_per_week, frequency_per_month
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        schedule_days, start_date, end_date, is_active, notes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `, [
       clientIds, worker_id, gallons, schedule_type, schedule_time,
-      schedule_days, start_date, end_date, is_active ?? true, notes,
-      frequency_per_week, frequency_per_month
+      schedule_days, start_date, end_date, is_active ?? true, notes
     ]);
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error creating schedule:', error);
-    res.status(getStatusCode(error)).json({ error: 'Failed to create schedule' });
+    res.status(500).json({ error: 'Failed to create schedule' });
   }
 };
 
@@ -99,9 +95,7 @@ exports.updateSchedule = async (req, res) => {
       start_date,
       end_date,
       is_active,
-      notes,
-      frequency_per_week,
-      frequency_per_month
+      notes
     } = req.body;
 
     const result = await query(`
@@ -115,15 +109,12 @@ exports.updateSchedule = async (req, res) => {
         end_date = COALESCE($8, end_date),
         is_active = COALESCE($9, is_active),
         notes = COALESCE($10, notes),
-        frequency_per_week = COALESCE($11, frequency_per_week),
-        frequency_per_month = COALESCE($12, frequency_per_month),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
       RETURNING *
     `, [
       id, worker_id, gallons, schedule_type, schedule_time,
-      schedule_days, start_date, end_date, is_active, notes,
-      frequency_per_week, frequency_per_month
+      schedule_days, start_date, end_date, is_active, notes
     ]);
 
     if (result.rows.length === 0) {
