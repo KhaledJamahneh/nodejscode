@@ -796,7 +796,8 @@ router.post('/dispensers/unassign', [
 // Debts
 router.get('/debts', adminController.getClientDebts);
 router.patch('/debts/:deliveryId/mark-paid', [
-  body('paymentMethod').isIn(['cash', 'coupon']).withMessage('Payment method must be cash or coupon')
+  body('paymentMethod').isIn(['cash', 'coupon']).withMessage('Payment method must be cash or coupon'),
+  body('amount').optional().isFloat({ min: 0 }).withMessage('Amount must be a positive number')
 ], validate, adminController.markDebtAsPaid);
 router.patch('/debts/:deliveryId/mark-unpaid', adminController.markDebtAsUnpaid);
 

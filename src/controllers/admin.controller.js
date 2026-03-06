@@ -4049,6 +4049,7 @@ const getClientDebts = async (req, res) => {
         d.total_price,
         COALESCE(d.paid_amount, 0) as paid_amount,
         COALESCE(d.paid_coupons_count, 0) as paid_coupons,
+        COALESCE(d.partial_payment_amount, 0) as partial_payment_amount,
         (d.total_price - COALESCE(d.paid_amount, 0)) as cash_debt,
         (d.gallons_delivered - COALESCE(d.paid_coupons_count, 0)) as coupon_debt,
         COALESCE(d.debt_paid, false) as debt_paid,
@@ -4072,6 +4073,7 @@ const getClientDebts = async (req, res) => {
       totalPrice: parseFloat(row.total_price),
       paidAmount: parseFloat(row.paid_amount),
       paidCoupons: row.paid_coupons,
+      partialPaymentAmount: parseFloat(row.partial_payment_amount),
       cashDebt: parseFloat(row.cash_debt),
       couponDebt: row.coupon_debt,
       debtPaid: row.debt_paid,
@@ -4094,34 +4096,58 @@ const getClientDebts = async (req, res) => {
 
 /**
  * PATCH /api/v1/admin/debts/:deliveryId/mark-paid
- * Mark a delivery debt as paid
+ * Mark a delivery debt as paid (full or partial)
  */
 const markDebtAsPaid = async (req, res) => {
   try {
     const { deliveryId } = req.params;
-    const { paymentMethod } = req.body;
+    const { paymentMethod, amount } = req.body;
 
-    const result = await query(
-      `UPDATE deliveries 
-       SET debt_paid = true, 
-           debt_paid_at = NOW(), 
-           debt_payment_method = $1
-       WHERE id = $2
-       RETURNING *`,
-      [paymentMethod, deliveryId]
+    // Get current debt info
+    const debtInfo = await query(
+      `SELECT total_price, COALESCE(paid_amount, 0) as paid_amount, 
+              COALESCE(partial_payment_amount, 0) as partial_payment_amount
+       FROM deliveries WHERE id = $1`,
+      [deliveryId]
     );
 
-    if (result.rows.length === 0) {
+    if (debtInfo.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Delivery not found'
       });
     }
 
+    const totalPrice = parseFloat(debtInfo.rows[0].total_price);
+    const currentPaid = parseFloat(debtInfo.rows[0].paid_amount);
+    const currentPartial = parseFloat(debtInfo.rows[0].partial_payment_amount);
+    const remainingDebt = totalPrice - currentPaid;
+    const paymentAmount = amount ? parseFloat(amount) : remainingDebt;
+    const newPartialTotal = currentPartial + paymentAmount;
+
+    // Check if fully paid
+    const isFullyPaid = newPartialTotal >= remainingDebt;
+
+    const result = await query(
+      `UPDATE deliveries 
+       SET partial_payment_amount = $1,
+           debt_paid = $2, 
+           debt_paid_at = CASE WHEN $2 THEN NOW() ELSE NULL END, 
+           debt_payment_method = CASE WHEN $2 THEN $3 ELSE NULL END
+       WHERE id = $4
+       RETURNING *`,
+      [newPartialTotal, isFullyPaid, paymentMethod, deliveryId]
+    );
+
     res.json({
       success: true,
-      message: 'Debt marked as paid',
-      data: result.rows[0]
+      message: isFullyPaid ? 'Debt fully paid' : 'Partial payment recorded',
+      data: {
+        ...result.rows[0],
+        isFullyPaid,
+        paidAmount: newPartialTotal,
+        remainingDebt: Math.max(0, remainingDebt - paymentAmount)
+      }
     });
   } catch (error) {
     logger.error('Error marking debt as paid:', error);
@@ -4144,7 +4170,8 @@ const markDebtAsUnpaid = async (req, res) => {
       `UPDATE deliveries 
        SET debt_paid = false, 
            debt_paid_at = NULL, 
-           debt_payment_method = NULL
+           debt_payment_method = NULL,
+           partial_payment_amount = 0
        WHERE id = $1
        RETURNING *`,
       [deliveryId]
