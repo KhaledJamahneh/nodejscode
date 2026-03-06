@@ -165,3 +165,29 @@ exports.batchDeleteSchedules = async (req, res) => {
     res.status(getStatusCode(error)).json({ error: 'Failed to delete schedules' });
   }
 };
+
+// ── Create delivery from schedule ─────────────────────────────────────────────
+exports.createDeliveryFromSchedule = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { worker_id } = req.body;
+
+    const schedule = await query('SELECT * FROM scheduled_deliveries WHERE id = $1', [id]);
+    if (schedule.rows.length === 0) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+
+    const s = schedule.rows[0];
+    const result = await query(`
+      INSERT INTO deliveries (
+        client_id, worker_id, gallons, status, scheduled_date, notes
+      ) VALUES ($1, $2, $3, 'pending', CURRENT_DATE, $4)
+      RETURNING *
+    `, [s.client_id, worker_id, s.gallons, s.notes]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating delivery from schedule:', error);
+    res.status(500).json({ error: 'Failed to create delivery' });
+  }
+};
