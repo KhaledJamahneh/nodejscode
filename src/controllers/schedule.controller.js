@@ -192,8 +192,8 @@ exports.createDeliveryFromSchedule = async (req, res) => {
     const s = schedule.rows[0];
     const result = await query(`
       INSERT INTO deliveries (
-        client_id, worker_id, gallons_delivered, status, delivery_date, notes
-      ) VALUES ($1, $2, $3, 'pending', CURRENT_DATE, $4)
+        client_id, worker_id, gallons_delivered, status, delivery_date, notes, is_main_list
+      ) VALUES ($1, $2, $3, 'pending', CURRENT_DATE, $4, true)
       RETURNING *
     `, [s.client_id, worker_id, s.gallons, s.notes]);
 
