@@ -180,7 +180,7 @@ exports.createDeliveryFromSchedule = async (req, res) => {
     const s = schedule.rows[0];
     const result = await query(`
       INSERT INTO deliveries (
-        client_id, worker_id, gallons, status, scheduled_date, notes
+        client_id, worker_id, gallons_delivered, status, delivery_date, notes
       ) VALUES ($1, $2, $3, 'pending', CURRENT_DATE, $4)
       RETURNING *
     `, [s.client_id, worker_id, s.gallons, s.notes]);
