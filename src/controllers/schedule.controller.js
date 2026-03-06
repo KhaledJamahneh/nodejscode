@@ -64,18 +64,23 @@ exports.createSchedule = async (req, res) => {
     // Support both single client_id and array of client_ids
     const clientIds = Array.isArray(client_id) ? client_id : [client_id];
 
-    const result = await query(`
-      INSERT INTO scheduled_deliveries (
-        client_id, worker_id, gallons, schedule_type, schedule_time,
-        schedule_days, start_date, end_date, is_active, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING *
-    `, [
-      clientIds, worker_id, gallons, schedule_type, schedule_time,
-      schedule_days, start_date, end_date, is_active ?? true, notes
-    ]);
+    // Create a schedule for each client
+    const results = [];
+    for (const cid of clientIds) {
+      const result = await query(`
+        INSERT INTO scheduled_deliveries (
+          client_id, worker_id, gallons, schedule_type, schedule_time,
+          schedule_days, start_date, end_date, is_active, notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING *
+      `, [
+        cid, worker_id, gallons, schedule_type, schedule_time,
+        schedule_days, start_date, end_date, is_active ?? true, notes
+      ]);
+      results.push(result.rows[0]);
+    }
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(results.length === 1 ? results[0] : results);
   } catch (error) {
     console.error('Error creating schedule:', error);
     res.status(500).json({ error: 'Failed to create schedule' });
