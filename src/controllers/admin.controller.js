@@ -1539,6 +1539,12 @@ const createQuickCouponDelivery = async (req, res) => {
            VALUES ($1, $2, 'cash', 'completed', NOW(), $3)`,
           [clientData.user_id, effectiveTotalPrice, `Coupon book delivery - ${coupons_delivered} coupons`]
         );
+      } else {
+        // Add to client debt if not paid
+        await client.query(
+          'UPDATE client_profiles SET current_debt = current_debt + $1 WHERE id = $2',
+          [effectiveTotalPrice, actualClientId]
+        );
       }
 
       return { deliveryId: deliveryResult.rows[0].id };
