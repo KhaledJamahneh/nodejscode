@@ -1464,6 +1464,85 @@ const deleteDelivery = async (req, res) => {
 };
 
 /**
+ * POST /api/v1/admin/deliveries/quick-coupon
+ * Quick delivery of coupon books to client
+ */
+const createQuickCouponDelivery = async (req, res) => {
+  try {
+    const { client_id, worker_id, coupons_delivered, delivery_date, notes, is_paid, custom_amount } = req.body;
+    
+    logger.info('Quick coupon delivery request:', { client_id, worker_id, coupons_delivered, is_paid, custom_amount });
+
+    const result = await transaction(async (client) => {
+      const clientProfile = await client.query(
+        `SELECT cp.id as profile_id, cp.user_id, cp.subscription_type, u.is_active 
+         FROM client_profiles cp
+         JOIN users u ON cp.user_id = u.id
+         WHERE cp.id = $1 OR cp.user_id = $1 FOR UPDATE`,
+        [client_id]
+      );
+
+      if (clientProfile.rows.length === 0) {
+        throw new Error('Client not found');
+      }
+
+      const clientData = clientProfile.rows[0];
+      const actualClientId = clientData.profile_id;
+
+      if (!clientData.is_active) {
+        throw new Error('Client account is inactive');
+      }
+
+      if (clientData.subscription_type !== 'coupon_book') {
+        throw new Error('Cannot deliver coupons to non-coupon_book client');
+      }
+
+      const effectiveTotalPrice = custom_amount !== undefined ? custom_amount : (coupons_delivered * 10);
+      const paidAmountValue = is_paid === true ? effectiveTotalPrice : 0;
+
+      // Create coupon delivery record
+      const deliveryResult = await client.query(
+        `INSERT INTO deliveries (
+          client_id, worker_id, delivery_date, actual_delivery_time, 
+          gallons_delivered, status, notes, created_at, paid_amount, total_price, paid_coupons_count
+        ) VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE), NOW(), 0, 'completed', $4, NOW(), $5, $6, $7)
+        RETURNING id`,
+        [actualClientId, worker_id, delivery_date, notes || `Coupon book delivery: ${coupons_delivered} coupons`, paidAmountValue, effectiveTotalPrice, -coupons_delivered]
+      );
+
+      // Add coupons to client account
+      await client.query(
+        'UPDATE client_profiles SET remaining_coupons = remaining_coupons + $1 WHERE id = $2',
+        [coupons_delivered, actualClientId]
+      );
+
+      // Handle payment
+      if (is_paid === true) {
+        await client.query(
+          `INSERT INTO payments (payer_id, amount, payment_method, payment_status, payment_date, description)
+           VALUES ($1, $2, 'cash', 'completed', NOW(), $3)`,
+          [clientData.user_id, effectiveTotalPrice, `Coupon book delivery - ${coupons_delivered} coupons`]
+        );
+      }
+
+      return { deliveryId: deliveryResult.rows[0].id };
+    });
+
+    res.json({
+      success: true,
+      message: 'Coupon delivery created successfully',
+      data: result
+    });
+  } catch (error) {
+    logger.error('Error creating quick coupon delivery:', error);
+    res.status(getStatusCode(error)).json({
+      success: false,
+      message: error.message || 'Failed to create coupon delivery'
+    });
+  }
+};
+
+/**
  * POST /api/v1/admin/deliveries/quick
  * Create a quick delivery without a request
  */
@@ -4265,6 +4344,7 @@ module.exports = {
   unassignWorkerFromDelivery,
   deleteDelivery,
   createQuickDelivery,
+  createQuickCouponDelivery,
   updateDelivery,
   getAllUsers,
   getUserById,
