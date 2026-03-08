@@ -134,6 +134,7 @@ const getMainSchedule = async (req, res) => {
         u.phone_number as client_phone,
         cp.remaining_coupons,
         cp.subscription_type::text,
+        d.paid_coupons_count,
         false as is_request,
         'delivery' as task_type
       FROM deliveries d
@@ -161,6 +162,7 @@ const getMainSchedule = async (req, res) => {
         u.phone_number as client_phone,
         cp.remaining_coupons,
         cp.subscription_type::text,
+        NULL::integer as paid_coupons_count,
         true as is_request,
         'delivery_request' as task_type
       FROM delivery_requests dr
@@ -186,6 +188,7 @@ const getMainSchedule = async (req, res) => {
         u.phone_number as client_phone,
         cp.remaining_coupons,
         cp.subscription_type::text,
+        NULL::integer as paid_coupons_count,
         true as is_request,
         'coupon_request' as task_type
       FROM coupon_book_requests cbr
