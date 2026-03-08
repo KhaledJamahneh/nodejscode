@@ -27,16 +27,15 @@ const getRevenueData = async (req, res) => {
       [startDate, endDate]
     );
 
-    // Coupon revenue (coupons_collected)
+    // Coupon revenue (paid_coupons_count)
     const couponQuery = await query(
       `SELECT 
-        COALESCE(SUM(coupons_collected), 0) as total_coupons,
-        COALESCE(SUM(coupons_collected * cs.price), 0) as coupon_revenue
-      FROM deliveries d
-      LEFT JOIN coupon_sizes cs ON d.coupon_size_id = cs.id
-      WHERE d.delivery_date BETWEEN $1 AND $2
-        AND d.status = 'completed'
-        AND d.coupons_collected > 0`,
+        COALESCE(SUM(paid_coupons_count), 0) as total_coupons,
+        COALESCE(SUM(paid_amount), 0) as coupon_revenue
+      FROM deliveries
+      WHERE delivery_date BETWEEN $1 AND $2
+        AND status = 'completed'
+        AND paid_coupons_count > 0`,
       [startDate, endDate]
     );
 
