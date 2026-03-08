@@ -1548,6 +1548,12 @@ const createQuickDelivery = async (req, res) => {
       if (clientData.subscription_type === 'coupon_book') {
         // Deduct coupons
         const couponsNeeded = Math.ceil(gallons_delivered / 20);
+        
+        // Check if client has enough coupons
+        if (clientData.remaining_coupons < couponsNeeded) {
+          throw new Error(`Insufficient coupons. Client has ${clientData.remaining_coupons} coupons but needs ${couponsNeeded} for ${gallons_delivered} gallons.`);
+        }
+        
         await client.query(
           'UPDATE client_profiles SET remaining_coupons = remaining_coupons - $1 WHERE id = $2',
           [couponsNeeded, actualClientId]
