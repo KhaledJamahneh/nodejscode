@@ -926,7 +926,8 @@ const getAllDeliveries = async (req, res) => {
         w.full_name as worker_name,
         'delivery' as source_type,
         NULL::integer as book_size,
-        d.client_id
+        d.client_id,
+        d.paid_coupons_count
       FROM deliveries d
       JOIN client_profiles c ON d.client_id = c.id
       JOIN users u ON c.user_id = u.id
