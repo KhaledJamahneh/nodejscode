@@ -1473,7 +1473,7 @@ const createQuickDelivery = async (req, res) => {
     
     logger.info('Quick delivery request:', { client_id, worker_id, gallons_delivered, empty_gallons_returned, is_paid, custom_amount });
 
-    await transaction(async (client) => {
+    const result = await transaction(async (client) => {
       // Get client profile - accept both user_id and profile_id
       const clientProfile = await client.query(
         `SELECT cp.id as profile_id, cp.user_id, cp.subscription_type, cp.remaining_coupons, cp.current_debt, u.preferred_language, u.is_active 
