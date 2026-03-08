@@ -1469,9 +1469,9 @@ const deleteDelivery = async (req, res) => {
  */
 const createQuickDelivery = async (req, res) => {
   try {
-    const { client_id, worker_id, gallons_delivered, empty_gallons_returned, delivery_date, notes, is_paid, custom_amount } = req.body;
+    const { client_id, worker_id, gallons_delivered, empty_gallons_returned, delivery_date, notes, is_paid, custom_amount, paid_coupons_count } = req.body;
     
-    logger.info('Quick delivery request:', { client_id, worker_id, gallons_delivered, empty_gallons_returned, is_paid, custom_amount });
+    logger.info('Quick delivery request:', { client_id, worker_id, gallons_delivered, empty_gallons_returned, is_paid, custom_amount, paid_coupons_count });
 
     const result = await transaction(async (client) => {
       // Get client profile - accept both user_id and profile_id
@@ -1512,14 +1512,21 @@ const createQuickDelivery = async (req, res) => {
       const paidAmountValue = is_paid === true ? effectiveTotalPrice : 0;
 
       // Create delivery
+      // Calculate paid_coupons_count for coupon_book clients
+      const paidCouponsValue = clientData.subscription_type === 'coupon_book'
+        ? (paid_coupons_count !== undefined && paid_coupons_count !== null 
+            ? parseInt(paid_coupons_count)
+            : Math.ceil(gallons_delivered / 20))
+        : 0;
+
       const deliveryResult = await client.query(
         `INSERT INTO deliveries (
           client_id, worker_id, delivery_date, actual_delivery_time, 
           gallons_delivered, empty_gallons_returned, 
-          status, notes, created_at, paid_amount, total_price
-        ) VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE), NOW(), $4, $5, 'completed', $6, NOW(), $7, $8)
+          status, notes, created_at, paid_amount, total_price, paid_coupons_count
+        ) VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE), NOW(), $4, $5, 'completed', $6, NOW(), $7, $8, $9)
         RETURNING id`,
-        [actualClientId, worker_id, delivery_date, gallons_delivered, empty_gallons_returned || 0, notes, paidAmountValue, effectiveTotalPrice]
+        [actualClientId, worker_id, delivery_date, gallons_delivered, empty_gallons_returned || 0, notes, paidAmountValue, effectiveTotalPrice, paidCouponsValue]
       );
 
       const deliveryId = deliveryResult.rows[0].id;
@@ -1546,8 +1553,10 @@ const createQuickDelivery = async (req, res) => {
 
       // Handle payment based on subscription type
       if (clientData.subscription_type === 'coupon_book') {
-        // Deduct coupons
-        const couponsNeeded = Math.ceil(gallons_delivered / 20);
+        // Deduct coupons - use manual count if provided, otherwise auto-calculate
+        const couponsNeeded = paid_coupons_count !== undefined && paid_coupons_count !== null 
+          ? parseInt(paid_coupons_count)
+          : Math.ceil(gallons_delivered / 20);
         
         // Check if client has enough coupons
         if (clientData.remaining_coupons < couponsNeeded) {
