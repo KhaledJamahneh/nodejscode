@@ -1493,8 +1493,12 @@ const createQuickCouponDelivery = async (req, res) => {
         throw new Error('Client account is inactive');
       }
 
+      // Auto-convert to coupon_book if not already
       if (clientData.subscription_type !== 'coupon_book') {
-        throw new Error('Cannot deliver coupons to non-coupon_book client');
+        await client.query(
+          'UPDATE client_profiles SET subscription_type = $1 WHERE id = $2',
+          ['coupon_book', actualClientId]
+        );
       }
 
       const effectiveTotalPrice = custom_amount !== undefined ? custom_amount : (coupons_delivered * 10);
