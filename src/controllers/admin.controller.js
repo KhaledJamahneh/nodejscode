@@ -1493,6 +1493,18 @@ const createQuickCouponDelivery = async (req, res) => {
         throw new Error('Client account is inactive');
       }
 
+      // Get worker profile ID
+      const workerProfile = await client.query(
+        'SELECT id FROM worker_profiles WHERE user_id = $1',
+        [worker_id]
+      );
+
+      if (workerProfile.rows.length === 0) {
+        throw new Error('Worker not found');
+      }
+
+      const actualWorkerId = workerProfile.rows[0].id;
+
       // Auto-convert to coupon_book if not already
       if (clientData.subscription_type !== 'coupon_book') {
         await client.query(
@@ -1511,7 +1523,7 @@ const createQuickCouponDelivery = async (req, res) => {
           gallons_delivered, status, notes, created_at, paid_amount, total_price, paid_coupons_count
         ) VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE), NOW(), 0, 'completed', $4, NOW(), $5, $6, $7)
         RETURNING id`,
-        [actualClientId, worker_id, delivery_date, notes || `Coupon book delivery: ${coupons_delivered} coupons`, paidAmountValue, effectiveTotalPrice, -coupons_delivered]
+        [actualClientId, actualWorkerId, delivery_date, notes || `Coupon book delivery: ${coupons_delivered} coupons`, paidAmountValue, effectiveTotalPrice, -coupons_delivered]
       );
 
       // Add coupons to client account
