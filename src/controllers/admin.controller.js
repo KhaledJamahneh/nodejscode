@@ -1551,6 +1551,13 @@ const createQuickDelivery = async (req, res) => {
         [netGallons, actualClientId]
       );
 
+      // Validate: if paid_coupons_count is provided, client must be coupon_book
+      if (paid_coupons_count !== undefined && paid_coupons_count !== null && parseInt(paid_coupons_count) > 0) {
+        if (clientData.subscription_type !== 'coupon_book') {
+          throw new Error(`Cannot use coupons for ${clientData.subscription_type} client. This client uses cash payment.`);
+        }
+      }
+
       // Handle payment based on subscription type
       if (clientData.subscription_type === 'coupon_book') {
         // Deduct coupons - use manual count if provided, otherwise auto-calculate
