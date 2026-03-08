@@ -27,17 +27,15 @@ const getRevenueData = async (req, res) => {
       [startDate, endDate]
     );
 
-    // Coupon revenue (using paid_amount for coupon_book deliveries)
+    // Coupon count (number of coupons collected, not cash value)
     const couponQuery = await query(
       `SELECT 
-        COALESCE(SUM(d.paid_coupons_count), 0) as total_coupons,
-        COALESCE(SUM(d.paid_amount), 0) as coupon_revenue
+        COALESCE(SUM(d.paid_coupons_count), 0) as total_coupons
       FROM deliveries d
       JOIN client_profiles cp ON d.client_id = cp.id
       WHERE d.delivery_date BETWEEN $1 AND $2
         AND d.status = 'completed'
-        AND cp.subscription_type = 'coupon_book'
-        AND d.paid_coupons_count > 0`,
+        AND cp.subscription_type = 'coupon_book'`,
       [startDate, endDate]
     );
 
@@ -53,8 +51,8 @@ const getRevenueData = async (req, res) => {
 
     const paymentRevenue = parseFloat(paymentQuery.rows[0].payment_revenue) || 0;
     const cashRevenue = parseFloat(cashQuery.rows[0].cash_revenue) || 0;
-    const couponRevenue = parseFloat(couponQuery.rows[0].coupon_revenue) || 0;
-    const totalRevenue = paymentRevenue + couponRevenue;
+    const totalCoupons = parseInt(couponQuery.rows[0].total_coupons) || 0;
+    const totalRevenue = paymentRevenue; // Only cash payments count as revenue
 
     // Daily breakdown
     const dailyQuery = await query(
@@ -92,11 +90,11 @@ const getRevenueData = async (req, res) => {
       deliveryRevenue: 0,
       paymentRevenue,
       cashRevenue,
-      couponRevenue,
+      couponRevenue: 0, // Coupons don't generate cash revenue
       totalDeliveries: parseInt(deliveryQuery.rows[0].total_deliveries),
       totalPayments: parseInt(paymentQuery.rows[0].total_payments),
       cashTransactions: parseInt(cashQuery.rows[0].cash_transactions),
-      totalCoupons: parseInt(couponQuery.rows[0].total_coupons),
+      totalCoupons: totalCoupons,
       avgOrderValue: paymentQuery.rows[0].total_payments > 0 
         ? totalRevenue / paymentQuery.rows[0].total_payments 
         : 0,
@@ -115,7 +113,7 @@ const getRevenueData = async (req, res) => {
         delivery: 0,
         payment: paymentRevenue,
         cash: cashRevenue,
-        coupon: couponRevenue,
+        coupon: 0, // Coupons tracked separately, not as revenue
       },
     });
   } catch (error) {
