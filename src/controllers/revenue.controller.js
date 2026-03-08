@@ -31,9 +31,10 @@ const getRevenueData = async (req, res) => {
     const couponQuery = await query(
       `SELECT 
         COALESCE(SUM(d.paid_coupons_count), 0) as total_coupons,
-        COALESCE(SUM(d.gallons_delivered * 0.50), 0) as coupon_revenue
+        COALESCE(SUM(d.paid_coupons_count * cs.price_per_page * cs.size), 0) as coupon_revenue
       FROM deliveries d
       JOIN client_profiles cp ON d.client_id = cp.id
+      LEFT JOIN coupon_sizes cs ON cs.is_active = true
       WHERE d.delivery_date BETWEEN $1 AND $2
         AND d.status = 'completed'
         AND cp.subscription_type = 'coupon_book'`,
