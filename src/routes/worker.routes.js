@@ -7,6 +7,7 @@ const { body, query, param } = require('express-validator');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth.middleware');
 const { validate } = require('../middleware/validation.middleware');
 const workerController = require('../controllers/worker.controller');
+const adminController = require('../controllers/admin.controller');
 const clientController = require('../controllers/client.controller');
 
 const router = express.Router();
@@ -328,6 +329,18 @@ const quickDeliveryValidation = [
 ];
 
 router.post('/deliveries/quick', workerAuth, quickDeliveryValidation, validate, workerController.createQuickDelivery);
+
+/**
+ * POST /api/v1/workers/deliveries/quick-coupon
+ * Quick delivery of coupon books
+ */
+const quickCouponDeliveryValidation = [
+  body('client_id').isInt().withMessage('Client ID is required'),
+  body('worker_id').isInt().withMessage('Worker ID is required'),
+  body('coupons_delivered').isInt({ min: 1, max: 1000 }).withMessage('Coupons delivered must be between 1 and 1000'),
+];
+
+router.post('/deliveries/quick-coupon', workerAuth, quickCouponDeliveryValidation, validate, adminController.createQuickCouponDelivery);
 
 router.put(
   '/expenses/:id',
