@@ -952,7 +952,8 @@ const getAllDeliveries = async (req, res) => {
         w.full_name as worker_name,
         'request' as source_type,
         NULL::integer as book_size,
-        dr.client_id
+        dr.client_id,
+        NULL::integer as paid_coupons_count
       FROM delivery_requests dr
       JOIN client_profiles c ON dr.client_id = c.id
       JOIN users u ON c.user_id = u.id
@@ -977,7 +978,8 @@ const getAllDeliveries = async (req, res) => {
         w.full_name as worker_name,
         'coupon_request' as source_type,
         COALESCE(cs.size, 10) as book_size,
-        cbr.client_id
+        cbr.client_id,
+        NULL::integer as paid_coupons_count
       FROM coupon_book_requests cbr
       JOIN client_profiles c ON cbr.client_id = c.id
       JOIN users u ON c.user_id = u.id
