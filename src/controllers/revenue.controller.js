@@ -27,11 +27,12 @@ const getRevenueData = async (req, res) => {
       [startDate, endDate]
     );
 
-    // Coupon revenue (paid_coupons_count)
+    // Coupon revenue (paid_coupons_count * average coupon value)
+    // Each coupon page is worth ~₪0.50, and each page = 20 gallons worth ₪10 = ₪10 per coupon
     const couponQuery = await query(
       `SELECT 
         COALESCE(SUM(paid_coupons_count), 0) as total_coupons,
-        COALESCE(SUM(paid_amount), 0) as coupon_revenue
+        COALESCE(SUM(paid_coupons_count * 10), 0) as coupon_revenue
       FROM deliveries
       WHERE delivery_date BETWEEN $1 AND $2
         AND status = 'completed'
