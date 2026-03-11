@@ -284,6 +284,17 @@ router.post(
 );
 
 /**
+ * POST /api/v1/admin/requests/:id/accept
+ * Accept a delivery request (admin approval before assignment)
+ */
+router.post(
+  '/requests/:id/accept',
+  [param('id').isInt().withMessage('Valid ID required')],
+  validate,
+  adminController.acceptRequest
+);
+
+/**
  * POST /api/v1/admin/requests/:id/assign
  * Assign a worker to a delivery request
  */

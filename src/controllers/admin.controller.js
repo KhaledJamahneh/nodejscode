@@ -690,6 +690,60 @@ const getAllRequests = async (req, res) => {
 };
 
 /**
+ * POST /api/v1/admin/requests/:id/accept
+ * Accept a delivery request (admin approves it before assignment)
+ */
+const acceptRequest = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+
+    const requestCheck = await query(
+      'SELECT dr.id, dr.status, cp.user_id as client_user_id FROM delivery_requests dr JOIN client_profiles cp ON dr.client_id = cp.id WHERE dr.id = $1',
+      [requestId]
+    );
+
+    if (requestCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Delivery request not found'
+      });
+    }
+
+    if (requestCheck.rows[0].status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Can only accept pending requests'
+      });
+    }
+
+    await query(
+      `UPDATE delivery_requests SET status = 'accepted', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [requestId]
+    );
+
+    // Notify client
+    const clientUserId = requestCheck.rows[0].client_user_id;
+    await query(
+      `INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)`,
+      [clientUserId, 'Request Accepted', 'Your water delivery request has been accepted', 'request_accepted']
+    );
+
+    logger.info(`Admin accepted request ${requestId}`);
+
+    res.json({
+      success: true,
+      message: 'Request accepted successfully'
+    });
+  } catch (error) {
+    logger.error('Error accepting request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to accept request'
+    });
+  }
+};
+
+/**
  * POST /api/v1/admin/requests/:id/assign
  * Assign a worker to a delivery request
  */
@@ -718,10 +772,10 @@ const assignWorkerToRequest = async (req, res) => {
       });
     }
 
-    if (requestCheck.rows[0].status !== 'pending') {
+    if (!['pending', 'accepted'].includes(requestCheck.rows[0].status)) {
       return res.status(400).json({
         success: false,
-        message: 'Can only assign workers to pending requests'
+        message: 'Can only assign workers to pending or accepted requests'
       });
     }
 
@@ -740,12 +794,15 @@ const assignWorkerToRequest = async (req, res) => {
 
     // Assign worker and mark as in_progress to show on schedule
     const result = await transaction(async (client) => {
-      await client.query(
+      const updateResult = await client.query(
         `UPDATE delivery_requests 
          SET assigned_worker_id = $1, status = 'in_progress', updated_at = CURRENT_TIMESTAMP 
-         WHERE id = $2`,
+         WHERE id = $2
+         RETURNING id, status, assigned_worker_id`,
         [worker_id, requestId]
       );
+
+      logger.info(`Assigned request ${requestId} to worker ${worker_id}, new status: ${updateResult.rows[0].status}`);
 
       // Notify Worker
       const workerUser = await client.query('SELECT u.id as user_id, u.preferred_language FROM worker_profiles wp JOIN users u ON wp.user_id = u.id WHERE wp.id = $1', [worker_id]);
@@ -4359,6 +4416,7 @@ const markDebtAsUnpaid = async (req, res) => {
 module.exports = {
   getDashboard,
   getAllRequests,
+  acceptRequest,
   assignWorkerToRequest,
   batchAssignWorkersToRequests,
   updateRequestStatus,

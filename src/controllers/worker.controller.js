@@ -201,6 +201,9 @@ const getMainSchedule = async (req, res) => {
       ORDER BY is_request ASC, scheduled_time ASC NULLS LAST`,
       [workerId, targetDate, ['pending', 'in_progress', 'completed']]
     );
+    
+    logger.info(`Worker ${workerId} main schedule for ${targetDate}: ${result.rows.length} items, ${result.rows.filter(r => r.is_request).length} requests`);
+    
     res.json({
       success: true,
       data: {
@@ -268,7 +271,7 @@ const getSecondaryList = async (req, res) => {
         JOIN client_profiles c ON dr.client_id = c.id
         JOIN users u ON c.user_id = u.id
         JOIN client_profiles cp ON c.id = cp.id
-        WHERE dr.status = 'pending'
+        WHERE dr.status = 'accepted'
           AND (dr.assigned_worker_id IS NULL OR dr.assigned_worker_id = $1)
         
         UNION ALL
@@ -890,8 +893,8 @@ const acceptRequest = async (req, res) => {
       }
 
       // 3. Status/Assignment check
-      if (request.status !== 'pending') {
-        throw new Error('Request is no longer in pending status');
+      if (request.status !== 'accepted') {
+        throw new Error('Request must be accepted by admin first');
       }
 
       if (request.assigned_worker_id && request.assigned_worker_id !== workerId) {
